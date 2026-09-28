@@ -201,6 +201,9 @@ export interface EvalReport {
     avg_latency_ms: number;
     p50_latency_ms: number;
     p95_latency_ms: number;
+    p50_latency_ex_backoff_ms?: number;
+    p95_latency_ex_backoff_ms?: number;
+    backoff_ms?: number;
     tokens: number;
     rate_limited: number;
     by_category: Record<string, { passed: number; total: number }>;

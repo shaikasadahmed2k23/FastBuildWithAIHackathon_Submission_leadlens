@@ -73,7 +73,15 @@ function Report({ data }: { data: EvalReport }) {
           value={fmt.pct(s.fallback_rate, 0)}
           sub={`${s.fallbacks.template} template · ${s.fallbacks.rules} rule-based`}
         />
-        <Stat label="Latency p50 / p95" value={`${fmt.int(s.p50_latency_ms)} / ${fmt.int(s.p95_latency_ms)} ms`} sub="End to end, per question" />
+        <Stat
+          label="Latency p50 / p95"
+          value={`${fmt.int(s.p50_latency_ms)} / ${fmt.int(s.p95_latency_ms)} ms`}
+          sub={
+            s.backoff_ms
+              ? `${fmt.int(s.p50_latency_ex_backoff_ms)} / ${fmt.int(s.p95_latency_ex_backoff_ms)} ms excluding rate-limit waits`
+              : "End to end, per question"
+          }
+        />
       </div>
 
       {data.variance ? (
