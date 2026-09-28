@@ -28,6 +28,10 @@ ACTIVITIES = {"demo": "demo_request", "demos": "demo_request", "pricing": "prici
               "opens": "email_open", "visited": "website_visit", "visit": "website_visit", "visits": "website_visit"}
 ISSUES = {"stale": "stale", "duplicate": "duplicate", "duplicates": "duplicate", "dupes": "duplicate",
           "duplicated": "duplicate", "missing": "missing_field", "incomplete": "missing_field"}
+# Verbs that say a record *has* an issue. Only meaningful next to an issue type,
+# so they are accepted only when one was recognized ("flagged as spam" is still declined).
+ISSUE_VERBS = {"flagged", "marked", "tagged", "labeled", "labelled", "detected", "identified", "classified",
+               "considered", "listed"}
 GROUPS = {"owner": "l.owner", "owners": "l.owner", "rep": "l.owner", "industry": "c.industry",
           "stage": "l.stage", "source": "l.source", "country": "c.country", "seniority": "l.seniority"}
 STOPWORDS = set("""
@@ -112,6 +116,7 @@ def _parse(question: str) -> Parsed | None:
         fld = next((f for f in ("email", "phone", "title") if f in words), None) if issue == "missing_field" else None
         detail = f" AND i.details = 'Missing {fld}'" if fld else ""
         p.conds.append(f"EXISTS (SELECT 1 FROM data_issues i WHERE i.lead_id = l.lead_id AND i.issue_type = '{issue}'{detail})")
+        known.update(ISSUE_VERBS & set(words))
 
     activity = next((v for k, v in ACTIVITIES.items() if k in words), None)
     act_cond = f"a.occurred_at >= {AS_OF_SQL} - INTERVAL {days} DAY" + (f" AND a.type = '{activity}'" if activity else "")

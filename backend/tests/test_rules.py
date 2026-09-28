@@ -14,6 +14,10 @@ HELD_OUT = [
     ("how many stale leads in the proposal stage",
      "SELECT count(DISTINCT i.lead_id) FROM data_issues i JOIN leads l ON l.lead_id = i.lead_id "
      "WHERE i.issue_type = 'stale' AND l.stage = 'proposal'"),
+    ("how many leads are marked stale",
+     "SELECT count(DISTINCT lead_id) FROM data_issues WHERE issue_type = 'stale'"),
+    ("count leads tagged as missing a title",
+     "SELECT count(*) FROM leads WHERE title IS NULL OR trim(title) = ''"),
     ("average score of leads from linkedin",
      "SELECT round(avg(s.score), 1) FROM leads l JOIN lead_scores s ON s.lead_id = l.lead_id WHERE l.source = 'linkedin'"),
 ]
