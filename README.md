@@ -91,11 +91,11 @@ Scores and issues for the affected leads are then recomputed. Decided actions ca
 
 ## Results
 
-From `backend/evals/latest.json`, offline mode (no LLM key):
+Rule-based (offline) mode, 3 runs. Method, definitions and known failure cases are in **[docs/EVALS.md](docs/EVALS.md)**.
 
 | Metric | Result |
 |---|---|
-| Golden questions answered correctly | 49 / 50 |
+| Golden questions answered correctly | 50 / 50 (every run) |
 | Answers passing the citation checker | 100% |
 | Duplicate detection P / R | 1.000 / 1.000 (192 pairs) |
 | Stale detection P / R | 1.000 / 1.000 (480) |
@@ -103,9 +103,9 @@ From `backend/evals/latest.json`, offline mode (no LLM key):
 
 Caveats on these numbers:
 
-- **The offline rules were developed while looking at the golden questions**, so 49/50 overstates how well offline mode handles new phrasings. `tests/test_rules.py` has held-out phrasings and questions it must decline. The one miss ("flagged as duplicates") is declined, not answered wrongly.
+- **The offline rules were developed while looking at the golden questions**, so 50/50 overstates how well offline mode handles new phrasings. `tests/test_rules.py` has held-out phrasings and questions it must decline.
 - **Cleaning is perfect because the injected noise is synthetic** and the detectors were designed alongside it. Real CRM data would be harder.
-- **The LLM path hasn't been benchmarked here.** Run `python -m evals.run` with `GROQ_API_KEY` set to measure it. The report records which mode produced it.
+- **The live LLM path hasn't been benchmarked yet.** Run `python -m evals.run --mode live --runs 3` with `GROQ_API_KEY` set to measure it.
 
 ## API
 
