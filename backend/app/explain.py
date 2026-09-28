@@ -115,7 +115,8 @@ def draft_outreach(b: ScoreBreakdown, lead: dict[str, Any], company: dict[str, A
     """Draft an email for human review. Citations record which rows motivated it."""
     top = b.intent.contributions[0] if b.intent.contributions else None
     cited = [b.lead_id] + ([top.ref] if top else [])
-    first = lead.get("first_name") or "there"
+    first = (lead.get("first_name") or "there").strip()
+    first = first.title() if first.isupper() else first  # CRM rows are sometimes all caps
     owner_first = (lead.get("owner") or "").split(" ")[0] or "The team"
     company_name = company["name"] if company else "your team"
     if llm.available():

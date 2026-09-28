@@ -59,6 +59,12 @@ def _days_between(later: datetime, earlier: datetime) -> float:
     return (later - earlier).total_seconds() / 86400
 
 
+def _plural(noun: str, n: int) -> str:
+    if n == 1:
+        return noun
+    return noun[:-1] + "ies" if noun.endswith("y") else noun + "s"
+
+
 def fit_component(lead: dict[str, Any], company: dict[str, Any] | None) -> Component:
     seniority = lead.get("seniority") or "unknown"
     sen_pts = float(ICP["seniority_points"].get(seniority, 0))
@@ -99,7 +105,7 @@ def intent_component(activities: Iterable[dict[str, Any]], as_of: datetime = AS_
         for c in contribs:
             counts[c.field] += 1
         top = sorted(counts.items(), key=lambda kv: (-INTENT_WEIGHTS.get(kv[0], 0), kv[0]))[:3]
-        summary = ", ".join(f"{n} {t.replace('_', ' ')}" for t, n in top) + f" in last {INTENT_WINDOW_DAYS}d"
+        summary = ", ".join(f"{n} {_plural(t.replace('_', ' '), n)}" for t, n in top) + f" in last {INTENT_WINDOW_DAYS}d"
     return Component(points=points, max_points=INTENT_MAX, summary=summary, contributions=contribs)
 
 
