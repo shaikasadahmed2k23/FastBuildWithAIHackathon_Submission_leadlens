@@ -30,8 +30,11 @@ class Settings(BaseSettings):
 
     groq_api_key: str = ""
     gemini_api_key: str = ""
-    groq_model: str = "llama-3.3-70b-versatile"
-    gemini_model: str = "gemini-2.0-flash"
+    # llama-3.3-70b-versatile was retired from Groq; gpt-oss-120b is the largest general model there now.
+    groq_model: str = "openai/gpt-oss-120b"
+    # Only sent to reasoning models (gpt-oss). "low" keeps latency and token use down under free-tier limits.
+    groq_reasoning_effort: str = "low"
+    gemini_model: str = "gemini-3.8-flash"
     leadlens_db_path: str = str(DATA_DIR / "leadlens.duckdb")
     cors_origins: str = "http://localhost:3000"
     llm_timeout_s: float = 20.0

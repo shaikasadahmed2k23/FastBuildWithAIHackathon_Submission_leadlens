@@ -72,6 +72,8 @@ def _groq(system: str, user: str, json_mode: bool) -> str:
     }
     if json_mode:
         body["response_format"] = {"type": "json_object"}
+    if settings.groq_model.startswith("openai/gpt-oss") and settings.groq_reasoning_effort:
+        body["reasoning_effort"] = settings.groq_reasoning_effort
     data = _post(GROQ_URL, body, {"Authorization": f"Bearer {settings.groq_api_key}"})
     stats["tokens"] += int(data.get("usage", {}).get("total_tokens", 0))
     return data["choices"][0]["message"]["content"]
