@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckCircle2, ChevronRight, CornerDownLeft, XCircle } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import * as React from "react";
 
 import { CitationChip, CitedText } from "@/components/inspector";
@@ -25,6 +26,14 @@ const EXAMPLES = [
 const MAX_TABLE_ROWS = 50;
 
 export default function AskPage() {
+  return (
+    <React.Suspense fallback={<PageHeader title="Ask" />}>
+      <Ask />
+    </React.Suspense>
+  );
+}
+
+function Ask() {
   const [question, setQuestion] = React.useState("");
   const [history, setHistory] = React.useState<AskResult[]>([]);
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -54,6 +63,16 @@ export default function AskPage() {
   const submit = (q: string) => {
     if (q.trim().length >= 3 && !ask.isPending) ask.mutate(q.trim());
   };
+
+  // Deep link: /ask?q=... runs the question once on load.
+  const initial = useSearchParams().get("q");
+  const ran = React.useRef(false);
+  React.useEffect(() => {
+    if (initial && !ran.current) {
+      ran.current = true;
+      ask.mutate(initial);
+    }
+  }, [initial, ask]);
 
   return (
     <>

@@ -97,6 +97,12 @@ function Leads() {
 
   React.useEffect(() => setCursor(0), [q.data]);
 
+  // Deep link: /leads?lead=LD-00123 opens that lead's drawer.
+  const deepLink = useSearchParams().get("lead");
+  React.useEffect(() => {
+    if (deepLink) open(deepLink);
+  }, [deepLink, open]);
+
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -176,11 +182,11 @@ function Leads() {
       },
       {
         id: "fit",
-        header: "F / I / R",
+        header: "F/I/R",
         enableSorting: false,
         cell: ({ row: { original: l } }) => (
-          <span className="tnum font-mono text-xs text-zinc-500">
-            {l.fit.toFixed(0)} / {l.intent.toFixed(0)} / {l.recency.toFixed(0)}
+          <span className="tnum whitespace-nowrap font-mono text-xs text-zinc-500">
+            {l.fit.toFixed(0)}/{l.intent.toFixed(0)}/{l.recency.toFixed(0)}
           </span>
         ),
       },
@@ -285,8 +291,8 @@ function Leads() {
               <col className="w-[9%]" />
               <col className="w-[10%]" />
               <col className="w-[9%]" />
-              <col className="w-[13%]" />
-              <col className="w-[8%]" />
+              <col className="w-[12%]" />
+              <col className="w-[9%]" />
               <col className="w-[11%]" />
             </colgroup>
             <thead className="sticky top-12 z-10 bg-white">

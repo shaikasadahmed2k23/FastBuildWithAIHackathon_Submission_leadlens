@@ -26,6 +26,11 @@ export function Sheet({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-zinc-900/10" />
         <Dialog.Content
+          // Focus the panel itself rather than the close button, so no ring shows on open.
+          onOpenAutoFocus={(e) => {
+            e.preventDefault();
+            (e.currentTarget as HTMLElement).focus();
+          }}
           className={cn(
             "fixed inset-y-0 right-0 z-50 flex w-full max-w-[560px] flex-col border-l border-zinc-200 bg-white shadow-sm focus:outline-none",
             className,
