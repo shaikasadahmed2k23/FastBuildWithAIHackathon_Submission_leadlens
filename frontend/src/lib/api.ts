@@ -194,11 +194,26 @@ export interface EvalReport {
     answered: number;
     citation_valid_rate: number;
     hallucinated_citations: number;
+    declined: number;
+    retry_rate: number;
+    fallback_rate: number;
+    fallbacks: { template: number; rules: number };
     avg_latency_ms: number;
+    p50_latency_ms: number;
+    p95_latency_ms: number;
+    tokens: number;
+    rate_limited: number;
     by_category: Record<string, { passed: number; total: number }>;
     by_source: Record<string, number>;
   };
   cleaning: Record<string, { precision: number; recall: number; f1: number; found: number; expected: number }>;
+  variance?: {
+    runs: number;
+    accuracy: { mean: number; stdev: number; min: number; max: number };
+    citation_valid_rate: { mean: number; stdev: number; min: number; max: number };
+    unstable_questions: string[];
+    always_failing: string[];
+  };
   results: {
     id: string;
     category: string;

@@ -60,23 +60,30 @@ function Report({ data }: { data: EvalReport }) {
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <Stat label="Answer accuracy" value={fmt.pct(s.accuracy, 0)} sub={`${s.passed} of ${s.total} golden questions`} />
         <Stat
-          label="Citation validity"
+          label="Citation checker pass"
           value={fmt.pct(s.citation_valid_rate, 0)}
-          sub={`${s.hallucinated_citations} answers failed the checker`}
+          sub={`${s.hallucinated_citations} of ${s.answered} answers failed`}
         />
-        <Stat label="Avg latency" value={`${fmt.int(s.avg_latency_ms)} ms`} sub="End to end, per question" />
+        <Stat label="Retry rate" value={fmt.pct(s.retry_rate, 0)} sub="Questions needing a SQL or answer retry" />
         <Stat
-          label="Answered by"
-          value={Object.entries(s.by_source)
-            .filter(([, n]) => n)
-            .map(([k, n]) => `${n} ${k}`)
-            .join(" · ")}
-          sub="llm / rules / none"
+          label="Fallback rate"
+          value={fmt.pct(s.fallback_rate, 0)}
+          sub={`${s.fallbacks.template} template · ${s.fallbacks.rules} rule-based`}
         />
+        <Stat label="Latency p50 / p95" value={`${fmt.int(s.p50_latency_ms)} / ${fmt.int(s.p95_latency_ms)} ms`} sub="End to end, per question" />
       </div>
+
+      {data.variance ? (
+        <p className="text-xs text-zinc-500">
+          Across {data.variance.runs} runs: accuracy {fmt.pct(data.variance.accuracy.min, 0)}–{fmt.pct(data.variance.accuracy.max, 0)}{" "}
+          (sd {(data.variance.accuracy.stdev * 100).toFixed(1)} pts); unstable questions:{" "}
+          {data.variance.unstable_questions.length ? data.variance.unstable_questions.join(", ") : "none"}. Figures above are
+          from the last run.
+        </p>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <Panel title="Data cleaning vs. injected ground truth">
