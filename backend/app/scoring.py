@@ -20,6 +20,7 @@ from app.config import AS_OF, CLOSED_STAGES, ICP, INTENT_WEIGHTS, INTENT_WINDOW_
 INTENT_HALF_LIFE_DAYS = 10.0
 INTENT_MAX = 40.0
 RECENCY_MAX = 20.0
+SENIORITY_LABELS = {"c_level": "C-level", "vp": "VP", "director": "Director", "manager": "Manager", "individual": "IC"}
 
 
 class Contribution(BaseModel):
@@ -73,7 +74,9 @@ def fit_component(lead: dict[str, Any], company: dict[str, Any] | None) -> Compo
             Contribution(source="company", ref=company["company_id"], field="industry", value=industry, points=ind_pts),
         ]
     points = round(sen_pts + size_pts + ind_pts, 1)
-    summary = f"{seniority.replace('_', '-')} at a {company['employees'] if company else '?'}-person {company['industry'] if company else 'unknown'} company"
+    label = SENIORITY_LABELS.get(seniority, seniority)
+    summary = (f"{label} at a {company['employees']}-person {company['industry']} company" if company
+               else f"{label}, company unknown")
     return Component(points=points, max_points=40, summary=summary, contributions=contribs)
 
 
@@ -85,7 +88,7 @@ def intent_component(activities: Iterable[dict[str, Any]], as_of: datetime = AS_
             continue
         pts = INTENT_WEIGHTS.get(act["type"], 0.0) * 0.5 ** (age / INTENT_HALF_LIFE_DAYS)
         contribs.append(Contribution(source="activity", ref=act["activity_id"], field=act["type"],
-                                     value=f"{age:.0f}d ago", points=round(pts, 2)))
+                                     value="today" if age < 1 else f"{age:.0f}d ago", points=round(pts, 2)))
     contribs.sort(key=lambda c: (-c.points, c.ref))
     raw = sum(c.points for c in contribs)
     points = round(min(INTENT_MAX, raw), 1)

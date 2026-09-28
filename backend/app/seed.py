@@ -20,7 +20,7 @@ import pandas as pd
 from faker import Faker
 
 from app import db
-from app.config import AS_OF, CLOSED_STAGES, DATA_DIR, OPEN_STAGES, STALE_DAYS
+from app.config import AS_OF, CLOSED_STAGES, DATA_DIR, OPEN_STAGES, OWNERS, STALE_DAYS
 
 SEED = 42
 N_COMPANIES = 1500
@@ -48,7 +48,6 @@ STAGE_WEIGHTS = {
     "new": 0.2, "contacted": 0.25, "qualified": 0.18, "proposal": 0.1,
     "negotiation": 0.07, "won": 0.1, "lost": 0.1,
 }
-OWNERS = ["Maya Chen", "Daniel Ortiz", "Priya Nair", "Tom Becker", "Aisha Bello", "Lucas Martin", "Hana Sato", "Ravi Kumar"]
 ACTIVITY_TYPES = {
     "email_open": 0.34, "website_visit": 0.24, "email_reply": 0.12, "call": 0.1,
     "pricing_page_visit": 0.09, "meeting": 0.06, "demo_request": 0.05,

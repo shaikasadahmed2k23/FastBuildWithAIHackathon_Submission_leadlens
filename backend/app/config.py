@@ -12,12 +12,14 @@ DATA_DIR = BACKEND_DIR / "data"
 # All time-based logic (seeding, staleness, recency, intent windows) is computed
 # relative to this fixed instant so scores and evals are reproducible.
 AS_OF = datetime(2026, 9, 15, 12, 0, 0)
+AS_OF_SQL = f"TIMESTAMP '{AS_OF:%Y-%m-%d %H:%M:%S}'"
 
 STALE_DAYS = 90
 INTENT_WINDOW_DAYS = 30
 OPEN_STAGES = ("new", "contacted", "qualified", "proposal", "negotiation")
 CLOSED_STAGES = ("won", "lost")
 ALL_STAGES = OPEN_STAGES + CLOSED_STAGES
+OWNERS = ("Maya Chen", "Daniel Ortiz", "Priya Nair", "Tom Becker", "Aisha Bello", "Lucas Martin", "Hana Sato", "Ravi Kumar")
 
 
 class Settings(BaseSettings):

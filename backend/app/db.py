@@ -97,6 +97,8 @@ def connect(path: Path | None = None) -> duckdb.DuckDBPyConnection:
         target.parent.mkdir(parents=True, exist_ok=True)
         _conn = duckdb.connect(str(target))
         _conn.execute(SCHEMA)
+        # Sandbox: generated SQL can never read files, URLs or attach databases.
+        _conn.execute("SET enable_external_access = false")
         _conn_path = target
     return _conn
 
