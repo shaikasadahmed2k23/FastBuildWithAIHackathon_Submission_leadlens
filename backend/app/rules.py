@@ -1,29 +1,57 @@
-"""Keyword-based question -> SQL mapping used when no LLM is available.
+"""Keyword slot-filling question -> SQL, used when no LLM is available.
 
-Deliberately small: it covers the common questions a sales team asks so the app
-stays useful in degraded mode. Anything it can't parse returns ``None``.
+Precision over coverage: if the question contains a content word the parser
+doesn't understand, it returns ``None`` rather than answering a different
+question.
 """
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from app.config import ALL_STAGES, AS_OF_SQL, ICP, OWNERS
 
-LEAD_COLUMNS = (
-    "l.lead_id, l.first_name || ' ' || l.last_name AS name, c.name AS company, "
-    "l.stage, l.owner, s.score"
-)
-JOINS = "JOIN companies c ON c.company_id = l.company_id JOIN lead_scores s ON s.lead_id = l.lead_id"
-LEAD_FROM = f"leads l {JOINS}"
-ISSUE_WORDS = {
-    "stale": "stale", "duplicate": "duplicate", "duplicates": "duplicate", "dupes": "duplicate",
-    "missing": "missing_field", "incomplete": "missing_field",
-}
-ACTIVITY_WORDS = {
-    "demo": "demo_request", "pricing": "pricing_page_visit", "meeting": "meeting",
-    "replied": "email_reply", "reply": "email_reply", "call": "call",
-}
-FIELDS = ("email", "phone", "title")
+LEAD_JOINS = "JOIN companies c ON c.company_id = l.company_id JOIN lead_scores s ON s.lead_id = l.lead_id"
+LEAD_LIST_COLUMNS = "l.lead_id, l.first_name || ' ' || l.last_name AS name, c.name AS company, l.stage, l.owner, s.score"
+
+COUNTRIES = {"germany": "DE", "german": "DE", "uk": "GB", "britain": "GB", "british": "GB", "england": "GB",
+             "us": "US", "usa": "US", "america": "US", "american": "US", "india": "IN", "indian": "IN",
+             "canada": "CA", "canadian": "CA", "australia": "AU", "australian": "AU", "france": "FR", "french": "FR"}
+SENIORITY = {"c_level": "c_level", "executive": "c_level", "executives": "c_level", "vp": "vp", "vps": "vp",
+             "director": "director", "directors": "director", "manager": "manager", "managers": "manager",
+             "individual": "individual", "contributor": "individual"}
+SOURCES = {"referral": "referral", "referrals": "referral", "website": "website", "linkedin": "linkedin",
+           "event": "event", "events": "event", "outbound": "cold_outbound", "cold": "cold_outbound",
+           "partner": "partner", "partners": "partner"}
+ACTIVITIES = {"demo": "demo_request", "demos": "demo_request", "pricing": "pricing_page_visit",
+              "meeting": "meeting", "meetings": "meeting", "replied": "email_reply", "reply": "email_reply",
+              "replies": "email_reply", "call": "call", "calls": "call", "opened": "email_open",
+              "opens": "email_open", "visited": "website_visit", "visit": "website_visit", "visits": "website_visit"}
+ISSUES = {"stale": "stale", "duplicate": "duplicate", "duplicates": "duplicate", "dupes": "duplicate",
+          "duplicated": "duplicate", "missing": "missing_field", "incomplete": "missing_field"}
+GROUPS = {"owner": "l.owner", "owners": "l.owner", "rep": "l.owner", "industry": "c.industry",
+          "stage": "l.stage", "source": "l.source", "country": "c.country", "seniority": "l.seniority"}
+STOPWORDS = set("""
+a an the of in at on by for to from with and or is are was were be been being have has had do does did
+what which who whom how many much show me list give find get there their them that this these those all any
+each per our my we i you it its as than more over above under below less greater fewer number count total
+top best highest hottest leads lead prospects prospect people contacts value values based work working
+please currently right now level levels across
+""".split())
+RECOGNIZED = set("""
+open closed never contacted score scores average avg mean max maximum lowest sum pipeline deal
+deals revenue companies company activities activity recorded requested request requests page site issues
+issue data field fields email address phone title job employees days day last past recent recently
+owned owns own belong belongs belonging came come industry industries stage stages type types new
+""".split())
+
+
+@dataclass
+class Parsed:
+    entity: str = "leads"  # leads | companies | activities | issues
+    metric: str = "list"  # list | count | avg_score | max_score | sum_deal | avg_deal
+    group: str | None = None
+    limit: int = 200
+    conds: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -32,24 +60,91 @@ class RuleMatch:
     rule: str
 
 
-def _filters(q: str) -> list[str]:
-    conds: list[str] = []
+def _parse(question: str) -> Parsed | None:
+    q = question.lower().replace("c-level", "c_level").replace("e-commerce", "ecommerce")
+    words = re.findall(r"[a-z][a-z_]*|\d+", q)
+    p = Parsed()
+    known: set[str] = set()
+
     for industry in ICP["industry_points"]:
-        if industry.lower() in q:
-            conds.append(f"c.industry = '{industry}'")
-            break
+        key = industry.lower().replace("-", "")
+        if key in words:
+            p.conds.append(f"c.industry = '{industry}'")
+            known.add(key)
     for owner in OWNERS:
-        first = owner.split()[0].lower()
-        if re.search(rf"\b{first}\b", q):
-            conds.append(f"l.owner = '{owner}'")
-            break
+        first, last = owner.lower().split()
+        if first in words:
+            p.conds.append(f"l.owner = '{owner}'")
+            known.update((first, last))
+    never_contacted = "never" in words and "contacted" in words
     for stage in ALL_STAGES:
-        if re.search(rf"\b{stage}\b", q):
-            conds.append(f"l.stage = '{stage}'")
-            break
-    if re.search(r"\bopen\b", q):
-        conds.append("l.stage NOT IN ('won', 'lost')")
-    return conds
+        if stage in words and not (stage == "contacted" and never_contacted):
+            p.conds.append(f"l.stage = '{stage}'")
+    if "open" in words:
+        p.conds.append("l.stage NOT IN ('won', 'lost')")
+    if never_contacted:
+        p.conds.append("l.last_contacted_at IS NULL")
+    for vocab, col in ((COUNTRIES, "c.country"), (SENIORITY, "l.seniority"), (SOURCES, "l.source")):
+        for word, value in vocab.items():
+            if word in words:
+                p.conds.append(f"{col} = '{value}'")
+                known.add(word)
+
+    days_m = re.search(r"\b(?:last|past)\s+(\d{1,3})\s+days?\b", q)
+    days = int(days_m.group(1)) if days_m else 30
+    top_m = re.search(r"\b(?:top|best|first|highest|hottest)\s+(\d{1,3})\b", q) or re.search(r"\b(\d{1,3})\s+(?:best|top|hottest)\b", q)
+    if top_m:
+        p.limit = min(int(top_m.group(1)), 200)
+    elif re.search(r"\b(top|best|hottest)\b", q):
+        p.limit = 10
+
+    for pat, expr in ((r"scores?\s+(?:above|over|greater than|more than)\s+(\d+(?:\.\d+)?)", "s.score >"),
+                      (r"scores?\s+(?:below|under|less than)\s+(\d+(?:\.\d+)?)", "s.score <"),
+                      (r"(?:more than|over|above)\s+(\d+)\s+employees", "c.employees >"),
+                      (r"(?:fewer than|less than|under|below)\s+(\d+)\s+employees", "c.employees <"),
+                      (r"deal value (?:over|above|greater than|more than)\s+(\d+)", "l.deal_value >")):
+        m = re.search(pat, q)
+        if m:
+            p.conds.append(f"{expr} {m.group(1)}")
+
+    issue = next((v for k, v in ISSUES.items() if k in words), None)
+    if issue:
+        fld = next((f for f in ("email", "phone", "title") if f in words), None) if issue == "missing_field" else None
+        detail = f" AND i.details = 'Missing {fld}'" if fld else ""
+        p.conds.append(f"EXISTS (SELECT 1 FROM data_issues i WHERE i.lead_id = l.lead_id AND i.issue_type = '{issue}'{detail})")
+
+    activity = next((v for k, v in ACTIVITIES.items() if k in words), None)
+    act_cond = f"a.occurred_at >= {AS_OF_SQL} - INTERVAL {days} DAY" + (f" AND a.type = '{activity}'" if activity else "")
+
+    group_m = re.search(r"\b(?:by|per|each|across)\s+(?:company\s+)?(owner|owners|rep|industry|stage|source|country|seniority|type)\b", q)
+    if group_m:
+        p.group = group_m.group(1)
+
+    if re.search(r"\b(average|avg|mean)\b", q):
+        p.metric = "avg_deal" if "deal" in words else "avg_score"
+    elif re.search(r"\b(highest|max|maximum)\s+(lead\s+)?score\b", q):
+        p.metric = "max_score"
+    elif re.search(r"\b(total|sum)\b.*\b(deal|pipeline)\b|\bpipeline\b", q):
+        p.metric = "sum_deal"
+    elif re.search(r"\bhow many\b|\bcount\b|\bnumber of\b", q) or p.group:
+        p.metric = "count"
+
+    about_leads = bool({"leads", "lead", "who"} & set(words))
+    if "companies" in words and not about_leads and not issue and not activity:
+        p.entity = "companies"
+    elif "issues" in words and not about_leads:
+        p.entity = "issues"
+    elif activity or "activities" in words:
+        if about_leads:
+            p.conds.append(f"EXISTS (SELECT 1 FROM activities a WHERE a.lead_id = l.lead_id AND {act_cond})")
+        else:
+            p.entity = "activities"
+            p.conds.append(act_cond)
+
+    unknown = [w for w in words if not w.isdigit() and w not in known and w not in STOPWORDS
+               and w not in RECOGNIZED and w not in ISSUES and w not in ACTIVITIES and w not in GROUPS
+               and w not in ALL_STAGES]
+    return None if unknown else p
 
 
 def _where(conds: list[str]) -> str:
@@ -57,47 +152,45 @@ def _where(conds: list[str]) -> str:
 
 
 def match(question: str) -> RuleMatch | None:
-    q = question.lower().strip()
-    conds = _filters(q)
-    limit_m = re.search(r"\b(?:top|best|first|highest)\s+(\d{1,3})\b", q) or re.search(r"\b(\d{1,3})\s+(?:best|top|hottest)\b", q)
-    limit = min(int(limit_m.group(1)), 200) if limit_m else 10
-    counting = bool(re.search(r"\bhow many\b|\bcount\b|\bnumber of\b", q))
-    days_m = re.search(r"\b(?:last|past)\s+(\d{1,3})\s+days?\b", q)
-    days = int(days_m.group(1)) if days_m else 30
+    p = _parse(question)
+    if p is None:
+        return None
+    rule = f"{p.entity}:{p.metric}" + (f":by_{p.group}" if p.group else "")
 
-    issue = next((v for k, v in ISSUE_WORDS.items() if re.search(rf"\b{k}\b", q)), None)
-    if issue:
-        field = next((f for f in FIELDS if f in q), None) if issue == "missing_field" else None
-        issue_cond = [f"i.issue_type = '{issue}'"] + ([f"i.details = 'Missing {field}'"] if field else [])
-        where = _where(issue_cond + conds)
-        base = f"FROM data_issues i JOIN leads l ON l.lead_id = i.lead_id {JOINS}{where}"
-        if counting:
-            return RuleMatch(f"SELECT count(DISTINCT i.lead_id) AS lead_count {base}", f"count_{issue}")
-        return RuleMatch(f"SELECT DISTINCT {LEAD_COLUMNS}, i.details {base} ORDER BY s.score DESC, l.lead_id LIMIT {limit}", f"list_{issue}")
+    if p.entity == "companies":
+        if p.metric != "count" or p.group or any(not c.startswith("c.") for c in p.conds):
+            return None
+        return RuleMatch(f"SELECT count(*) AS company_count FROM companies c{_where(p.conds)}", rule)
 
-    activity = next((v for k, v in ACTIVITY_WORDS.items() if re.search(rf"\b{k}\b", q)), None)
-    if activity:
-        act_cond = [f"a.type = '{activity}'", f"a.occurred_at >= {AS_OF_SQL} - INTERVAL {days} DAY"]
-        base = f"FROM activities a JOIN leads l ON l.lead_id = a.lead_id {JOINS}{_where(act_cond + conds)}"
-        if counting:
-            return RuleMatch(f"SELECT count(DISTINCT a.lead_id) AS lead_count {base}", f"count_{activity}")
-        return RuleMatch(
-            f"SELECT {LEAD_COLUMNS}, max(a.occurred_at) AS last_{activity}, arg_max(a.activity_id, a.occurred_at) AS activity_id "
-            f"{base} GROUP BY ALL ORDER BY s.score DESC, l.lead_id LIMIT {limit}", f"list_{activity}")
+    if p.entity == "issues":
+        if p.metric != "count" or p.conds or p.group not in (None, "type"):
+            return None
+        if p.group == "type":
+            return RuleMatch("SELECT issue_type, count(*) AS issue_count FROM data_issues GROUP BY 1 ORDER BY 2 DESC", rule)
+        return RuleMatch("SELECT count(*) AS issue_count FROM data_issues", rule)
 
-    if re.search(r"\b(pipeline|deal value|revenue)\b", q):
-        return RuleMatch(f"SELECT round(sum(l.deal_value), 2) AS total_deal_value, count(*) AS lead_count FROM {LEAD_FROM}{_where(conds)}", "pipeline")
+    if p.entity == "activities":
+        if p.metric != "count":
+            return None
+        from_ = f"FROM activities a JOIN leads l ON l.lead_id = a.lead_id {LEAD_JOINS}{_where(p.conds)}"
+        if p.group:
+            col = "a.type" if p.group == "type" else GROUPS[p.group]
+            return RuleMatch(f"SELECT {col} AS {p.group}, count(*) AS activity_count {from_} GROUP BY 1 ORDER BY 2 DESC", rule)
+        return RuleMatch(f"SELECT count(*) AS activity_count {from_}", rule)
 
-    by_m = re.search(r"\b(?:by|per|for each)\s+(owner|industry|stage|source|country)\b", q)
-    if by_m:
-        col = {"owner": "l.owner", "industry": "c.industry", "stage": "l.stage", "source": "l.source", "country": "c.country"}[by_m.group(1)]
-        return RuleMatch(
-            f"SELECT {col} AS {by_m.group(1)}, count(*) AS lead_count, round(avg(s.score), 1) AS avg_score "
-            f"FROM {LEAD_FROM}{_where(conds)} GROUP BY 1 ORDER BY lead_count DESC", f"group_by_{by_m.group(1)}")
-
-    if counting and re.search(r"\bleads?\b", q):
-        return RuleMatch(f"SELECT count(*) AS lead_count FROM {LEAD_FROM}{_where(conds)}", "count_leads")
-
-    if re.search(r"\b(leads?|prospects?|who)\b", q):
-        return RuleMatch(f"SELECT {LEAD_COLUMNS} FROM {LEAD_FROM}{_where(conds)} ORDER BY s.score DESC, l.lead_id LIMIT {limit}", "top_leads")
-    return None
+    from_ = f"FROM leads l {LEAD_JOINS}{_where(p.conds)}"
+    aggregates = {
+        "count": "count(*) AS lead_count",
+        "avg_score": "round(avg(s.score), 1) AS avg_score",
+        "max_score": "max(s.score) AS max_score",
+        "sum_deal": "round(sum(l.deal_value), 0) AS total_deal_value",
+        "avg_deal": "round(avg(l.deal_value), 0) AS avg_deal_value",
+    }
+    if p.group:
+        if p.group not in GROUPS or p.metric == "list":
+            return None
+        name = p.group.removesuffix("s")
+        return RuleMatch(f"SELECT {GROUPS[p.group]} AS {name}, {aggregates[p.metric]} {from_} GROUP BY 1 ORDER BY 2 DESC", rule)
+    if p.metric in aggregates:
+        return RuleMatch(f"SELECT {aggregates[p.metric]} {from_}", rule)
+    return RuleMatch(f"SELECT {LEAD_LIST_COLUMNS} {from_} ORDER BY s.score DESC, l.lead_id LIMIT {p.limit}", rule)
