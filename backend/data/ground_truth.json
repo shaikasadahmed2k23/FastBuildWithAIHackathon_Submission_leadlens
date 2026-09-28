@@ -1,0 +1,2415 @@
+{
+ "seed": 42,
+ "as_of": "2026-09-15T12:00:00",
+ "counts": {
+  "duplicates": 192,
+  "stale": 480,
+  "missing": 240
+ },
+ "duplicates": [
+  {
+   "lead_id": "LD-00044",
+   "original_id": "LD-03615",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-00046",
+   "original_id": "LD-01110",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-00063",
+   "original_id": "LD-02674",
+   "kind": "gmail_dots"
+  },
+  {
+   "lead_id": "LD-00093",
+   "original_id": "LD-02940",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-00128",
+   "original_id": "LD-01913",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-00156",
+   "original_id": "LD-02078",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-00219",
+   "original_id": "LD-00630",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-00227",
+   "original_id": "LD-03342",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-00260",
+   "original_id": "LD-00036",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-00269",
+   "original_id": "LD-01155",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-00273",
+   "original_id": "LD-02594",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-00293",
+   "original_id": "LD-02675",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-00299",
+   "original_id": "LD-01820",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-00336",
+   "original_id": "LD-04419",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-00340",
+   "original_id": "LD-01270",
+   "kind": "gmail_dots"
+  },
+  {
+   "lead_id": "LD-00345",
+   "original_id": "LD-01454",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-00368",
+   "original_id": "LD-04118",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-00387",
+   "original_id": "LD-00434",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-00408",
+   "original_id": "LD-00412",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-00458",
+   "original_id": "LD-01837",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-00462",
+   "original_id": "LD-03156",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-00468",
+   "original_id": "LD-01693",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-00485",
+   "original_id": "LD-03178",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-00487",
+   "original_id": "LD-02932",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-00493",
+   "original_id": "LD-04544",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-00511",
+   "original_id": "LD-02127",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-00546",
+   "original_id": "LD-02904",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-00567",
+   "original_id": "LD-03183",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-00573",
+   "original_id": "LD-02115",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-00606",
+   "original_id": "LD-03361",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-00614",
+   "original_id": "LD-02496",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-00643",
+   "original_id": "LD-00436",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-00695",
+   "original_id": "LD-03175",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-00708",
+   "original_id": "LD-00761",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-00733",
+   "original_id": "LD-01966",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-00748",
+   "original_id": "LD-01474",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-00758",
+   "original_id": "LD-04378",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-00783",
+   "original_id": "LD-02613",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-00823",
+   "original_id": "LD-03762",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-00847",
+   "original_id": "LD-00385",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-00853",
+   "original_id": "LD-01225",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-00873",
+   "original_id": "LD-04391",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-00912",
+   "original_id": "LD-03890",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-00945",
+   "original_id": "LD-01300",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-00966",
+   "original_id": "LD-03761",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-00970",
+   "original_id": "LD-02254",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-01011",
+   "original_id": "LD-00076",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-01064",
+   "original_id": "LD-00416",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-01068",
+   "original_id": "LD-02380",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-01072",
+   "original_id": "LD-01239",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-01077",
+   "original_id": "LD-02729",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-01080",
+   "original_id": "LD-01397",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-01086",
+   "original_id": "LD-03569",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-01115",
+   "original_id": "LD-03110",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-01174",
+   "original_id": "LD-04869",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-01269",
+   "original_id": "LD-00403",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-01336",
+   "original_id": "LD-01264",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-01358",
+   "original_id": "LD-00292",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-01418",
+   "original_id": "LD-00108",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-01436",
+   "original_id": "LD-04930",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-01471",
+   "original_id": "LD-01390",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-01510",
+   "original_id": "LD-03921",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-01519",
+   "original_id": "LD-01385",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-01539",
+   "original_id": "LD-00501",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-01554",
+   "original_id": "LD-02190",
+   "kind": "gmail_dots"
+  },
+  {
+   "lead_id": "LD-01565",
+   "original_id": "LD-00895",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-01571",
+   "original_id": "LD-02608",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-01573",
+   "original_id": "LD-01306",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-01584",
+   "original_id": "LD-01959",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-01612",
+   "original_id": "LD-01938",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-01642",
+   "original_id": "LD-04800",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-01675",
+   "original_id": "LD-00541",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-01676",
+   "original_id": "LD-01163",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-01687",
+   "original_id": "LD-02726",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-01726",
+   "original_id": "LD-04986",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-01878",
+   "original_id": "LD-01295",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-01902",
+   "original_id": "LD-02421",
+   "kind": "gmail_dots"
+  },
+  {
+   "lead_id": "LD-02010",
+   "original_id": "LD-02568",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-02032",
+   "original_id": "LD-00671",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-02120",
+   "original_id": "LD-02050",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-02147",
+   "original_id": "LD-02656",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-02165",
+   "original_id": "LD-04255",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-02232",
+   "original_id": "LD-02664",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-02239",
+   "original_id": "LD-03426",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-02358",
+   "original_id": "LD-03978",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-02361",
+   "original_id": "LD-04422",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-02369",
+   "original_id": "LD-01469",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-02372",
+   "original_id": "LD-03231",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-02374",
+   "original_id": "LD-04947",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-02382",
+   "original_id": "LD-03170",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-02405",
+   "original_id": "LD-02659",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-02411",
+   "original_id": "LD-02519",
+   "kind": "gmail_dots"
+  },
+  {
+   "lead_id": "LD-02416",
+   "original_id": "LD-04647",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-02438",
+   "original_id": "LD-00021",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-02446",
+   "original_id": "LD-01493",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-02450",
+   "original_id": "LD-00210",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-02471",
+   "original_id": "LD-03531",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-02516",
+   "original_id": "LD-04237",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-02532",
+   "original_id": "LD-01532",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-02549",
+   "original_id": "LD-02591",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-02551",
+   "original_id": "LD-01356",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-02587",
+   "original_id": "LD-04232",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-02614",
+   "original_id": "LD-00650",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-02650",
+   "original_id": "LD-00626",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-02723",
+   "original_id": "LD-03266",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-02746",
+   "original_id": "LD-04621",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-02798",
+   "original_id": "LD-03389",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-02813",
+   "original_id": "LD-01202",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-02841",
+   "original_id": "LD-04822",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-02876",
+   "original_id": "LD-00109",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-02905",
+   "original_id": "LD-02741",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-02951",
+   "original_id": "LD-04003",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-02962",
+   "original_id": "LD-01623",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-02989",
+   "original_id": "LD-03692",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-02999",
+   "original_id": "LD-04105",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-03041",
+   "original_id": "LD-03563",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-03132",
+   "original_id": "LD-01517",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-03171",
+   "original_id": "LD-04482",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-03185",
+   "original_id": "LD-00251",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-03210",
+   "original_id": "LD-01582",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-03241",
+   "original_id": "LD-00200",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-03262",
+   "original_id": "LD-02122",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-03286",
+   "original_id": "LD-02763",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-03318",
+   "original_id": "LD-01314",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-03347",
+   "original_id": "LD-02598",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-03351",
+   "original_id": "LD-02171",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-03355",
+   "original_id": "LD-02511",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-03356",
+   "original_id": "LD-00860",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-03408",
+   "original_id": "LD-02414",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-03480",
+   "original_id": "LD-04700",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-03579",
+   "original_id": "LD-00197",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-03595",
+   "original_id": "LD-03721",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-03619",
+   "original_id": "LD-03470",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-03629",
+   "original_id": "LD-04092",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-03668",
+   "original_id": "LD-00365",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-03741",
+   "original_id": "LD-00662",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-03755",
+   "original_id": "LD-02260",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-03785",
+   "original_id": "LD-03292",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-03792",
+   "original_id": "LD-02242",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-03814",
+   "original_id": "LD-02689",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-03818",
+   "original_id": "LD-01814",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-03819",
+   "original_id": "LD-01686",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-03869",
+   "original_id": "LD-03678",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-03885",
+   "original_id": "LD-01311",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-03891",
+   "original_id": "LD-03334",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-03955",
+   "original_id": "LD-00571",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-03963",
+   "original_id": "LD-03382",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-04004",
+   "original_id": "LD-04728",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-04009",
+   "original_id": "LD-00864",
+   "kind": "gmail_dots"
+  },
+  {
+   "lead_id": "LD-04064",
+   "original_id": "LD-01372",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-04140",
+   "original_id": "LD-00916",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-04142",
+   "original_id": "LD-04386",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-04144",
+   "original_id": "LD-00306",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-04171",
+   "original_id": "LD-02685",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-04177",
+   "original_id": "LD-04803",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-04183",
+   "original_id": "LD-00636",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-04199",
+   "original_id": "LD-00171",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-04205",
+   "original_id": "LD-03724",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-04209",
+   "original_id": "LD-01082",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-04225",
+   "original_id": "LD-00681",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-04250",
+   "original_id": "LD-01840",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-04275",
+   "original_id": "LD-04030",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-04318",
+   "original_id": "LD-03339",
+   "kind": "gmail_dots"
+  },
+  {
+   "lead_id": "LD-04355",
+   "original_id": "LD-01366",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-04401",
+   "original_id": "LD-01681",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-04415",
+   "original_id": "LD-01289",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-04454",
+   "original_id": "LD-03258",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-04481",
+   "original_id": "LD-03842",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-04510",
+   "original_id": "LD-00224",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-04548",
+   "original_id": "LD-02293",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-04561",
+   "original_id": "LD-00188",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-04580",
+   "original_id": "LD-00646",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-04585",
+   "original_id": "LD-02341",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-04654",
+   "original_id": "LD-03280",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-04660",
+   "original_id": "LD-01265",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-04735",
+   "original_id": "LD-01276",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-04743",
+   "original_id": "LD-03108",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-04753",
+   "original_id": "LD-04157",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-04794",
+   "original_id": "LD-00721",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-04804",
+   "original_id": "LD-02722",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-04820",
+   "original_id": "LD-00061",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-04835",
+   "original_id": "LD-00174",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-04861",
+   "original_id": "LD-00997",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-04868",
+   "original_id": "LD-04985",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-04878",
+   "original_id": "LD-03852",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-04896",
+   "original_id": "LD-02491",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-04901",
+   "original_id": "LD-03570",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-04908",
+   "original_id": "LD-01574",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-04949",
+   "original_id": "LD-02265",
+   "kind": "email_typo"
+  },
+  {
+   "lead_id": "LD-04950",
+   "original_id": "LD-04273",
+   "kind": "name_typo"
+  },
+  {
+   "lead_id": "LD-04956",
+   "original_id": "LD-03828",
+   "kind": "case_change"
+  },
+  {
+   "lead_id": "LD-04962",
+   "original_id": "LD-01143",
+   "kind": "email_typo"
+  }
+ ],
+ "stale": [
+  "LD-00003",
+  "LD-00020",
+  "LD-00025",
+  "LD-00031",
+  "LD-00037",
+  "LD-00039",
+  "LD-00051",
+  "LD-00053",
+  "LD-00057",
+  "LD-00069",
+  "LD-00070",
+  "LD-00095",
+  "LD-00104",
+  "LD-00109",
+  "LD-00113",
+  "LD-00120",
+  "LD-00143",
+  "LD-00155",
+  "LD-00163",
+  "LD-00176",
+  "LD-00185",
+  "LD-00197",
+  "LD-00206",
+  "LD-00213",
+  "LD-00235",
+  "LD-00251",
+  "LD-00267",
+  "LD-00271",
+  "LD-00284",
+  "LD-00287",
+  "LD-00290",
+  "LD-00294",
+  "LD-00298",
+  "LD-00315",
+  "LD-00325",
+  "LD-00327",
+  "LD-00328",
+  "LD-00330",
+  "LD-00343",
+  "LD-00355",
+  "LD-00362",
+  "LD-00366",
+  "LD-00375",
+  "LD-00389",
+  "LD-00406",
+  "LD-00407",
+  "LD-00450",
+  "LD-00451",
+  "LD-00453",
+  "LD-00463",
+  "LD-00466",
+  "LD-00483",
+  "LD-00512",
+  "LD-00513",
+  "LD-00520",
+  "LD-00535",
+  "LD-00537",
+  "LD-00570",
+  "LD-00584",
+  "LD-00590",
+  "LD-00600",
+  "LD-00607",
+  "LD-00626",
+  "LD-00631",
+  "LD-00633",
+  "LD-00638",
+  "LD-00646",
+  "LD-00653",
+  "LD-00677",
+  "LD-00685",
+  "LD-00686",
+  "LD-00687",
+  "LD-00696",
+  "LD-00700",
+  "LD-00702",
+  "LD-00735",
+  "LD-00760",
+  "LD-00780",
+  "LD-00781",
+  "LD-00790",
+  "LD-00822",
+  "LD-00833",
+  "LD-00834",
+  "LD-00848",
+  "LD-00850",
+  "LD-00852",
+  "LD-00878",
+  "LD-00882",
+  "LD-00883",
+  "LD-00887",
+  "LD-00891",
+  "LD-00896",
+  "LD-00930",
+  "LD-00939",
+  "LD-00942",
+  "LD-00949",
+  "LD-00967",
+  "LD-00985",
+  "LD-00988",
+  "LD-01001",
+  "LD-01010",
+  "LD-01017",
+  "LD-01023",
+  "LD-01029",
+  "LD-01033",
+  "LD-01044",
+  "LD-01049",
+  "LD-01053",
+  "LD-01058",
+  "LD-01061",
+  "LD-01063",
+  "LD-01076",
+  "LD-01114",
+  "LD-01118",
+  "LD-01140",
+  "LD-01150",
+  "LD-01162",
+  "LD-01167",
+  "LD-01175",
+  "LD-01188",
+  "LD-01192",
+  "LD-01221",
+  "LD-01222",
+  "LD-01231",
+  "LD-01234",
+  "LD-01235",
+  "LD-01239",
+  "LD-01248",
+  "LD-01255",
+  "LD-01261",
+  "LD-01262",
+  "LD-01292",
+  "LD-01306",
+  "LD-01311",
+  "LD-01341",
+  "LD-01364",
+  "LD-01370",
+  "LD-01381",
+  "LD-01382",
+  "LD-01413",
+  "LD-01474",
+  "LD-01478",
+  "LD-01491",
+  "LD-01501",
+  "LD-01502",
+  "LD-01512",
+  "LD-01513",
+  "LD-01515",
+  "LD-01521",
+  "LD-01547",
+  "LD-01551",
+  "LD-01569",
+  "LD-01613",
+  "LD-01625",
+  "LD-01657",
+  "LD-01666",
+  "LD-01709",
+  "LD-01711",
+  "LD-01738",
+  "LD-01747",
+  "LD-01760",
+  "LD-01790",
+  "LD-01793",
+  "LD-01824",
+  "LD-01838",
+  "LD-01842",
+  "LD-01848",
+  "LD-01862",
+  "LD-01882",
+  "LD-01888",
+  "LD-01899",
+  "LD-01929",
+  "LD-01939",
+  "LD-01949",
+  "LD-01958",
+  "LD-01968",
+  "LD-01970",
+  "LD-01982",
+  "LD-01994",
+  "LD-02006",
+  "LD-02012",
+  "LD-02016",
+  "LD-02025",
+  "LD-02038",
+  "LD-02040",
+  "LD-02049",
+  "LD-02053",
+  "LD-02062",
+  "LD-02070",
+  "LD-02090",
+  "LD-02096",
+  "LD-02098",
+  "LD-02108",
+  "LD-02140",
+  "LD-02148",
+  "LD-02149",
+  "LD-02156",
+  "LD-02160",
+  "LD-02171",
+  "LD-02176",
+  "LD-02177",
+  "LD-02182",
+  "LD-02192",
+  "LD-02198",
+  "LD-02213",
+  "LD-02229",
+  "LD-02244",
+  "LD-02256",
+  "LD-02261",
+  "LD-02268",
+  "LD-02276",
+  "LD-02303",
+  "LD-02304",
+  "LD-02325",
+  "LD-02334",
+  "LD-02337",
+  "LD-02340",
+  "LD-02341",
+  "LD-02357",
+  "LD-02360",
+  "LD-02366",
+  "LD-02381",
+  "LD-02392",
+  "LD-02396",
+  "LD-02398",
+  "LD-02400",
+  "LD-02404",
+  "LD-02407",
+  "LD-02408",
+  "LD-02410",
+  "LD-02414",
+  "LD-02419",
+  "LD-02422",
+  "LD-02425",
+  "LD-02434",
+  "LD-02444",
+  "LD-02456",
+  "LD-02458",
+  "LD-02473",
+  "LD-02489",
+  "LD-02502",
+  "LD-02507",
+  "LD-02514",
+  "LD-02529",
+  "LD-02535",
+  "LD-02562",
+  "LD-02574",
+  "LD-02579",
+  "LD-02595",
+  "LD-02612",
+  "LD-02621",
+  "LD-02629",
+  "LD-02632",
+  "LD-02646",
+  "LD-02657",
+  "LD-02658",
+  "LD-02660",
+  "LD-02663",
+  "LD-02667",
+  "LD-02672",
+  "LD-02674",
+  "LD-02689",
+  "LD-02698",
+  "LD-02711",
+  "LD-02714",
+  "LD-02722",
+  "LD-02735",
+  "LD-02737",
+  "LD-02738",
+  "LD-02754",
+  "LD-02762",
+  "LD-02763",
+  "LD-02770",
+  "LD-02772",
+  "LD-02775",
+  "LD-02779",
+  "LD-02800",
+  "LD-02834",
+  "LD-02855",
+  "LD-02901",
+  "LD-02912",
+  "LD-02915",
+  "LD-02917",
+  "LD-02929",
+  "LD-02930",
+  "LD-02940",
+  "LD-02945",
+  "LD-02991",
+  "LD-02994",
+  "LD-03004",
+  "LD-03017",
+  "LD-03023",
+  "LD-03034",
+  "LD-03117",
+  "LD-03123",
+  "LD-03151",
+  "LD-03172",
+  "LD-03183",
+  "LD-03201",
+  "LD-03213",
+  "LD-03220",
+  "LD-03224",
+  "LD-03236",
+  "LD-03238",
+  "LD-03240",
+  "LD-03251",
+  "LD-03260",
+  "LD-03264",
+  "LD-03269",
+  "LD-03281",
+  "LD-03289",
+  "LD-03292",
+  "LD-03295",
+  "LD-03297",
+  "LD-03307",
+  "LD-03309",
+  "LD-03310",
+  "LD-03319",
+  "LD-03324",
+  "LD-03333",
+  "LD-03361",
+  "LD-03375",
+  "LD-03396",
+  "LD-03403",
+  "LD-03413",
+  "LD-03433",
+  "LD-03438",
+  "LD-03449",
+  "LD-03464",
+  "LD-03470",
+  "LD-03496",
+  "LD-03502",
+  "LD-03507",
+  "LD-03515",
+  "LD-03516",
+  "LD-03529",
+  "LD-03531",
+  "LD-03542",
+  "LD-03543",
+  "LD-03565",
+  "LD-03581",
+  "LD-03590",
+  "LD-03600",
+  "LD-03601",
+  "LD-03611",
+  "LD-03616",
+  "LD-03618",
+  "LD-03627",
+  "LD-03637",
+  "LD-03642",
+  "LD-03643",
+  "LD-03650",
+  "LD-03657",
+  "LD-03661",
+  "LD-03663",
+  "LD-03665",
+  "LD-03666",
+  "LD-03667",
+  "LD-03672",
+  "LD-03684",
+  "LD-03690",
+  "LD-03707",
+  "LD-03714",
+  "LD-03717",
+  "LD-03721",
+  "LD-03733",
+  "LD-03744",
+  "LD-03762",
+  "LD-03776",
+  "LD-03783",
+  "LD-03788",
+  "LD-03812",
+  "LD-03826",
+  "LD-03827",
+  "LD-03831",
+  "LD-03847",
+  "LD-03852",
+  "LD-03859",
+  "LD-03860",
+  "LD-03864",
+  "LD-03871",
+  "LD-03877",
+  "LD-03883",
+  "LD-03890",
+  "LD-03898",
+  "LD-03905",
+  "LD-03918",
+  "LD-03928",
+  "LD-03938",
+  "LD-03948",
+  "LD-03954",
+  "LD-03981",
+  "LD-03996",
+  "LD-04003",
+  "LD-04005",
+  "LD-04013",
+  "LD-04036",
+  "LD-04058",
+  "LD-04065",
+  "LD-04085",
+  "LD-04100",
+  "LD-04120",
+  "LD-04122",
+  "LD-04128",
+  "LD-04130",
+  "LD-04151",
+  "LD-04160",
+  "LD-04173",
+  "LD-04186",
+  "LD-04197",
+  "LD-04198",
+  "LD-04211",
+  "LD-04221",
+  "LD-04223",
+  "LD-04286",
+  "LD-04291",
+  "LD-04303",
+  "LD-04304",
+  "LD-04306",
+  "LD-04322",
+  "LD-04338",
+  "LD-04339",
+  "LD-04358",
+  "LD-04368",
+  "LD-04369",
+  "LD-04385",
+  "LD-04394",
+  "LD-04406",
+  "LD-04407",
+  "LD-04423",
+  "LD-04426",
+  "LD-04429",
+  "LD-04431",
+  "LD-04439",
+  "LD-04447",
+  "LD-04452",
+  "LD-04456",
+  "LD-04464",
+  "LD-04486",
+  "LD-04492",
+  "LD-04500",
+  "LD-04514",
+  "LD-04516",
+  "LD-04517",
+  "LD-04524",
+  "LD-04540",
+  "LD-04554",
+  "LD-04558",
+  "LD-04582",
+  "LD-04611",
+  "LD-04629",
+  "LD-04639",
+  "LD-04643",
+  "LD-04685",
+  "LD-04702",
+  "LD-04712",
+  "LD-04718",
+  "LD-04722",
+  "LD-04724",
+  "LD-04745",
+  "LD-04777",
+  "LD-04778",
+  "LD-04784",
+  "LD-04821",
+  "LD-04831",
+  "LD-04842",
+  "LD-04853",
+  "LD-04860",
+  "LD-04863",
+  "LD-04871",
+  "LD-04874",
+  "LD-04880",
+  "LD-04892",
+  "LD-04895",
+  "LD-04903",
+  "LD-04938",
+  "LD-04975",
+  "LD-04977",
+  "LD-04984",
+  "LD-04990"
+ ],
+ "missing": [
+  {
+   "lead_id": "LD-00024",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-00030",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-00142",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-00147",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-00150",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-00161",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-00192",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-00202",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-00235",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-00239",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-00263",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-00279",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-00285",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-00325",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-00350",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-00389",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-00427",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-00430",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-00431",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-00441",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-00466",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-00489",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-00498",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-00519",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-00529",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-00540",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-00553",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-00561",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-00638",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-00675",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-00710",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-00724",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-00740",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-00753",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-00764",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-00774",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-00799",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-00822",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-00825",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-00829",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-00830",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-00865",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-00872",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-00910",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-00920",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-00950",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-00954",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01019",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01032",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-01053",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01070",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01079",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-01103",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01105",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01109",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-01134",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-01176",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-01224",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-01278",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01279",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01324",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01328",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01348",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-01362",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-01363",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-01369",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01402",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-01426",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-01443",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01485",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01501",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-01527",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-01544",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-01572",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-01575",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01581",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-01615",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01662",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-01680",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01692",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01703",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-01734",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01737",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-01781",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-01807",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-01830",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-01850",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-01871",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-01885",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-01889",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-01915",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-01924",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-01928",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-02012",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-02014",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-02034",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-02065",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-02143",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-02158",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-02178",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-02181",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-02186",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-02187",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-02200",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-02276",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-02277",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-02285",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-02326",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-02343",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-02354",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-02359",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-02387",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-02395",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-02396",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-02514",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-02531",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-02548",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-02561",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-02577",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-02588",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-02621",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-02635",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-02745",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-02747",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-02774",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-02776",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-02793",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-02802",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-02834",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-02858",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-02886",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-02903",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-02930",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-02935",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-02963",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-02974",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-02975",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03020",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03042",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-03060",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-03090",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03094",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-03096",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-03098",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03107",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-03190",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03232",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03236",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-03239",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-03281",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-03329",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03341",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03368",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03379",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-03401",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03462",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-03486",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03503",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03565",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-03573",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-03609",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-03614",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-03651",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-03656",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-03665",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03670",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03697",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-03705",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03754",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-03765",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-03780",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-03789",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03794",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03806",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03809",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-03827",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03853",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-03860",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03920",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-03923",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-03937",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-03962",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-03989",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04050",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04057",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04089",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04090",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-04107",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04108",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04151",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04188",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-04206",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04231",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-04233",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04274",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04283",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04286",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04299",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04301",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-04315",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04331",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04343",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04372",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04375",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-04407",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04408",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04413",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04436",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04466",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-04505",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04507",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04514",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04546",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04547",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04571",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04596",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04627",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04645",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04653",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04661",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04696",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04699",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-04701",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04716",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04734",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04749",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-04754",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04772",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04788",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04799",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04846",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04847",
+   "field": "title"
+  },
+  {
+   "lead_id": "LD-04853",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-04880",
+   "field": "email"
+  },
+  {
+   "lead_id": "LD-04897",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04915",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04928",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04941",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04959",
+   "field": "phone"
+  },
+  {
+   "lead_id": "LD-04972",
+   "field": "phone"
+  }
+ ]
+}
