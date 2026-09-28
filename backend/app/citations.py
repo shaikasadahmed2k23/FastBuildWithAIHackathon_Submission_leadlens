@@ -10,6 +10,8 @@ from pydantic import BaseModel
 ID_PATTERN = re.compile(r"\b(?:LD|CO|ACT|ISS|AX)-\d{4,6}\b")
 _DATE_PATTERN = re.compile(r"\b\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}(?::\d{2})?)?\b")
 _NUMBER_PATTERN = re.compile(r"(?<![\w.])-?\d[\d,]*(?:\.\d+)?%?(?![\w])")
+_BRACKET = re.compile(r"\[([^\]]*)\]")
+_ID_LIST = re.compile(rf"\s*{ID_PATTERN.pattern}(?:\s*[,;]\s*{ID_PATTERN.pattern})*\s*")
 
 
 class CitationReport(BaseModel):
@@ -77,6 +79,8 @@ def check(
     cited = extract_ids(text)
     known = evidence_ids(rows)
     unknown = [c for c in cited if c not in known]
+    # Square brackets are reserved for real row IDs; anything else there is an invented reference.
+    unknown += [f"[{b}]" for b in _BRACKET.findall(text) if not _ID_LIST.fullmatch(b)]
 
     stripped = _DATE_PATTERN.sub(" ", ID_PATTERN.sub(" ", text))
     allowed = evidence_numbers(rows) + [float(len(rows))] + [float(n) for n in extra_numbers]
@@ -86,7 +90,7 @@ def check(
         require_citation = bool(known)
     reason = None
     if unknown:
-        reason = f"cites IDs not in the query result: {', '.join(unknown)}"
+        reason = f"cites references that are not row IDs in the query result: {', '.join(unknown)}"
     elif unsupported:
         reason = f"states numbers not in the query result: {', '.join(unsupported)}"
     elif require_citation and not cited:

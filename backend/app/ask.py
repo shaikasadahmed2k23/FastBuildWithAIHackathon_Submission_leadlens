@@ -17,8 +17,9 @@ TEMPLATE_ROWS = 5
 SCHEMA_DOC = f"""DuckDB tables (read-only):
 companies(company_id VARCHAR 'CO-00001', name, domain, industry, employees INT, country, created_at TIMESTAMP)
 leads(lead_id VARCHAR 'LD-00001', company_id, first_name, last_name, email, phone, title,
-      seniority ['c_level','vp','director','manager','individual'], source, stage, deal_value DOUBLE,
-      owner, created_at, last_contacted_at TIMESTAMP NULL, updated_at)
+      seniority ['c_level','vp','director','manager','individual'],
+      source ['website','referral','linkedin','event','cold_outbound','partner'], stage, deal_value DOUBLE NULL,
+      owner, created_at, last_contacted_at TIMESTAMP NULL (NULL = never contacted), updated_at)
 activities(activity_id VARCHAR 'ACT-00001', lead_id, type, occurred_at TIMESTAMP)
   type in ['email_open','email_reply','call','meeting','demo_request','website_visit','pricing_page_visit']
 data_issues(issue_id VARCHAR 'ISS-00001', lead_id, issue_type ['duplicate','stale','missing_field'],
@@ -28,7 +29,12 @@ lead_scores(lead_id, score DOUBLE 0-100, fit 0-40, intent 0-40, recency 0-20)
 Stages: open = {list(OPEN_STAGES)}, closed = ['won','lost'].
 Industries: Software, Fintech, Healthcare, E-commerce, Logistics, Manufacturing, Education, Media.
 Owners are full names, e.g. 'Maya Chen'. Countries are ISO codes ('US','GB','DE','IN','CA','AU','FR').
-The dataset is frozen: "now" is {AS_OF_SQL}. Never use now(), current_date or current_timestamp."""
+The dataset is frozen: "now" is {AS_OF_SQL}. Never use now(), current_date or current_timestamp.
+
+Data quirks (the CRM is messy on purpose):
+- A missing email/phone/title may be stored as NULL, '' or whitespace. Test "missing" with
+  (col IS NULL OR trim(col) = ''). data_issues rows with issue_type 'missing_field' list the same leads.
+- Names and emails can have inconsistent case; compare them case-insensitively."""
 
 SQL_SYSTEM = f"""You translate a sales team's question into ONE DuckDB SELECT query.
 {SCHEMA_DOC}
@@ -41,13 +47,18 @@ Rules:
 - Include a readable name column when listing leads (first_name || ' ' || last_name AS name).
 - Default LIMIT 10 for lists unless the question gives a number. Aggregate in SQL; never
   expect the reader to count or compute.
-- Case-insensitive text matching: use ILIKE or lower()."""
+- Coded columns (stage, seniority, source, type, issue_type, industry, country, owner) hold the exact
+  values listed above: compare with = or IN (...). Use ILIKE only for free text such as names,
+  company names or titles.
+- DuckDB dialect: no ILIKE ANY/ALL, no LIKE ANY; write separate conditions joined with OR instead."""
 
 ANSWER_SYSTEM = """You answer a sales team's question using ONLY the SQL result rows provided.
 Return JSON: {"answer": "..."}.
 - 1-3 short sentences, plain and specific. No preamble, no markdown headers.
 - Cite the row IDs you rely on inline in square brackets, e.g. [LD-00123] or [ACT-04567].
   Cite only IDs that appear in the rows. If rows have IDs, you must cite at least one.
+- If the rows have no ID values (e.g. a count or an average), cite nothing. Never invent
+  reference labels such as [row-0] or [1]; square brackets are only for real row IDs.
 - Every number you write must appear verbatim in the rows (or be the row count).
   Do not compute, sum, average or estimate anything yourself.
 - If the rows are empty, say no matching records were found."""
@@ -144,16 +155,19 @@ def _ask_llm(question: str, notes: list[str]) -> AskResponse | None:
     for attempt in range(1, MAX_SQL_ATTEMPTS + 1):
         user = f"Question: {question}"
         if feedback:
-            user += f"\n\nYour previous SQL was rejected: {feedback}. Write a corrected query."
+            user += f"\n\n{feedback}\nWrite a corrected query."
+        candidate = ""
         try:
             data, provider = llm.complete_json(SQL_SYSTEM, user)
-            sql, columns, rows = sql_guard.run(str(data.get("sql", "")))
+            candidate = str(data.get("sql", ""))
+            sql, columns, rows = sql_guard.run(candidate)
         except llm.LLMUnavailable as exc:
             notes.append(f"LLM unavailable: {exc}")
             return None
         except sql_guard.UnsafeSQL as exc:
-            feedback = str(exc)
-            notes.append(f"SQL attempt {attempt} rejected: {exc}")
+            # Show the model its own query next to the error; the error alone is often not enough to fix it.
+            feedback = f"Your previous SQL was rejected.\nSQL: {candidate}\nError: {exc}"
+            notes.append(f"SQL attempt {attempt} rejected: {exc} | SQL: {candidate[:300]}")
             continue
 
         answer_feedback: str | None = None
@@ -170,7 +184,7 @@ def _ask_llm(question: str, notes: list[str]) -> AskResponse | None:
                 return _finish(question, sql, columns, rows, answer, source="llm", provider=provider,
                                attempts=attempt, answer_attempts=answer_attempts, notes=notes)
             answer_feedback = report.reason
-            notes.append(f"Answer rejected: {report.reason}")
+            notes.append(f"Answer rejected: {report.reason} | Answer: {answer[:300]}")
         # The SQL result is trustworthy even when the prose isn't: summarize it deterministically.
         notes.append("Fell back to a template answer built from the query result.")
         return _finish(question, sql, columns, rows, template_answer(columns, rows), source="llm", provider=provider,

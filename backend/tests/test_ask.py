@@ -71,6 +71,7 @@ def test_llm_unsafe_sql_is_retried(seeded: GroundTruth, fake_llm: Callable[..., 
     r = ask.ask("top 3 leads")
     assert r.valid and r.attempts == 2
     assert "only SELECT" in fake.prompts[1]
+    assert "SQL: DELETE FROM leads" in fake.prompts[1]  # the model sees what it wrote, not just the error
 
 
 def test_hallucinated_citation_is_rejected_then_fixed(seeded: GroundTruth, fake_llm: Callable[..., FakeLLM]) -> None:

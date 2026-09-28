@@ -52,3 +52,15 @@ def test_aggregate_without_ids_needs_no_citation() -> None:
 def test_dates_and_percentages() -> None:
     assert check("Created on 2026-01-02 [LD-00012].", ROWS).valid
     assert check("Conversion is 25% overall.", [{"rate": 0.25}]).valid
+
+
+def test_invented_bracket_references_are_rejected() -> None:
+    agg = [{"lead_count": 75}]
+    assert not check("There are 75 leads [row-0].", agg).valid
+    assert not check("There are 75 leads [source].", agg).valid
+    assert check("There are 75 leads.", agg).valid
+
+
+def test_bracket_lists_of_real_ids_are_allowed() -> None:
+    assert check("Top two: [LD-00012, LD-00034].", ROWS).valid
+    assert not check("Top two: [LD-00012, see table].", ROWS).valid
