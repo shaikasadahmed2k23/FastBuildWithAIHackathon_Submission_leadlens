@@ -1,5 +1,6 @@
 """Validate and run untrusted (LLM-written) SQL as a bounded, read-only query."""
 
+import json
 import re
 import threading
 from typing import Any
@@ -38,14 +39,53 @@ def validate(sql: str, cur: duckdb.DuckDBPyConnection) -> str:
     blocked = _BLOCKED_FUNCTIONS.search(cleaned) or _BLOCKED_CATALOGS.search(cleaned)
     if blocked:
         raise UnsafeSQL(f"function or catalog not allowed: {blocked.group(1)}")
-    try:
-        tables = cur.get_table_names(cleaned)
-    except duckdb.Error as exc:
-        raise UnsafeSQL(f"invalid query: {str(exc).splitlines()[0]}") from exc
-    disallowed = sorted(t for t in tables if t.split(".")[-1] not in db.QUERYABLE_TABLES)
+    _check_tables(cleaned, cur)
+    return cleaned
+
+
+def _walk(node: Any, visit: Any) -> None:
+    if isinstance(node, dict):
+        visit(node)
+        for value in node.values():
+            _walk(value, visit)
+    elif isinstance(node, list):
+        for value in node:
+            _walk(value, visit)
+
+
+def _check_tables(sql: str, cur: duckdb.DuckDBPyConnection) -> None:
+    """Allow only queryable tables, found from the parse tree.
+
+    ``get_table_names`` is not used: in DuckDB 1.5 it binds the query and wrongly
+    fails on valid ``JOIN ... USING`` clauses. Parsing needs no binding; column
+    errors surface at execution with a precise message for the model to fix.
+    """
+    tree = json.loads(cur.execute("SELECT json_serialize_sql(?)", [sql]).fetchone()[0])
+    if tree.get("error"):
+        raise UnsafeSQL(f"syntax error: {tree.get('error_message', 'could not parse')}")
+    tables: list[tuple[str, str]] = []
+    functions: list[str] = []
+    ctes: list[str] = []
+
+    def visit(node: dict[str, Any]) -> None:
+        if node.get("type") == "BASE_TABLE":
+            tables.append((node.get("schema_name") or "", node.get("table_name", "")))
+        elif node.get("type") == "TABLE_FUNCTION":
+            functions.append(str(node.get("function", {}).get("function_name", "?")))
+        if isinstance(node.get("cte_map"), dict):
+            ctes.extend(entry["key"] for entry in node["cte_map"].get("map", []))
+
+    _walk(tree, visit)
+    if functions:
+        raise UnsafeSQL(f"table functions are not allowed: {', '.join(sorted(set(functions)))}")
+    protected = {r[0] for r in cur.execute("SELECT table_name FROM duckdb_tables()").fetchall()} - set(db.QUERYABLE_TABLES)
+    shadowing = sorted(set(ctes) & protected)
+    if shadowing:
+        raise UnsafeSQL(f"CTE name not allowed: {', '.join(shadowing)}")
+    disallowed = sorted({f"{s}.{t}" if s else t for s, t in tables
+                         if t not in ctes and (s not in ("", "main") or t not in db.QUERYABLE_TABLES)})
     if disallowed:
         raise UnsafeSQL(f"table not allowed: {', '.join(disallowed)}")
-    return cleaned
 
 
 def run(sql: str) -> tuple[str, list[str], list[dict[str, Any]]]:
