@@ -178,3 +178,16 @@ def materialize_scores(conn: duckdb.DuckDBPyConnection) -> int:
     conn.execute("INSERT INTO lead_scores SELECT * FROM scores_df")
     conn.unregister("scores_df")
     return len(rows)
+
+
+def rescore(conn: duckdb.DuckDBPyConnection, lead_ids: Iterable[str]) -> None:
+    """Recompute stored scores for the given leads (drops rows for deleted leads)."""
+    for lead_id in lead_ids:
+        b = score_one(conn, lead_id)
+        if b is None:
+            conn.execute("DELETE FROM lead_scores WHERE lead_id = ?", [lead_id])
+        else:
+            conn.execute(
+                "INSERT OR REPLACE INTO lead_scores VALUES (?, ?, ?, ?, ?)",
+                [b.lead_id, b.score, b.fit.points, b.intent.points, b.recency.points],
+            )

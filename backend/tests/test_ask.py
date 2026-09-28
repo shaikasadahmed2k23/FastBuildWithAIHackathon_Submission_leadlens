@@ -26,12 +26,6 @@ class FakeLLM:
 
 
 @pytest.fixture
-def offline(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(settings, "groq_api_key", "")
-    monkeypatch.setattr(settings, "gemini_api_key", "")
-
-
-@pytest.fixture
 def fake_llm(monkeypatch: pytest.MonkeyPatch) -> Callable[[list[dict[str, Any]]], FakeLLM]:
     def install(replies: list[dict[str, Any]]) -> FakeLLM:
         fake = FakeLLM(replies)
