@@ -31,6 +31,12 @@ Industries: Software, Fintech, Healthcare, E-commerce, Logistics, Manufacturing,
 Owners are full names, e.g. 'Maya Chen'. Countries are ISO codes ('US','GB','DE','IN','CA','AU','FR').
 The dataset is frozen: "now" is {AS_OF_SQL}. Never use now(), current_date or current_timestamp.
 
+Definitions (data_issues is the canonical source for data-quality questions; use it rather
+than re-deriving these rules):
+- stale: an open lead with no contact for more than 90 days (issue_type 'stale').
+- duplicate: lead_id is the newer duplicate record; related_lead_id is the record it duplicates.
+- missing field: details says which field, e.g. 'Missing email' (issue_type 'missing_field').
+
 Data quirks (the CRM is messy on purpose):
 - A missing email/phone/title may be stored as NULL, '' or whitespace. Test "missing" with
   (col IS NULL OR trim(col) = ''). data_issues rows with issue_type 'missing_field' list the same leads.
