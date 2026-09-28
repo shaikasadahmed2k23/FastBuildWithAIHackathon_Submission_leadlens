@@ -318,7 +318,8 @@ def save_ground_truth(truth: GroundTruth, path: Path = GROUND_TRUTH_PATH) -> Non
         "missing": truth.missing,
     }
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=1) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(payload, indent=1) + "\n", encoding="utf-8", newline="
+")
 
 
 def main() -> None:

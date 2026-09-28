@@ -110,7 +110,8 @@ def main() -> None:
         "cleaning": cleaning,
         "results": results,
     }
-    args.out.write_text(json.dumps(report, indent=1, default=str) + "\n", encoding="utf-8")
+    args.out.write_text(json.dumps(report, indent=1, default=str) + "\n", encoding="utf-8", newline="
+")
     s = report["summary"]
     print(f"mode={report['mode']}  accuracy={s['passed']}/{s['total']} ({s['accuracy']:.0%})  "
           f"citation_valid={s['citation_valid_rate']:.0%}  avg_latency={s['avg_latency_ms']}ms")

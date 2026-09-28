@@ -39,7 +39,8 @@ def main() -> None:
         finally:
             db.close()
             settings.leadlens_db_path = original
-    GOLDEN_PATH.write_text("".join(json.dumps(e) + "\n" for e in entries), encoding="utf-8")
+    GOLDEN_PATH.write_text("".join(json.dumps(e) + "\n" for e in entries), encoding="utf-8", newline="
+")
     print(f"Wrote {len(entries)} golden questions -> {GOLDEN_PATH}")
 
 
