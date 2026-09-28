@@ -1,11 +1,18 @@
 """Run the golden set through /ask and score data cleaning against ground truth.
 
-Run: ``python -m evals.run`` (from ``backend/``). Uses a fresh seeded database so
-results are reproducible, and writes ``evals/latest.json`` (served at /evals/latest).
+Run from ``backend/``:
+    python -m evals.run                      # auto: live if an LLM key is set, else offline
+    python -m evals.run --mode offline       # force the rule-based path
+    python -m evals.run --mode live --runs 3 # repeat to measure run-to-run variance
+
+Uses a fresh seeded database so results are reproducible, and writes
+``evals/latest.json`` (served at /evals/latest) unless ``--out`` is given.
 """
 
 import argparse
 import json
+import math
+import statistics
 import tempfile
 import time
 from collections import defaultdict
@@ -51,6 +58,7 @@ def cleaning_metrics(truth: GroundTruth) -> dict[str, dict[str, float]]:
 def run_questions(golden: list[dict[str, Any]]) -> list[dict[str, Any]]:
     results = []
     for g in golden:
+        tokens_before, limited_before = llm.stats["tokens"], llm.stats["rate_limited"]
         started = time.perf_counter()
         r = ask.ask(g["question"])
         latency_ms = round((time.perf_counter() - started) * 1000)
@@ -58,11 +66,22 @@ def run_questions(golden: list[dict[str, Any]]) -> list[dict[str, Any]]:
         results.append({
             "id": g["id"], "category": g["category"], "kind": g["kind"], "question": g["question"],
             "passed": grade(g["kind"], g["expected"], got), "valid": r.valid, "source": r.source,
-            "latency_ms": latency_ms, "sql": r.sql, "answer": r.answer, "citations": r.citations,
+            "fallback": r.fallback, "sql_attempts": r.attempts, "answer_attempts": r.answer_attempts,
+            "latency_ms": latency_ms, "tokens": llm.stats["tokens"] - tokens_before,
+            "rate_limited": llm.stats["rate_limited"] - limited_before,
+            "sql": r.sql, "answer": r.answer, "citations": r.citations, "notes": r.notes,
             "expected": g["expected"] if g["kind"] != "id_set" else f"{len(g['expected'])} ids",
             "got": got if g["kind"] != "id_set" or got is None else f"{len(got)} ids",
         })
     return results
+
+
+def _percentile(values: list[int], pct: float) -> int:
+    """Nearest-rank percentile."""
+    if not values:
+        return 0
+    ordered = sorted(values)
+    return ordered[max(0, math.ceil(pct / 100 * len(ordered)) - 1)]
 
 
 def summarize(results: list[dict[str, Any]]) -> dict[str, Any]:
@@ -71,54 +90,106 @@ def summarize(results: list[dict[str, Any]]) -> dict[str, Any]:
         by_cat[r["category"]].append(r["passed"])
     n = len(results)
     answered = [r for r in results if r["sql"]]
+    latencies = [r["latency_ms"] for r in results]
+    retried = [r for r in results if r["sql_attempts"] > 1 or r["answer_attempts"] > 1]
+    fell_back = [r for r in results if r["fallback"] != "none"]
     return {
         "total": n,
         "passed": sum(r["passed"] for r in results),
         "accuracy": round(sum(r["passed"] for r in results) / n, 4) if n else 0.0,
         "answered": len(answered),
+        "declined": n - len(answered),
         "citation_valid_rate": round(sum(r["valid"] for r in answered) / len(answered), 4) if answered else 0.0,
-        "hallucinated_citations": sum(1 for r in results if r["valid"] is False and r["sql"]),
-        "avg_latency_ms": round(sum(r["latency_ms"] for r in results) / n) if n else 0,
+        "hallucinated_citations": sum(1 for r in answered if not r["valid"]),
+        "retry_rate": round(len(retried) / n, 4) if n else 0.0,
+        "sql_retries": sum(r["sql_attempts"] - 1 for r in results if r["sql_attempts"] > 1),
+        "answer_retries": sum(r["answer_attempts"] - 1 for r in results if r["answer_attempts"] > 1),
+        "fallback_rate": round(len(fell_back) / n, 4) if n else 0.0,
+        "fallbacks": {k: sum(1 for r in fell_back if r["fallback"] == k) for k in ("template", "rules")},
+        "avg_latency_ms": round(sum(latencies) / n) if n else 0,
+        "p50_latency_ms": _percentile(latencies, 50),
+        "p95_latency_ms": _percentile(latencies, 95),
+        "max_latency_ms": max(latencies, default=0),
+        "tokens": sum(r["tokens"] for r in results),
+        "rate_limited": sum(r["rate_limited"] for r in results),
         "by_category": {c: {"passed": sum(v), "total": len(v)} for c, v in sorted(by_cat.items())},
         "by_source": {s: sum(1 for r in results if r["source"] == s) for s in ("llm", "rules", "none")},
     }
 
 
+def variance(runs: list[list[dict[str, Any]]], summaries: list[dict[str, Any]]) -> dict[str, Any]:
+    def spread(key: str) -> dict[str, float]:
+        vals = [s[key] for s in summaries]
+        return {"mean": round(statistics.mean(vals), 4), "stdev": round(statistics.pstdev(vals), 4),
+                "min": min(vals), "max": max(vals)}
+
+    pass_counts: dict[str, int] = defaultdict(int)
+    for results in runs:
+        for r in results:
+            pass_counts[r["id"]] += r["passed"]
+    return {
+        "runs": len(runs),
+        **{k: spread(k) for k in ("accuracy", "citation_valid_rate", "retry_rate", "fallback_rate",
+                                  "p50_latency_ms", "p95_latency_ms")},
+        "unstable_questions": sorted(q for q, c in pass_counts.items() if 0 < c < len(runs)),
+        "always_failing": sorted(q for q, c in pass_counts.items() if c == 0),
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument("--mode", choices=["auto", "offline", "live"], default="auto")
+    parser.add_argument("--runs", type=int, default=1, help="repeat the golden set N times")
     parser.add_argument("--limit", type=int, default=None, help="only run the first N questions")
     parser.add_argument("--out", type=Path, default=LATEST_PATH)
     args = parser.parse_args()
 
+    if args.mode == "offline":
+        settings.groq_api_key = settings.gemini_api_key = ""
+    elif args.mode == "live" and not llm.available():
+        parser.error("--mode live needs GROQ_API_KEY or GEMINI_API_KEY (backend/.env)")
+    mode = "live" if llm.available() else "offline"
+
     golden = load_golden()[: args.limit]
+    runs: list[list[dict[str, Any]]] = []
     with tempfile.TemporaryDirectory() as tmp:
         original = settings.leadlens_db_path
         settings.leadlens_db_path = str(Path(tmp) / "eval.duckdb")
         try:
             truth = write_database(settings.db_path)
             cleaning = cleaning_metrics(truth)
-            results = run_questions(golden)
+            for i in range(args.runs):
+                runs.append(run_questions(golden))
+                s = summarize(runs[-1])
+                print(f"run {i + 1}/{args.runs}: accuracy={s['passed']}/{s['total']}  "
+                      f"citation_valid={s['citation_valid_rate']:.0%}  retry={s['retry_rate']:.0%}  "
+                      f"fallback={s['fallback_rate']:.0%}  p50={s['p50_latency_ms']}ms  p95={s['p95_latency_ms']}ms")
         finally:
             db.close()
             settings.leadlens_db_path = original
 
-    report = {
+    summaries = [summarize(r) for r in runs]
+    report: dict[str, Any] = {
         "run_at": datetime.now(UTC).isoformat(timespec="seconds"),
-        "mode": "full" if llm.available() else "offline",
-        "model": settings.groq_model if settings.groq_api_key else settings.gemini_model if settings.gemini_api_key else None,
-        "summary": summarize(results),
+        "mode": "full" if mode == "live" else "offline",
+        "model": (settings.groq_model if settings.groq_api_key else settings.gemini_model) if mode == "live" else None,
+        "summary": summaries[-1],
         "cleaning": cleaning,
-        "results": results,
+        "results": runs[-1],
     }
+    if len(runs) > 1:
+        report["run_summaries"] = summaries
+        report["variance"] = variance(runs, summaries)
+    args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=1, default=str) + "\n", encoding="utf-8", newline="\n")
-    s = report["summary"]
-    print(f"mode={report['mode']}  accuracy={s['passed']}/{s['total']} ({s['accuracy']:.0%})  "
-          f"citation_valid={s['citation_valid_rate']:.0%}  avg_latency={s['avg_latency_ms']}ms")
+
     for kind, m in cleaning.items():
         print(f"cleaning {kind:<14} P={m['precision']:.3f} R={m['recall']:.3f} F1={m['f1']:.3f}")
-    for r in results:
+    for r in runs[-1]:
         if not r["passed"]:
-            print(f"  FAIL {r['id']} [{r['source']}] {r['question']}  expected={r['expected']} got={r['got']}")
+            print(f"  FAIL {r['id']} [{r['source']}/{r['fallback']}] {r['question']}  expected={r['expected']} got={r['got']}")
+    if "variance" in report:
+        print("variance:", json.dumps(report["variance"]))
 
 
 if __name__ == "__main__":

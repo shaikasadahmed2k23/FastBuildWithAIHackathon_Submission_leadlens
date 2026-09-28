@@ -63,7 +63,11 @@ class AskResponse(BaseModel):
     valid: bool
     source: Literal["llm", "rules", "none"]
     provider: str | None = None
-    attempts: int = 0
+    attempts: int = 0  # SQL generation attempts
+    answer_attempts: int = 0  # LLM answer-writing attempts
+    # How the final answer was produced when the LLM path didn't fully succeed:
+    # "template" = LLM SQL + deterministic summary; "rules" = rule-based parser after an LLM failure.
+    fallback: Literal["none", "template", "rules"] = "none"
     notes: list[str] = []
 
 
@@ -116,11 +120,13 @@ def _answer_with_llm(question: str, sql: str, columns: list[str], rows: list[dic
     return str(data.get("answer", "")).strip(), provider
 
 
-def _finish(question: str, sql: str, columns: list[str], rows: list[dict[str, Any]], answer: str,
-            source: Literal["llm", "rules", "none"], provider: str | None, attempts: int, notes: list[str],
-            templated: bool = False) -> AskResponse:
-    # The template may mention how many rows it shows; the LLM never gets that allowance.
-    extra = _question_numbers(question) + ([float(min(TEMPLATE_ROWS, len(rows)))] if source != "llm" or templated else [])
+def _finish(question: str, sql: str, columns: list[str], rows: list[dict[str, Any]], answer: str, *,
+            source: Literal["llm", "rules", "none"], provider: str | None = None, attempts: int = 1,
+            answer_attempts: int = 0, fallback: Literal["none", "template", "rules"] = "none",
+            notes: list[str]) -> AskResponse:
+    # A template may mention how many rows it shows; LLM-written answers never get that allowance.
+    templated = source == "rules" or fallback == "template"
+    extra = _question_numbers(question) + ([float(min(TEMPLATE_ROWS, len(rows)))] if templated else [])
     report = citations.check(answer, rows, extra_numbers=extra)
     if not report.valid:
         notes = notes + [f"Rejected by citation checker: {report.reason}"]
@@ -128,16 +134,14 @@ def _finish(question: str, sql: str, columns: list[str], rows: list[dict[str, An
         question=question, answer=answer, sql=sql, columns=columns,
         rows=[{k: citations.jsonable(v) for k, v in r.items()} for r in rows],
         citations=report.cited, valid=report.valid, source=source, provider=provider,
-        attempts=attempts, notes=notes,
+        attempts=attempts, answer_attempts=answer_attempts, fallback=fallback, notes=notes,
     )
 
 
-def _ask_llm(question: str) -> AskResponse | None:
-    notes: list[str] = []
+def _ask_llm(question: str, notes: list[str]) -> AskResponse | None:
+    """The LLM path. Returns None when it can't produce a result (caller falls back to rules)."""
     feedback: str | None = None
-    attempts = 0
-    for _ in range(MAX_SQL_ATTEMPTS):
-        attempts += 1
+    for attempt in range(1, MAX_SQL_ATTEMPTS + 1):
         user = f"Question: {question}"
         if feedback:
             user += f"\n\nYour previous SQL was rejected: {feedback}. Write a corrected query."
@@ -149,11 +153,13 @@ def _ask_llm(question: str) -> AskResponse | None:
             return None
         except sql_guard.UnsafeSQL as exc:
             feedback = str(exc)
-            notes.append(f"SQL attempt {attempts} rejected: {exc}")
+            notes.append(f"SQL attempt {attempt} rejected: {exc}")
             continue
 
         answer_feedback: str | None = None
+        answer_attempts = 0
         for _ in range(MAX_ANSWER_ATTEMPTS):
+            answer_attempts += 1
             try:
                 answer, provider = _answer_with_llm(question, sql, columns, rows, answer_feedback)
             except llm.LLMUnavailable as exc:
@@ -161,38 +167,40 @@ def _ask_llm(question: str) -> AskResponse | None:
                 break
             report = citations.check(answer, rows, extra_numbers=_question_numbers(question))
             if report.valid:
-                return _finish(question, sql, columns, rows, answer, "llm", provider, attempts, notes)
+                return _finish(question, sql, columns, rows, answer, source="llm", provider=provider,
+                               attempts=attempt, answer_attempts=answer_attempts, notes=notes)
             answer_feedback = report.reason
             notes.append(f"Answer rejected: {report.reason}")
         # The SQL result is trustworthy even when the prose isn't: summarize it deterministically.
         notes.append("Fell back to a template answer built from the query result.")
-        return _finish(question, sql, columns, rows, template_answer(columns, rows), "llm", provider, attempts, notes,
-                       templated=True)
-    notes.append("Could not produce a valid query.")
-    return AskResponse(question=question, answer="I couldn't turn that question into a valid query. Try rephrasing it.",
-                       sql=None, columns=[], rows=[], citations=[], valid=False, source="llm",
-                       attempts=attempts, notes=notes)
+        return _finish(question, sql, columns, rows, template_answer(columns, rows), source="llm", provider=provider,
+                       attempts=attempt, answer_attempts=answer_attempts, fallback="template", notes=notes)
+    notes.append(f"No valid query after {MAX_SQL_ATTEMPTS} attempts.")
+    return None
 
 
 def ask(question: str) -> AskResponse:
     question = question.strip()
     notes: list[str] = []
+    llm_failed = False
     if llm.available():
-        result = _ask_llm(question)
+        result = _ask_llm(question, notes)
         if result is not None:
             return result
-        notes.append("LLM unavailable; used rule-based fallback.")
+        llm_failed = True
+        notes.append("Used the rule-based parser instead.")
     else:
-        notes.append("No LLM key configured; used rule-based fallback.")
+        notes.append("No LLM key configured; used the rule-based parser.")
 
     matched = rules.match(question)
     if matched is None:
         return AskResponse(
             question=question,
-            answer="I can't answer that in offline mode. Try e.g. \"top 10 open leads in Fintech\", "
+            answer="I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", "
                    "\"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
-            sql=None, columns=[], rows=[], citations=[], valid=False, source="none", notes=notes,
+            sql=None, columns=[], rows=[], citations=[], valid=False, source="none",
+            attempts=MAX_SQL_ATTEMPTS if llm_failed else 0, fallback="rules" if llm_failed else "none", notes=notes,
         )
     sql, columns, rows = sql_guard.run(matched.sql)
-    return _finish(question, sql, columns, rows, template_answer(columns, rows), "rules", None, 1,
-                   notes + [f"Matched rule: {matched.rule}"])
+    return _finish(question, sql, columns, rows, template_answer(columns, rows), source="rules",
+                   fallback="rules" if llm_failed else "none", notes=notes + [f"Matched rule: {matched.rule}"])

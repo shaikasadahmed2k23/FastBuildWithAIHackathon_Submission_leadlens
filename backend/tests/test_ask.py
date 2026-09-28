@@ -93,3 +93,25 @@ def test_llm_outage_falls_back_to_rules(seeded: GroundTruth, fake_llm: Callable[
     fake_llm([])
     r = ask.ask("how many stale leads")
     assert r.source == "rules" and r.valid and r.rows == [{"lead_count": len(seeded.stale)}]
+
+
+def test_fallback_labels_and_attempt_counts(seeded: GroundTruth, fake_llm: Callable[..., FakeLLM]) -> None:
+    top = _top3()[0]
+    fake_llm([{"sql": TOP3}, {"answer": "Top is [LD-99999]."}, {"answer": f"Top is [{top['lead_id']}]."}])
+    r = ask.ask("top 3 leads")
+    assert (r.fallback, r.attempts, r.answer_attempts) == ("none", 1, 2)
+
+    fake_llm([{"sql": TOP3}, {"answer": "Top is [LD-99999]."}, {"answer": "Top is [LD-99998]."}])
+    assert ask.ask("top 3 leads").fallback == "template"
+
+
+def test_repeated_bad_sql_falls_back_to_rules(seeded: GroundTruth, fake_llm: Callable[..., FakeLLM]) -> None:
+    fake_llm([{"sql": "DELETE FROM leads"}] * 3)
+    r = ask.ask("how many stale leads")
+    assert r.source == "rules" and r.fallback == "rules" and r.valid
+    assert r.rows == [{"lead_count": len(seeded.stale)}]
+
+
+def test_offline_mode_is_not_counted_as_fallback(seeded: GroundTruth, offline: None) -> None:
+    r = ask.ask("how many stale leads")
+    assert r.source == "rules" and r.fallback == "none"
