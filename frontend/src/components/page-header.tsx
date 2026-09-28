@@ -1,5 +1,7 @@
 import type * as React from "react";
 
+import { ModeIndicator } from "@/components/mode-indicator";
+
 export function PageHeader({
   title,
   description,
@@ -15,7 +17,10 @@ export function PageHeader({
         <h1 className="text-sm font-semibold">{title}</h1>
         {description ? <p className="truncate text-sm text-zinc-500">{description}</p> : null}
       </div>
-      {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
+      <div className="flex shrink-0 items-center gap-3">
+        {actions}
+        <ModeIndicator />
+      </div>
     </header>
   );
 }

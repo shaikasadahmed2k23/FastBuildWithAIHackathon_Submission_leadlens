@@ -100,3 +100,16 @@ def test_action_endpoints(write_client: TestClient, seeded: GroundTruth) -> None
     detail = write_client.get(f"/leads/{lead_id}").json()
     assert detail["actions"][0]["action_id"] == action["action_id"]
     assert "stale" not in detail["lead"]["issues"]
+
+
+def test_health_reports_llm_status(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    from app import llm
+    from app.config import settings
+
+    assert client.get("/health").json()["llm_status"] == "none"
+    monkeypatch.setattr(settings, "groq_api_key", "test")
+    monkeypatch.setitem(llm.last_call, "ok", False)
+    body = client.get("/health").json()
+    assert body["llm"] == "groq" and body["llm_status"] == "failing"
+    monkeypatch.setitem(llm.last_call, "ok", True)
+    assert client.get("/health").json()["llm_status"] == "ok"

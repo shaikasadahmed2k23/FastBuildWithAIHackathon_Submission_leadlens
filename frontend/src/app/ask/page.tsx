@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, ChevronRight, CornerDownLeft, XCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
@@ -37,7 +37,7 @@ function Ask() {
   const [question, setQuestion] = React.useState("");
   const [history, setHistory] = React.useState<AskResult[]>([]);
   const inputRef = React.useRef<HTMLInputElement>(null);
-  const health = useQuery({ queryKey: ["health"], queryFn: api.health });
+  const qc = useQueryClient();
 
   const ask = useMutation({
     mutationFn: api.ask,
@@ -45,6 +45,8 @@ function Ask() {
       setHistory((h) => [r, ...h]);
       setQuestion("");
     },
+    // The answer may have revealed that the LLM is up or down; refresh the mode indicator.
+    onSettled: () => qc.invalidateQueries({ queryKey: ["health"] }),
   });
 
   React.useEffect(() => {
@@ -76,15 +78,7 @@ function Ask() {
 
   return (
     <>
-      <PageHeader
-        title="Ask"
-        description="Plain-English questions, answered with SQL and cited rows"
-        actions={
-          health.data?.mode === "offline" ? (
-            <span className="text-2xs text-amber-700">Offline: rule-based answers for common questions</span>
-          ) : null
-        }
-      />
+      <PageHeader title="Ask" description="Plain-English questions, answered with SQL and cited rows" />
       <div className="mx-auto max-w-4xl space-y-4 p-6">
         <form
           onSubmit={(e) => {
@@ -144,6 +138,31 @@ function Ask() {
   );
 }
 
+/** Which path produced this answer, stated plainly. */
+function AnsweredBy({ result: r }: { result: AskResult }) {
+  const provider = r.provider ? r.provider.charAt(0).toUpperCase() + r.provider.slice(1) : "LLM";
+  let label: string;
+  let tone = "text-zinc-500";
+  if (r.source === "llm" && r.fallback === "template") {
+    label = `SQL by ${provider} · template answer (LLM prose failed checks)`;
+    tone = "text-amber-700";
+  } else if (r.source === "llm") {
+    label = `LLM: ${provider}`;
+  } else if (r.fallback === "rules") {
+    label = r.source === "rules" ? "Rule-based fallback (LLM failed)" : "Unanswered (LLM failed)";
+    tone = "text-amber-700";
+  } else {
+    label = r.source === "rules" ? "Rule-based fallback" : "Unanswered";
+  }
+  const retries = Math.max(0, r.attempts - 1) + Math.max(0, r.answer_attempts - 1);
+  return (
+    <span className={cn("shrink-0 text-2xs", tone)}>
+      {label}
+      {retries ? ` · ${retries} ${retries === 1 ? "retry" : "retries"}` : ""}
+    </span>
+  );
+}
+
 function AnswerCard({ result: r }: { result: AskResult }) {
   const [showSql, setShowSql] = React.useState(true);
   const idColumns = React.useMemo(
@@ -154,10 +173,7 @@ function AnswerCard({ result: r }: { result: AskResult }) {
     <article className="rounded border border-zinc-200 bg-white">
       <header className="flex items-start justify-between gap-3 border-b border-zinc-200 px-4 py-2.5">
         <h2 className="text-sm font-medium">{r.question}</h2>
-        <span className="shrink-0 text-2xs text-zinc-500">
-          {r.source === "llm" ? `LLM${r.provider ? ` · ${r.provider}` : ""}` : r.source === "rules" ? "Rule-based" : "Unanswered"}
-          {r.attempts > 1 ? ` · ${r.attempts} attempts` : ""}
-        </span>
+        <AnsweredBy result={r} />
       </header>
 
       <div className="space-y-3 px-4 py-3">

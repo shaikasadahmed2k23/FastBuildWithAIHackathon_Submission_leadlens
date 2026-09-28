@@ -55,9 +55,17 @@ def _rows(sql: str, params: list[Any] | None = None) -> list[dict[str, Any]]:
 def health() -> dict[str, Any]:
     with db.cursor() as cur:
         leads = cur.execute("SELECT count(*) FROM leads").fetchone()[0]
-    provider = "groq" if settings.groq_api_key else "gemini" if settings.gemini_api_key else None
-    return {"status": "ok", "leads": leads, "as_of": AS_OF.isoformat(), "llm": provider,
-            "mode": "full" if llm.available() else "offline"}
+    # "failing" means a key is set but the most recent LLM call errored, so answers are
+    # currently coming from the rule-based fallback.
+    if not llm.available():
+        status = "none"
+    elif llm.last_call["ok"] is None:
+        status = "untested"
+    else:
+        status = "ok" if llm.last_call["ok"] else "failing"
+    return {"status": "ok", "leads": leads, "as_of": AS_OF.isoformat(), "llm": llm.configured_provider(),
+            "mode": "full" if llm.available() else "offline", "llm_status": status,
+            "llm_last_call": dict(llm.last_call)}
 
 
 @app.get("/overview")

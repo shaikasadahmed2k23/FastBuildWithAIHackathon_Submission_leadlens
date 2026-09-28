@@ -47,6 +47,8 @@ export interface Health {
   as_of: string;
   llm: string | null;
   mode: "full" | "offline";
+  llm_status: "none" | "untested" | "ok" | "failing";
+  llm_last_call: { provider: string | null; ok: boolean | null; at: string | null; error: string | null };
 }
 
 export interface LeadRow {
@@ -170,6 +172,8 @@ export interface AskResult {
   source: "llm" | "rules" | "none";
   provider: string | null;
   attempts: number;
+  answer_attempts: number;
+  fallback: "none" | "template" | "rules";
   notes: string[];
 }
 

@@ -55,13 +55,7 @@ export function Sidebar() {
             <span className="size-1.5 rounded-full bg-red-500" /> API unreachable
           </div>
         ) : health.data ? (
-          <>
-            <div className="flex items-center gap-1.5">
-              <span className={cn("size-1.5 rounded-full", health.data.mode === "full" ? "bg-emerald-500" : "bg-amber-500")} />
-              {health.data.mode === "full" ? `LLM: ${health.data.llm}` : "Offline mode (no LLM key)"}
-            </div>
-            <div>Data as of {fmt.date(health.data.as_of)}</div>
-          </>
+          <div>Data as of {fmt.date(health.data.as_of)}</div>
         ) : (
           <div>Connecting…</div>
         )}
