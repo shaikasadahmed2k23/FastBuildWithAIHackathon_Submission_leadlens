@@ -45,8 +45,10 @@ Rules:
   (lead_id, company_id, activity_id, issue_id) so the answer can cite them.
 - For "top"/"best"/"hottest" leads, rank by lead_scores.score DESC, tie-break by lead_id.
 - Include a readable name column when listing leads (first_name || ' ' || last_name AS name).
-- Default LIMIT 10 for lists unless the question gives a number. Aggregate in SQL; never
-  expect the reader to count or compute.
+- LIMIT only for ranking questions ("top", "best", "hottest", "first N"): use N, or 10 if no
+  number is given. For "which"/"list"/"show" questions return every matching row (no LIMIT;
+  the system caps results at 200). Never truncate a complete list silently.
+- Aggregate in SQL; never expect the reader to count or compute.
 - Coded columns (stage, seniority, source, type, issue_type, industry, country, owner) hold the exact
   values listed above: compare with = or IN (...). Use ILIKE only for free text such as names,
   company names or titles.

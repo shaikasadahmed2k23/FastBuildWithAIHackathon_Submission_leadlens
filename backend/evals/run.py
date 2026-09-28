@@ -59,6 +59,7 @@ def run_questions(golden: list[dict[str, Any]]) -> list[dict[str, Any]]:
     results = []
     for g in golden:
         tokens_before, limited_before = llm.stats["tokens"], llm.stats["rate_limited"]
+        backoff_before = llm.stats["backoff_ms"]
         started = time.perf_counter()
         r = ask.ask(g["question"])
         latency_ms = round((time.perf_counter() - started) * 1000)
@@ -67,7 +68,10 @@ def run_questions(golden: list[dict[str, Any]]) -> list[dict[str, Any]]:
             "id": g["id"], "category": g["category"], "kind": g["kind"], "question": g["question"],
             "passed": grade(g["kind"], g["expected"], got), "valid": r.valid, "source": r.source,
             "fallback": r.fallback, "sql_attempts": r.attempts, "answer_attempts": r.answer_attempts,
-            "latency_ms": latency_ms, "tokens": llm.stats["tokens"] - tokens_before,
+            "latency_ms": latency_ms,
+            # Time spent sleeping on provider rate limits (a quota effect, not model speed).
+            "backoff_ms": llm.stats["backoff_ms"] - backoff_before,
+            "tokens": llm.stats["tokens"] - tokens_before,
             "rate_limited": llm.stats["rate_limited"] - limited_before,
             "sql": r.sql, "answer": r.answer, "citations": r.citations, "notes": r.notes,
             "expected": g["expected"] if g["kind"] != "id_set" else f"{len(g['expected'])} ids",
@@ -91,6 +95,7 @@ def summarize(results: list[dict[str, Any]]) -> dict[str, Any]:
     n = len(results)
     answered = [r for r in results if r["sql"]]
     latencies = [r["latency_ms"] for r in results]
+    unthrottled = [r["latency_ms"] - r.get("backoff_ms", 0) for r in results]
     retried = [r for r in results if r["sql_attempts"] > 1 or r["answer_attempts"] > 1]
     fell_back = [r for r in results if r["fallback"] != "none"]
     return {
@@ -110,6 +115,9 @@ def summarize(results: list[dict[str, Any]]) -> dict[str, Any]:
         "p50_latency_ms": _percentile(latencies, 50),
         "p95_latency_ms": _percentile(latencies, 95),
         "max_latency_ms": max(latencies, default=0),
+        "p50_latency_ex_backoff_ms": _percentile(unthrottled, 50),
+        "p95_latency_ex_backoff_ms": _percentile(unthrottled, 95),
+        "backoff_ms": sum(r.get("backoff_ms", 0) for r in results),
         "tokens": sum(r["tokens"] for r in results),
         "rate_limited": sum(r["rate_limited"] for r in results),
         "by_category": {c: {"passed": sum(v), "total": len(v)} for c, v in sorted(by_cat.items())},
@@ -130,7 +138,8 @@ def variance(runs: list[list[dict[str, Any]]], summaries: list[dict[str, Any]]) 
     return {
         "runs": len(runs),
         **{k: spread(k) for k in ("accuracy", "citation_valid_rate", "retry_rate", "fallback_rate",
-                                  "p50_latency_ms", "p95_latency_ms")},
+                                  "p50_latency_ms", "p95_latency_ms", "p50_latency_ex_backoff_ms",
+                                  "p95_latency_ex_backoff_ms")},
         "unstable_questions": sorted(q for q, c in pass_counts.items() if 0 < c < len(runs)),
         "always_failing": sorted(q for q, c in pass_counts.items() if c == 0),
     }
@@ -163,7 +172,8 @@ def main() -> None:
                 s = summarize(runs[-1])
                 print(f"run {i + 1}/{args.runs}: accuracy={s['passed']}/{s['total']}  "
                       f"citation_valid={s['citation_valid_rate']:.0%}  retry={s['retry_rate']:.0%}  "
-                      f"fallback={s['fallback_rate']:.0%}  p50={s['p50_latency_ms']}ms  p95={s['p95_latency_ms']}ms")
+                      f"fallback={s['fallback_rate']:.0%}  p50={s['p50_latency_ms']}ms  p95={s['p95_latency_ms']}ms  "
+                      f"(ex-backoff p50={s['p50_latency_ex_backoff_ms']}ms p95={s['p95_latency_ex_backoff_ms']}ms)")
         finally:
             db.close()
             settings.leadlens_db_path = original

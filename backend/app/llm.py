@@ -60,7 +60,9 @@ def _post(url: str, body: dict[str, Any], headers: dict[str, str]) -> dict[str, 
             wait = float(resp.headers.get("retry-after", ""))
         except ValueError:
             wait = 2.0 ** attempt
-        time.sleep(min(max(wait, 0.5), MAX_BACKOFF_S))
+        wait = min(max(wait, 0.5), MAX_BACKOFF_S)
+        stats["backoff_ms"] += round(wait * 1000)
+        time.sleep(wait)
     raise AssertionError("unreachable")
 
 
