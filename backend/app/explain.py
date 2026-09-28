@@ -89,3 +89,50 @@ def explain(b: ScoreBreakdown, context: dict[str, Any] | None = None) -> Explana
     report = citations.check(text, evidence)
     return Explanation(lead_id=b.lead_id, why_now=text, citations=report.cited, valid=report.valid,
                        source="template", notes=notes)
+
+
+DRAFT_SYSTEM = """You draft a short, plain B2B sales email to a lead. Use ONLY the facts provided.
+Return JSON: {"subject": "...", "body": "..."}.
+- Subject under 8 words. Body 3-5 sentences, no hype, no emojis, signed by the owner's first name.
+- Reference the lead's recent activity naturally; do not mention scores, tracking or internal IDs.
+- Do not state any numbers that are not in the facts."""
+
+ACTIVITY_PHRASES = {
+    "demo_request": "your demo request", "pricing_page_visit": "your interest in our pricing",
+    "meeting": "our recent conversation", "email_reply": "your reply", "call": "our recent call",
+    "website_visit": "your recent visit", "email_open": "my last note",
+}
+
+
+class OutreachDraft(BaseModel):
+    subject: str
+    body: str
+    citations: list[str]
+    source: Literal["llm", "template"]
+
+
+def draft_outreach(b: ScoreBreakdown, lead: dict[str, Any], company: dict[str, Any] | None) -> OutreachDraft:
+    """Draft an email for human review. Citations record which rows motivated it."""
+    top = b.intent.contributions[0] if b.intent.contributions else None
+    cited = [b.lead_id] + ([top.ref] if top else [])
+    first = lead.get("first_name") or "there"
+    owner_first = (lead.get("owner") or "").split(" ")[0] or "The team"
+    company_name = company["name"] if company else "your team"
+    if llm.available():
+        facts = {"lead_first_name": first, "title": lead.get("title"), "company": company_name,
+                 "industry": company.get("industry") if company else None, "owner": lead.get("owner"),
+                 "stage": lead.get("stage"), "recent_activity": [c.field for c in b.intent.contributions[:3]],
+                 "follow_up_status": b.recency.summary}
+        try:
+            data, _ = llm.complete_json(DRAFT_SYSTEM, json.dumps(facts, default=str))
+            subject, body = str(data.get("subject", "")).strip(), str(data.get("body", "")).strip()
+            evidence = [{k: str(v) for k, v in facts.items()}]
+            if subject and body and citations.check(f"{subject} {body}", evidence, require_citation=False).valid:
+                return OutreachDraft(subject=subject, body=body, citations=cited, source="llm")
+        except llm.LLMUnavailable:
+            pass
+    hook = ACTIVITY_PHRASES.get(top.field, "your interest") if top else "where things stand"
+    subject = f"Following up on {hook}"
+    body = (f"Hi {first},\n\nThanks for {hook}. I'd love to understand what {company_name} is looking to solve "
+            f"and whether a short call this week would help.\n\nWould Tuesday or Wednesday work?\n\n{owner_first}")
+    return OutreachDraft(subject=subject, body=body, citations=cited, source="template")
