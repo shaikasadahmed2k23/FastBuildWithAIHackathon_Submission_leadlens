@@ -25,7 +25,7 @@ cd frontend && npm install && npm run dev         # UI on http://localhost:3000
 LLM keys are optional. Copy `.env.example` to `backend/.env` and set `GROQ_API_KEY` (primary) and/or `GEMINI_API_KEY` (fallback). With no keys the app runs in **offline mode**: "why now" notes and drafts come from templates, and questions go to the strict rule-based parser. The top bar always shows which mode is answering.
 
 ```bash
-cd backend && .venv/bin/pytest -q                   # 164 tests, no network needed
+cd backend && .venv/bin/pytest -q                   # 165 tests, no network needed
 .venv/bin/python -m evals.run --mode offline        # golden eval + cleaning precision/recall
 ```
 
