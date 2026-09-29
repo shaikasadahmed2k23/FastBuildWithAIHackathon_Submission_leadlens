@@ -22,6 +22,7 @@ import { Input, Select } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, type LeadRow, STAGES } from "@/lib/api";
+import { useHealth } from "@/lib/use-health";
 import { cn, daysSince, fmt } from "@/lib/utils";
 
 const PAGE_SIZE = 50;
@@ -76,7 +77,7 @@ function useFilters() {
 function Leads() {
   const { filters, set } = useFilters();
   const { open } = useInspector();
-  const health = useQuery({ queryKey: ["health"], queryFn: api.health });
+  const health = useHealth();
   const asOf = health.data?.as_of;
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [search, setSearch] = React.useState(filters.q);

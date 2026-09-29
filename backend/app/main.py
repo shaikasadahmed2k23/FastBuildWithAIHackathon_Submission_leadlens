@@ -4,6 +4,7 @@ import json
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Annotated, Any, Literal
 
 from fastapi import Depends, FastAPI, Form, HTTPException, Query, Request, UploadFile
@@ -14,7 +15,7 @@ from pydantic import BaseModel, Field
 from app import actions, ask, db, explain, importer, llm
 from app.citations import jsonable
 from app.config import AS_OF, BACKEND_DIR, settings
-from app.demo import DEMO_QUESTIONS, ResetResult, reset_demo_data
+from app.demo import DEMO_QUESTIONS, ResetResult, StartupState, ensure_ready, reset_demo_data
 from app.ratelimit import limiter
 from app.scoring import ScoreBreakdown, score_one
 
@@ -32,19 +33,21 @@ ROW_TABLES = {"LD": ("leads", "lead_id"), "CO": ("companies", "company_id"),
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    with db.cursor() as cur:
-        empty = cur.execute("SELECT count(*) FROM leads").fetchone()[0] == 0
-    if empty:  # first boot (e.g. fresh deploy): build the dataset
-        from app.seed import save_ground_truth, write_database
-        log.info("Database empty; seeding synthetic data")
-        save_ground_truth(write_database())
+async def lifespan(application: FastAPI) -> AsyncIterator[None]:
+    application.state.startup = ensure_ready()
+    log.info("startup: %s", application.state.startup.model_dump())
     yield
     db.close()
 
 
 app = FastAPI(title="LeadLens API", version="1.0.0", lifespan=lifespan)
-app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origin_list, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origin_list,
+    allow_origin_regex=settings.cors_origin_regex or None,  # e.g. Vercel preview deployments
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def _rows(sql: str, params: list[Any] | None = None) -> list[dict[str, Any]]:
@@ -55,9 +58,11 @@ def _rows(sql: str, params: list[Any] | None = None) -> list[dict[str, Any]]:
 # ---------------------------------------------------------------- health / overview
 
 @app.get("/health")
-def health() -> dict[str, Any]:
+def health(request: Request) -> dict[str, Any]:
+    startup: StartupState = getattr(request.app.state, "startup", StartupState())
     with db.cursor() as cur:
         leads = cur.execute("SELECT count(*) FROM leads").fetchone()[0]
+        cached = cur.execute("SELECT count(*) FROM llm_cache").fetchone()[0]
     # "failing" means a key is set but the most recent LLM call errored, so answers are
     # currently coming from the rule-based fallback.
     if not llm.available():
@@ -68,7 +73,10 @@ def health() -> dict[str, Any]:
         status = "ok" if llm.last_call["ok"] else "failing"
     return {"status": "ok", "leads": leads, "as_of": AS_OF.isoformat(), "llm": llm.configured_provider(),
             "mode": "full" if llm.available() else "offline", "llm_status": status,
-            "llm_last_call": dict(llm.last_call)}
+            "llm_last_call": dict(llm.last_call),
+            "data": {"ready": leads > 0, "leads": leads, "seeded_on_startup": startup.seeded},
+            "cache": {"entries": cached, "seed_file": Path(settings.answer_cache_seed_path).exists(),
+                      "loaded_on_startup": startup.cache_loaded}}
 
 
 @app.get("/overview")

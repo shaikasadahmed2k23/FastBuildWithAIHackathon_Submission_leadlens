@@ -1,8 +1,7 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-
-import { api, type Health } from "@/lib/api";
+import { type Health } from "@/lib/api";
+import { useHealth } from "@/lib/use-health";
 import { cn } from "@/lib/utils";
 
 const PROVIDER_NAME: Record<string, string> = { groq: "Groq", gemini: "Gemini" };
@@ -27,7 +26,7 @@ export function describeMode(h: Health): { label: string; detail: string; tone: 
 
 /** Always-visible indicator of which path answers questions right now. */
 export function ModeIndicator() {
-  const q = useQuery({ queryKey: ["health"], queryFn: api.health, refetchInterval: 30_000 });
+  const q = useHealth();
   if (q.isError) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded border border-red-200 bg-red-50 px-2 py-0.5 text-xs text-red-700">

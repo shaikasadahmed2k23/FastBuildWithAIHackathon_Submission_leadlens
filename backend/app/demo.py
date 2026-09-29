@@ -45,3 +45,21 @@ def reset_demo_data() -> ResetResult:
         leads = cur.execute("SELECT count(*) FROM leads").fetchone()[0]
     return ResetResult(leads=leads, cached_answers_loaded=loaded, cache_seed_found=seed.exists(),
                        seconds=round(time.perf_counter() - started, 1))
+
+
+class StartupState(BaseModel):
+    seeded: bool = False
+    cache_loaded: int = 0
+
+
+def ensure_ready() -> StartupState:
+    """On startup: build the seed dataset if the database is empty (fresh deploy), and load
+    the answer-cache seed if the cache is empty (e.g. after a redeploy wiped it)."""
+    with db.cursor() as cur:
+        leads = cur.execute("SELECT count(*) FROM leads").fetchone()[0]
+        cached = cur.execute("SELECT count(*) FROM llm_cache").fetchone()[0]
+    if leads == 0:
+        return StartupState(seeded=True, cache_loaded=reset_demo_data().cached_answers_loaded)
+    if cached == 0:
+        return StartupState(cache_loaded=cache.load_entries(Path(settings.answer_cache_seed_path)))
+    return StartupState()

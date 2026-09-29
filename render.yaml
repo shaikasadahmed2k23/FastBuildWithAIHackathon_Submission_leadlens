@@ -4,6 +4,7 @@ services:
     runtime: python
     rootDir: backend
     plan: free
+    # Seeding at build time keeps cold starts fast; the app also seeds on startup if the DB is missing.
     buildCommand: pip install -r requirements.txt && python -m app.seed
     # --proxy-headers: the per-client rate limit must see the caller's IP, not Render's proxy.
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'
@@ -15,5 +16,15 @@ services:
         sync: false
       - key: GEMINI_API_KEY
         sync: false
+      # Your Vercel URL, e.g. https://leadlens.vercel.app (comma-separate several).
       - key: CORS_ORIGINS
         sync: false
+      # Optional: allow Vercel preview deployments, e.g. https://leadlens-.*\.vercel\.app
+      - key: CORS_ORIGIN_REGEX
+        sync: false
+      - key: GROQ_MODEL
+        value: openai/gpt-oss-120b
+      - key: LLM_RATE_LIMIT_PER_MIN
+        value: "10"
+      - key: DEMO_RESET_ENABLED
+        value: "true"

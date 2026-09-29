@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-3.8-flash"
     leadlens_db_path: str = str(DATA_DIR / "leadlens.duckdb")
     cors_origins: str = "http://localhost:3000"
+    # Optional regex for extra origins, e.g. r"https://leadlens-.*\.vercel\.app" for preview deploys.
+    cors_origin_regex: str = ""
     llm_timeout_s: float = 20.0
     # JSONL ledger of every LLM call (tokens, latency, errors). Gitignored.
     llm_log_path: str = str(DATA_DIR / "llm_calls.jsonl")

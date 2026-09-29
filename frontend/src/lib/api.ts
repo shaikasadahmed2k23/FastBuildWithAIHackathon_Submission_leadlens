@@ -76,6 +76,8 @@ export interface Health {
   mode: "full" | "offline";
   llm_status: "none" | "untested" | "ok" | "failing";
   llm_last_call: { provider: string | null; ok: boolean | null; at: string | null; error: string | null };
+  data: { ready: boolean; leads: number; seeded_on_startup: boolean };
+  cache: { entries: number; seed_file: boolean; loaded_on_startup: number };
 }
 
 export interface LeadRow {

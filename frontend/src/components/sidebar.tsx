@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 
 import { ResetDemoButton } from "@/components/reset-demo";
 import { api } from "@/lib/api";
+import { useHealth } from "@/lib/use-health";
 import { cn, fmt } from "@/lib/utils";
 
 const NAV = [
@@ -19,7 +20,7 @@ const NAV = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const health = useQuery({ queryKey: ["health"], queryFn: api.health, refetchInterval: 60_000 });
+  const health = useHealth();
   const pending = useQuery({ queryKey: ["actions", "pending"], queryFn: () => api.actions("pending") });
 
   return (

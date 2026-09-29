@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -113,3 +114,32 @@ def test_health_reports_llm_status(client: TestClient, monkeypatch: pytest.Monke
     assert body["llm"] == "groq" and body["llm_status"] == "failing"
     monkeypatch.setitem(llm.last_call, "ok", True)
     assert client.get("/health").json()["llm_status"] == "ok"
+
+
+def test_health_reports_data_and_cache_readiness(client: TestClient) -> None:
+    body = client.get("/health").json()
+    assert body["data"]["ready"] and body["data"]["leads"] > 4900
+    assert set(body["cache"]) == {"entries", "seed_file", "loaded_on_startup"}
+
+
+def test_startup_seeds_an_empty_database(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, offline: None) -> None:
+    from app import db
+    from app.config import settings
+
+    db.close()
+    monkeypatch.setattr(settings, "leadlens_db_path", str(tmp_path / "fresh.duckdb"))
+    monkeypatch.setattr(settings, "answer_cache_seed_path", str(tmp_path / "none.json"))
+    try:
+        with TestClient(app) as c:
+            body = c.get("/health").json()
+        assert body["data"] == {"ready": True, "leads": 4992, "seeded_on_startup": True}
+        assert body["cache"]["seed_file"] is False
+    finally:
+        db.close()
+
+
+def test_cors_allows_configured_origins(client: TestClient) -> None:
+    ok = client.get("/health", headers={"Origin": "http://localhost:3000"})
+    assert ok.headers.get("access-control-allow-origin") == "http://localhost:3000"
+    blocked = client.get("/health", headers={"Origin": "https://evil.example"})
+    assert "access-control-allow-origin" not in blocked.headers

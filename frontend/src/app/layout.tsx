@@ -2,6 +2,7 @@ import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
 
+import { ApiGate } from "@/components/api-gate";
 import { Sidebar } from "@/components/sidebar";
 
 import { Providers } from "./providers";
@@ -18,7 +19,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="font-sans">
         <Providers>
           <Sidebar />
-          <main className="min-h-screen pl-[216px]">{children}</main>
+          <main className="min-h-screen pl-[216px]">
+            <ApiGate>{children}</ApiGate>
+          </main>
         </Providers>
       </body>
     </html>
