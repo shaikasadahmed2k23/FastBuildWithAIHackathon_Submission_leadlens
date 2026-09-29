@@ -1,0 +1,92 @@
+{
+ "leads": 498,
+ "true_pairs": 60,
+ "found_pairs": 20,
+ "precision": 0.9,
+ "recall": 0.3,
+ "f1": 0.45,
+ "recall_by_kind": {
+  "accents": {
+   "found": 0,
+   "total": 10
+  },
+  "company_suffix": {
+   "found": 6,
+   "total": 10
+  },
+  "nickname": {
+   "found": 2,
+   "total": 10
+  },
+  "phone_format": {
+   "found": 0,
+   "total": 10
+  },
+  "swapped": {
+   "found": 0,
+   "total": 10
+  },
+  "whitespace_case": {
+   "found": 10,
+   "total": 10
+  }
+ },
+ "traps": {
+  "total": 30,
+  "merged": 2,
+  "by_kind": {
+   "lookalike_names": 1,
+   "family_same_company": 1
+  }
+ },
+ "false_positives": [
+  {
+   "pair": [
+    "HL-0465",
+    "HL-0466"
+   ],
+   "reason": "similar name (91) and email (91) at same company",
+   "trap": "lookalike_names",
+   "rows": [
+    [
+     "Alex",
+     "Lopez",
+     "Moody Labs Corp",
+     "alex.lopez@moodylabs.com",
+     "+1 833-330-2693"
+    ],
+    [
+     "Alexis",
+     "Lopez",
+     "Moody Labs Corp",
+     "alexis.lopez@moodylabs.com",
+     "+1 722-596-8317"
+    ]
+   ]
+  },
+  {
+   "pair": [
+    "HL-0187",
+    "HL-0490"
+   ],
+   "reason": "similar name (88) and email (88) at same company",
+   "trap": "family_same_company",
+   "rows": [
+    [
+     "Raul",
+     "Freitas",
+     "Macias Energy LLC",
+     "raul.freitas@maciasenergy.com",
+     "+1 854-693-3984"
+    ],
+    [
+     "Paulo",
+     "Freitas",
+     "Macias Energy LLC",
+     "paulo.freitas@maciasenergy.com",
+     "+1 331-658-0920"
+    ]
+   ]
+  }
+ ]
+}
