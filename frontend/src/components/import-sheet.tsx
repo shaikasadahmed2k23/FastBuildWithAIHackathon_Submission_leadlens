@@ -223,7 +223,7 @@ function ImportSummary({ result, onAnother }: { result: ImportResult; onAnother:
       {result.lead_ids.length ? (
         <section>
           <h3 className="smallcaps mb-2 text-sm font-semibold text-ink">Imported leads (first 12)</h3>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
             {result.lead_ids.slice(0, 12).map((id) => (
               <CitationChip key={id} id={id} />
             ))}

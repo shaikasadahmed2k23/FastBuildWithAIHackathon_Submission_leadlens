@@ -77,7 +77,7 @@ flowchart LR
 | **Approvals** | Outreach drafts, duplicate merges and stage changes wait for a reviewer; approving executes and audits |
 | **Evals** | Golden-question accuracy, citation validity, retry/fallback rates, latency, cleaning precision/recall |
 
-Every ID in the UI (`LD-01234`, `ACT-38812`, `CO-00042`) is a chip that opens its source row.
+Every ID in the UI (`LD-01234`, `ACT-38812`, `CO-00042`) opens its source row. In prose ("why now", answers) citations appear as numbered footnotes with a Sources list underneath.
 
 ### Data
 
