@@ -1,146 +1,185 @@
 # LeadLens
 
-LeadLens is a decision engine for messy CRM leads. It cleans the data, ranks every lead with a deterministic score you can explain, says why each lead is worth acting on now (citing exact CRM rows), answers plain-English questions with SQL, and holds every change for human approval.
+LeadLens is a decision engine for messy CRM leads:
 
-**The core rule:** the LLM never computes a number. Scores, filters and aggregates come from Python and SQL. The LLM only writes SQL and phrases explanations. A checker verifies every ID and every number it writes against the query result. If a check fails, the answer is retried and then replaced with a deterministic one.
+- **Cleans the data:** duplicates, stale records, missing fields.
+- **Ranks every lead** with a deterministic score you can explain.
+- **Says why a lead is worth acting on now,** citing exact CRM rows.
+- **Answers plain-English questions** with visible SQL.
+- **Holds every change for human approval.**
+
+**The core rule:** the LLM never computes a number. Scores, filters and aggregates come from Python and SQL. The LLM only writes SQL and phrases explanations, and a checker verifies every row ID and every number it writes against the query result. If a check fails, the answer is retried, then replaced by a deterministic one. When no model is available, a strict offline parser answers only the questions it fully understands and declines the rest.
 
 ![Overview](docs/screenshots/overview.png)
 
 ## Quickstart
 
-Requires Python 3.11+ and Node 20+.
+Requires Python 3.11+ and Node 20+. Run from the repository root; the second and third commands need their own terminals.
 
 ```bash
-cd backend && python -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt   # Windows: .venv\Scripts\activate
-python -m app.seed && uvicorn app.main:app --reload            # API on :8000 (seeds ~5k leads in ~6s)
-cd ../frontend && npm install && npm run dev                   # UI on :3000 (in a second terminal)
+cd backend && python -m venv .venv && .venv/bin/pip install -r requirements.txt   # Windows: .venv\Scripts\pip
+cd backend && .venv/bin/uvicorn app.main:app      # API on :8000; builds the seed-42 dataset (~6s) on first start
+cd frontend && npm install && npm run dev         # UI on http://localhost:3000
 ```
 
-LLM keys are optional. Copy `.env.example` to `.env` and set `GROQ_API_KEY` (primary) and/or `GEMINI_API_KEY` (fallback). With no keys the app runs in **offline mode**: explanations and drafts come from templates, and questions go to a rule-based parser that declines anything it doesn't fully understand.
+LLM keys are optional. Copy `.env.example` to `backend/.env` and set `GROQ_API_KEY` (primary) and/or `GEMINI_API_KEY` (fallback). With no keys the app runs in **offline mode**: "why now" notes and drafts come from templates, and questions go to the strict rule-based parser. The top bar always shows which mode is answering.
 
 ```bash
-cd backend && pytest -q          # 83 tests
-python -m evals.run              # golden eval + cleaning precision/recall -> evals/latest.json
+cd backend && .venv/bin/pytest -q                   # 164 tests, no network needed
+.venv/bin/python -m evals.run --mode offline        # golden eval + cleaning precision/recall
 ```
 
-### Before a demo (LLM quota)
+## Architecture
 
-Free-tier keys have small quotas (Groq: 8k tokens/min, 200k tokens/day on this model). LeadLens protects them in four ways:
+```mermaid
+flowchart LR
+  subgraph Browser
+    UI["Next.js 14 UI<br/>(Vercel)"]
+  end
+  subgraph API["FastAPI (Render)"]
+    ASK["/ask pipeline"]
+    GUARD["SQL guard<br/>parse tree, allowlist,<br/>timeout, row cap"]
+    CHECK["Citation checker<br/>IDs + numbers must<br/>exist in result rows"]
+    RULES["Strict offline parser<br/>declines unless every<br/>word is accounted for"]
+    SCORE["Scoring<br/>fit + intent + recency"]
+    CLEAN["Cleaning<br/>duplicates, stale,<br/>missing fields"]
+    ACT["Approval queue<br/>+ audit log"]
+    CACHE["Answer cache<br/>per-table content hashes"]
+  end
+  DB[("DuckDB<br/>external access off")]
+  LLM["Groq gpt-oss-120b<br/>(Gemini fallback)"]
 
-- **Answer cache.** `/ask` and "why now" results are cached in DuckDB, keyed on the normalized question and a fingerprint of the prompts and model. Each entry also stores a content hash of every table its SQL read, and is served only while those tables are unchanged. For example, an approved stage change invalidates lead questions but not a companies-only question; proposing or rejecting an action invalidates nothing. Cached responses say `cached` and cost 0 tokens.
-- **Reset demo data** (sidebar, or `POST /admin/reset-demo`) rebuilds the seed-42 database and reloads `backend/data/answer_cache_seed.json`. Because entries are keyed on table contents, the seed cache is fully valid again after every reset. Set `DEMO_RESET_ENABLED=false` to disable it on a shared deployment.
-- **Compact prompts.** About 1,080 tokens per question, down from about 1,400 on the same questions. On list questions the answer payload is 82% smaller.
-- **Rate limit.** 10 requests per minute per client on `/ask` and `/explain` (`LLM_RATE_LIMIT_PER_MIN`).
-- **Call ledger.** Every provider call (purpose, tokens, latency, error) is appended to `backend/data/llm_calls.jsonl`.
-
-```bash
-python -m app.prewarm --reset --export             # API stopped: seed-42 DB + demo answers -> answer_cache_seed.json
-python -m app.prewarm --api http://localhost:8000   # or: warm a running API without exporting
-python -m app.llm_usage --since 2026-09-30           # tokens and errors from the ledger (UTC)
+  UI -->|REST| ASK
+  UI -->|REST| ACT
+  ASK --> CACHE
+  ASK -->|writes SQL, phrases answer| LLM
+  ASK --> GUARD --> DB
+  ASK --> CHECK
+  ASK -.LLM unavailable.-> RULES --> GUARD
+  ACT -->|on approval| DB
+  ACT --> CLEAN & SCORE
+  CLEAN --> DB
+  SCORE --> DB
 ```
+
+**A question's path:** cache lookup → the LLM writes SQL → the guard validates it → DuckDB runs it read-only → the LLM phrases an answer from the rows → the checker verifies every ID and number → the answer is shown with its SQL and rows.
+- Bad SQL is retried with the error and the rejected query fed back.
+- A rejected answer is retried once, then replaced by a template built from the rows.
+- If the LLM fails outright, the offline parser answers or declines.
 
 ## What it does
 
 | Screen | What you get |
 |---|---|
-| **Overview** | Lead counts, open pipeline, data health, score distribution, top open leads |
-| **Leads** | Sortable, filterable table (server-side). Click a row (or <kbd>J</kbd>/<kbd>K</kbd> then <kbd>Enter</kbd>) for a drawer with the score breakdown, a cited "why now", data issues, activity and actions. <kbd>/</kbd> focuses search. |
-| **Ask** | A plain-English question produces SQL, the result rows and an answer with citations. The SQL and rows are always shown, along with the verification result. |
-| **Approvals** | Outreach drafts, duplicate merges and stage changes wait for a reviewer. Approving runs the change; every transition is in the audit log. |
-| **Evals** | Golden-question accuracy, citation validity, latency, and cleaning precision/recall against injected ground truth |
+| **Overview** | Lead counts, open pipeline, data health, score distribution, top open leads, **Import CSV** |
+| **Leads** | Sortable, filterable table. Click a row (or <kbd>J</kbd>/<kbd>K</kbd>, <kbd>Enter</kbd>) for the score breakdown, a cited "why now", data issues, activity and actions. <kbd>/</kbd> focuses search. |
+| **Ask** | Plain-English question → SQL → rows → cited answer, with the verification result and the path that produced it |
+| **Approvals** | Outreach drafts, duplicate merges and stage changes wait for a reviewer; approving executes and audits |
+| **Evals** | Golden-question accuracy, citation validity, retry/fallback rates, latency, cleaning precision/recall |
 
-Every ID in the UI (`LD-01234`, `ACT-38812`, `CO-00042`, `ISS-00165`) is a chip that opens its source row.
-
-## How it works
-
-```
-backend/app/
-  seed.py       synthetic CRM (seed=42) + injected issues + ground_truth.json
-  cleaning.py   duplicate / stale / missing-field detection  -> data_issues
-  scoring.py    fit + intent + recency, with the rows behind every point
-  sql_guard.py  validates and sandboxes LLM-written SQL
-  citations.py  rejects answers citing IDs or numbers not in the evidence
-  ask.py        question -> SQL -> rows -> answer -> check -> retry/fallback
-  rules.py      offline question parser (declines rather than guesses)
-  explain.py    one-line "why now" + outreach drafts, checked, template fallback
-  actions.py    approval queue, execution, audit log
-  main.py       FastAPI
-backend/evals/  50 golden questions, answers computed from reference SQL
-frontend/       Next.js 14 App Router, Tailwind, TanStack Table/Query
-```
+Every ID in the UI (`LD-01234`, `ACT-38812`, `CO-00042`) is a chip that opens its source row.
 
 ### Data
 
-About 5,000 leads, 1,500 companies and 40,000 activities, generated deterministically. Time is frozen at `2026-09-15 12:00` (`AS_OF`), so scores and evals are reproducible. Known problems are injected and recorded in `backend/data/ground_truth.json`:
+About 5,000 leads, 1,500 companies and 40,000 activities, generated deterministically (seed 42) with time frozen at `2026-09-15 12:00`, so every score and eval is reproducible. Known problems are injected and recorded in `backend/data/ground_truth.json`: 4% duplicates, 10% stale, 5% missing fields.
 
-- **Duplicates (4%)**: case changes, name typos, email typos, Gmail dot variants
-- **Stale (10%)**: open stage with no contact for more than 90 days
-- **Missing fields (5%)**: blank email, phone or title (as `NULL`, `""` or `" "`)
+**CSV import** accepts HubSpot/Salesforce-style exports:
+1. It proposes a column mapping for you to confirm.
+2. It rejects bad rows with a reason each.
+3. It matches companies by domain.
+4. It re-runs duplicate detection across old and new leads, and scores the new ones.
 
-Duplicate detection normalizes emails (lowercase, Gmail dots and `+tags`), then fuzzy-matches name plus email local part within each company (rapidfuzz).
+Try it with `backend/data/sample_hubspot_export.csv`.
 
 ### Scoring (0–100)
 
 | Component | Max | Inputs |
 |---|---|---|
-| Fit | 40 | seniority (16) + company size band (14) + industry match to ICP (10) |
-| Intent | 40 | activities in the last 30 days, weighted by type (demo request 14, pricing visit 9, meeting 8, …), half-life 10 days, capped |
-| Recency | 20 | follow-up urgency: low right after contact, peaks when 8–30 days overdue, decays as the lead goes cold. Closed leads score 0. |
+| Fit | 40 | seniority (16) + company size (14) + industry match to the ICP (10) |
+| Intent | 40 | activities in the last 30 days, weighted by type (demo request 14, pricing visit 9, meeting 8, …), 10-day half-life |
+| Recency | 20 | follow-up urgency: low right after contact, highest when 8–30 days overdue, decaying as the lead goes cold |
 
-Each point is attributed to a lead field, company field or activity ID. Those references are the citations shown in the drawer. The ICP and weights are in `backend/app/config.py`.
+Every point is attributed to a lead field, company field or activity ID, and those are the citations shown in the UI.
 
-### Verification
+### Safety and verification
 
-1. **SQL guard**: exactly one `SELECT`, an allowlist of tables, blocked file and catalog functions, a 5s timeout, a 200-row cap, and execution inside a rolled-back transaction. The DuckDB connection also runs with `enable_external_access = false`, so no query can read files or URLs even if the checks were bypassed.
-2. **Citation checker**: every `LD-/CO-/ACT-/ISS-` ID in an answer must appear in the result rows. Every number must match a value in the rows (rounding allowed), the row count, or a number from the question. Arithmetic done by the LLM (e.g. a sum of two scores) fails the check. If the rows contain IDs, the answer must cite at least one.
-3. **Retry, then fall back**: bad SQL is retried up to 3 times with the error fed back. A rejected answer is retried once with the reason, and then replaced by a template summary built from the rows. The UI shows which path was taken.
+- **SQL guard:**
+  - Allows one `SELECT`, over allowlisted tables only, found by walking DuckDB's parse tree.
+  - Rejects table functions, and CTEs named after protected tables.
+  - Runs with a 5-second timeout, a 200-row cap, and inside a rolled-back transaction.
+  - The connection itself has `enable_external_access = false`.
+- **Citation checker:**
+  - Cited IDs must be in the result rows, and square brackets may only hold real row IDs.
+  - Every number must appear in the rows, be the row count, or come from the question. Arithmetic by the LLM fails the check.
+- **Approvals:** nothing changes CRM data until a person approves. Merges, stage changes and (simulated) outreach execute in a transaction, and every step is audited.
 
-### Approvals
+### Quota protection
 
-Nothing changes CRM data until a reviewer approves it. Approval runs the action in a transaction:
+The free Groq tier allows 8k tokens per minute and 200k per day on this model. LeadLens protects that budget in five ways:
 
-- **Merge**: activities move to the primary lead, blank fields are filled, the duplicate is removed
-- **Stage change**: updates the stage
-- **Outreach**: sending is simulated; the contact is logged, so staleness and recency update
+- **Answer cache.**
+  - `/ask` and "why now" results are cached, keyed on the normalized question and a fingerprint of the prompts and model.
+  - Each entry records a content hash of every table its SQL read, and is served only while those tables are unchanged.
+  - Proposing or rejecting an action invalidates nothing. An approved stage change invalidates lead questions but not a companies-only question.
+- **Reset demo data** (sidebar): rebuilds the seed-42 database and reloads `backend/data/answer_cache_seed.json`. Content hashes make that seed valid again after every reset.
+- **Compact prompts:** about 1,080 tokens per question, down from about 1,400.
+- **Rate limit:** 10 requests per minute per client on LLM endpoints.
+- **Call ledger:** every provider call is logged in `backend/data/llm_calls.jsonl` (`python -m app.llm_usage`).
 
-Scores and issues for the affected leads are then recomputed. Decided actions can't be decided again (409). A failed execution leaves the action `approved`, with the error recorded in the audit log.
+```bash
+python -m app.prewarm --reset --export   # with the API stopped: answer the demo questions, write the cache seed
+```
 
-## Results
+## Evaluation
 
-Three runs of each mode. Method, per-run numbers, the failures found and fixed, and known limits are in **[docs/EVALS.md](docs/EVALS.md)**.
+Full method, per-run numbers, every failure found and how it was fixed: **[docs/EVALS.md](docs/EVALS.md)**. All numbers come from committed JSON reports.
 
-| Metric | Live LLM (Groq `gpt-oss-120b`) | Rule-based (offline) |
+| | Live LLM (Groq `openai/gpt-oss-120b`) | Offline rule-based parser |
 |---|---|---|
-| Golden questions answered correctly | 50/50 in each of 3 runs* | 50/50 in each of 3 runs |
-| Answers passing the citation checker | 100% | 100% |
-| Retry rate (mean of 3 runs) | 0.7% | n/a |
-| Latency p50 / p95, excluding rate-limit waits | about 3.3s / 5–6s (clean runs) | 8 ms / 14 ms |
-| Duplicate / stale / missing-field detection P = R | 1.000 / 1.000 / 1.000 | same |
+| **Golden set** (50 questions, used during development) | 50/50 in each of 3 runs, 100% citation-checker pass¹ | 50/50² |
+| **Held-out set** (25 new questions, never tuned on) | **not yet run**³ | 4/25 correct, **0 wrong**; 21 declined⁴ |
+| Latency p50 / p95, excluding rate-limit waits | about 3.3s / 5–6s | under 40 ms |
 
-\* In run 3 the free-tier quota ran out and 17 questions fell back (14 to the rule-based parser). The model's own record is 50/50, 50/50 and 36/36.
+| Cleaning | Precision | Recall |
+|---|---|---|
+| Seeded data (noise designed alongside the detector) | 1.00 | 1.00 |
+| **Held-out duplicate set, detector untouched** | **0.90** | **0.30** |
+| Same set after general fixes (no longer held-out) | 1.00 | 1.00 |
 
-Caveats:
-
-- **The prompt fixes and the offline rules were developed against these 50 questions.** Treat the scores as "reliable on common analytics questions", not as proof of generalization. `tests/test_rules.py` has held-out and must-decline checks for offline mode.
-- **Cleaning is perfect on the seeded data because the detector was built alongside that noise.** On a held-out set with other noise (nicknames, swapped names, company-suffix variants, phone formats, accents), the untouched detector scored F1 0.45 (precision 0.90, recall 0.30). After general fixes it scores 1.00 there, but that set is no longer held-out. See docs/EVALS.md.
-- **The rule-based fallback scores 5/25 on held-out questions**, with 3 confident wrong answers. The live LLM held-out run is pending the provider's daily quota.
-- **The spec's `llama-3.3-70b-versatile` is no longer served by Groq,** so live results use `openai/gpt-oss-120b`.
-
-## API
-
-`GET /health` · `GET /overview` · `GET /leads?q&stage&owner&industry&issue&min_score&sort&order&page&page_size` · `GET /leads/{id}` · `POST /leads/{id}/explain` · `GET /rows/{id}` · `GET /issues?type` · `POST /ask {question}` · `GET /actions?status` · `GET /actions/{id}` · `POST /actions {type, lead_ids, payload?, note?, actor?}` · `POST /actions/{id}/approve|reject {actor, note?}` · `GET /evals/latest`
-
-Interactive docs are at `http://localhost:8000/docs`.
+1. In run 3 the daily quota ran out and 17 questions fell back, so the model's own record is 50/50, 50/50 and 36/36. These runs used the prompts from before compaction; the compacted prompts have only been re-verified on the first 15 golden questions.
+2. The offline parser was developed against these questions, so this is an upper bound.
+3. Blocked by the provider's daily token limit; it will be run once, unchanged, and reported as-is.
+4. Before the strict-fallback policy, the parser scored 5/25 but gave **3 confident wrong answers** (a ranking measure and a negation silently dropped). It now declines instead, at the cost of one question it used to answer correctly.
 
 ## Deploy
 
-- **API (Render)**: `render.yaml` is a blueprint. Set `GROQ_API_KEY`, `GEMINI_API_KEY` and `CORS_ORIGINS` (your Vercel URL). The build seeds the database.
-- **UI (Vercel)**: set the root directory to `frontend` and `NEXT_PUBLIC_API_URL` to the Render URL.
-- **CI**: `.github/workflows/ci.yml` runs pytest, an offline eval smoke run, lint, typecheck and the frontend build.
+Render (API) + Vercel (UI), free tiers. The step-by-step guide is in **[docs/DEPLOY.md](docs/DEPLOY.md)**.
+- On startup the API builds the dataset if it's missing and loads the answer-cache seed.
+- `/health` reports data and cache readiness.
+- The UI shows "Waking up server (~30s)" while a sleeping free instance starts.
+
+CI (`.github/workflows/ci.yml`) runs pytest, an offline eval, lint, typecheck and the production build. It never calls an LLM.
 
 ## Limitations
 
-- No authentication. The reviewer name on the Approvals page is self-declared.
-- Outreach is never actually sent.
-- On Render's free tier the disk is ephemeral, so approvals reset when the service restarts or redeploys.
-- The rule-based parser covers common counting, ranking, grouping and filter questions only. Anything else needs an LLM key.
+- **Synthetic data.** Real CRM noise (initials, job changes, transliterations) is harder than both the seeded and the held-out cleaning sets.
+- **The offline parser declines most questions** outside its small vocabulary. It's a safety net, not a substitute for the model.
+- **The checker verifies support, not correctness.** An answer can quote the right rows and still describe them wrongly. Grading on returned rows covers the SQL, not the prose.
+- **No authentication.** The reviewer name is self-declared, and "Reset demo data" is open to anyone on the deployment (set `DEMO_RESET_ENABLED=false` to disable it).
+- **Outreach is simulated;** no email is sent.
+- **Render's free disk is ephemeral:** approvals and imports reset on redeploy or restart.
+- **Single process.** The rate limiter and DuckDB (a single writer) assume one API instance.
+- **Model substitution.** The spec's `llama-3.3-70b-versatile` is no longer served by Groq, so live results use `openai/gpt-oss-120b`.
+
+## AI tools used
+
+- **Claude Code** (Anthropic's coding agent, model Claude Opus 5.5) built this project under the author's direction. It wrote most of the code, tests and documentation, ran the evaluations, and diagnosed the failures recorded in docs/EVALS.md.
+- **Runtime models:**
+  - Groq `openai/gpt-oss-120b` (reasoning effort `low`) writes SQL and phrases answers and "why now" notes.
+  - Google `gemini-3.8-flash` is the fallback provider.
+  - Neither computes scores or numbers.
+- **Faker** generates the synthetic CRM data.
+
+## API
+
+`GET /health` · `GET /overview` · `GET /leads` · `GET /leads/{id}` · `POST /leads/{id}/explain` · `GET /rows/{id}` · `GET /issues` · `POST /ask` · `GET /ask/examples` · `GET /actions` · `POST /actions` · `POST /actions/{id}/approve|reject` · `POST /import/preview` · `POST /import` · `POST /admin/reset-demo` · `GET /evals/latest`. Interactive docs are at `/docs`.
