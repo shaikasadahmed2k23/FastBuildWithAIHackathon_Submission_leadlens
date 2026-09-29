@@ -238,7 +238,8 @@ function ImportSummary({ result, onAnother }: { result: ImportResult; onAnother:
       ) : null}
       {result.warnings.length ? (
         <p className="text-2xs text-zinc-500">
-          {result.warnings.length} warnings, e.g. row {result.warnings[0].row}: {result.warnings[0].message}
+          {result.warnings.length} {result.warnings.length === 1 ? "warning" : "warnings"}, e.g. row{" "}
+          {result.warnings[0].row}: {result.warnings[0].message}
         </p>
       ) : null}
       <div className="flex justify-between border-t border-zinc-200 pt-4 text-2xs text-zinc-500">
