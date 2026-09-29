@@ -1,90 +1,133 @@
 # LeadLens evaluation
 
-This document covers what we measure, how, the results so far, and where the numbers fall short. All numbers here come from the JSON reports in `backend/evals/reports/`. Nothing is typed in by hand.
+This document covers what we measure, how, the results, and where the numbers fall short. Every number here comes from the JSON reports in `backend/evals/reports/` (`offline.json`, `live.json`). None are typed in by hand.
 
-> **Status:** the rule-based (offline) mode has been evaluated. **The live LLM mode (Groq, `llama-3.3-70b-versatile`) has not been run yet.** Its column below is empty until it is. See [Reproduce](#reproduce).
+## Summary
+
+| | Rule-based (offline) | Live LLM (Groq `openai/gpt-oss-120b`) |
+|---|---|---|
+| Golden accuracy, 3 runs | 50/50 every run | 50/50 every run (see the run 3 caveat) |
+| Answers passing the citation checker | 100% | 100% |
+| Wrong answers across 150 attempts | 0 | 0 |
+
+The most important caveat: in live run 3, the provider quota ran out partway through and 17 of the 50 questions fell back. Its 50/50 therefore includes 14 answers from the rule-based parser, which was tuned on these same questions. The LLM's own record is 50/50, 50/50 and 36/36 (the questions it answered in run 3).
+
+**Model note.** The project spec names `llama-3.3-70b-versatile`. Groq no longer serves it (`model_not_found`), and the account has no Llama models. The live results use `openai/gpt-oss-120b` with `reasoning_effort=low`, the largest general model available. Gemini `gemini-3.8-flash` is configured as the fallback provider.
 
 ## What is measured
 
 ### 1. Question answering (`/ask`), 50 golden questions
 
-- **Construction.** `backend/evals/questions.py` holds 50 questions in 7 categories (counts, data quality, intent, scoring, pipeline, ranking, breakdown). Each has a hand-written *reference SQL* query. `python -m evals.build_golden` runs every reference query on a freshly seeded database and writes the results to `golden.jsonl`. The expected answers are computed from data, never typed. A test (`tests/test_evals.py`) fails if `golden.jsonl` drifts from what the current data produces.
+- **Construction.** `backend/evals/questions.py` holds 50 questions in 7 categories (counts, data quality, intent, scoring, pipeline, ranking, breakdown). Each has a hand-written *reference SQL* query. `python -m evals.build_golden` runs every reference query on a freshly seeded database and writes the results to `golden.jsonl`. The expected answers are computed from data, never typed. A test fails if `golden.jsonl` drifts from what the current data produces.
 - **Answer kinds.**
   - `scalar` (25 questions): one number.
   - `id_set` (15): a set of lead/activity IDs.
   - `table` (10): a key-to-number mapping, e.g. stale leads per owner.
 - **Grading is on the returned rows, not the prose.**
-  - `scalar`: the first number in the first row, within ±0.051 or 0.1% (this allows rounding an average to one decimal).
+  - `scalar`: the first number in the first row, within ±0.051 or 0.1%.
   - `id_set`: exact set equality.
-  - `table`: the same keys, with each value within the same tolerance.
-- **The prose is checked separately** by the citation checker, which the app runs on every answer at runtime:
+  - `table`: the same keys, with each value within tolerance.
+- **The prose is checked by the citation checker**, which the app runs on every answer at runtime:
   - Every cited ID must appear in the result rows.
+  - Anything in square brackets must be a real row ID.
   - Every number must appear in the rows, be the row count, or appear in the question.
   - If the rows contain IDs, the answer must cite at least one.
 
 ### 2. Data cleaning, against injected ground truth
 
-The seeder injects known problems and writes them to `backend/data/ground_truth.json`. The eval compares the detected `data_issues` against that file and reports precision, recall and F1 for duplicate pairs, stale leads and missing fields.
+Detected `data_issues` are compared with `backend/data/ground_truth.json`, written by the seeder. The eval reports precision, recall and F1 for duplicate pairs, stale leads and missing fields. No LLM is involved, so both modes score the same.
 
 ### Metric definitions
 
 | Metric | Definition |
 |---|---|
 | Accuracy | Questions whose returned rows match the golden answer, divided by 50 |
-| Citation checker pass | Answers that pass the checker, divided by answers that ran a query (declined questions are excluded) |
-| Declined | Questions where no query was run: the offline parser refused, or the LLM and the fallback both failed |
+| Citation checker pass | Answers that pass the checker, divided by answers that ran a query |
 | Retry rate | Questions that needed more than one SQL attempt or more than one answer-writing attempt |
-| Fallback rate | Questions whose final answer did not come purely from the LLM. **template** = the LLM's SQL was used but its prose failed the checker twice, so a deterministic summary of the rows was shown. **rules** = the LLM failed (error, or 3 invalid SQL attempts), so the rule-based parser answered. In offline mode this is 0 by definition, since rules are the primary path there, not a fallback. |
-| p50 / p95 latency | Nearest-rank percentiles of end-to-end `ask()` time per question, in-process (no HTTP) |
-| Variance | The golden set repeated N times on the same database: mean, standard deviation and range of each metric, plus questions that pass in some runs but not others |
+| Fallback rate | Questions whose final answer did not come purely from the LLM. **template** = the LLM's SQL was used, but its prose failed the checker twice or the answer call failed, so a deterministic summary of the rows was shown. **rules** = the LLM path failed (provider error, or 3 invalid SQL attempts), so the rule-based parser answered. In offline mode this is 0 by definition. |
+| Latency p50 / p95 | Nearest-rank percentiles of end-to-end `ask()` time per question, in-process (no HTTP) |
+| Latency excluding backoff | The same, minus time spent sleeping on provider rate limits (`retry-after`). This separates the free-tier quota from model speed. |
+| Variance | The golden set repeated 3 times on the same database: range and standard deviation per metric, plus questions that pass in some runs but fail in others |
 
 ## Results
 
-| Metric | Rule-based (offline), 3 runs | Live LLM (Groq) |
-|---|---|---|
-| Accuracy | **50 / 50** in every run (sd 0.0) | not yet run |
-| Citation checker pass | 100% (50 / 50) | not yet run |
-| Declined | 0 | not yet run |
-| Retry rate | 0% (n/a: no LLM) | not yet run |
-| Fallback rate | 0% (n/a: rules are primary) | not yet run |
-| Latency p50 / p95 | 8 ms / 14 ms | not yet run |
-| Unstable questions | none (the path is deterministic) | not yet run |
-| Duplicate detection P / R / F1 | 1.000 / 1.000 / 1.000 (192 pairs) | same (no LLM involved) |
-| Stale detection P / R / F1 | 1.000 / 1.000 / 1.000 (480) | same |
-| Missing-field detection P / R / F1 | 1.000 / 1.000 / 1.000 (240) | same |
+### Live LLM, 3 runs (`backend/evals/reports/live.json`)
 
-Source: `backend/evals/reports/offline.json`.
+| Metric | Run 1 | Run 2 | Run 3 | Mean ± sd |
+|---|---|---|---|---|
+| Accuracy | 50/50 | 50/50 | 50/50* | 100% ± 0 |
+| Answered by the LLM (no fallback) | 50 | 50 | 33 | |
+| Citation checker pass | 100% | 100% | 100% | 100% ± 0 |
+| Retry rate | 2% (1 question) | 0% | 0% | 0.7% ± 0.9 |
+| Fallback rate | 0% | 0% | 34% (3 template, 14 rules) | 11.3% ± 16.0 |
+| Latency p50 / p95, end to end | 8.1s / 13.7s | 5.1s / 11.6s | 7.9s / 146.7s | |
+| Latency p50 / p95, excluding backoff | 3.3s / 5.7s | 3.2s / 4.9s | 3.9s / 25.7s | |
+| Rate-limit retries (429) | 62 | 47 | 161 | |
+| Tokens | 80.7k | 79.5k | 52.0k | |
+| Unstable questions | none | | | |
 
-## How to read these numbers
+\* In run 3, 14 correct answers came from the rule-based fallback, not the model.
 
-**Don't use the rule-based 50/50 as evidence that offline mode generalizes.** The parser was written and fixed while looking at the golden questions. Accuracy went from 22/50 to 47, then 49, then 50 as vocabulary gaps were found. The last fix (Q04, "flagged as duplicates") taught the parser status verbs such as *flagged* and *marked*, which count only when an issue type is also named. It was made after seeing the failure. The golden set is effectively the parser's training set.
+**What happened in run 3.** Partway through, Groq kept returning 429 after all 4 backoff retries (capped at 30s each). The Gemini fallback then failed as well: read timeouts, a 503, and then its own 429s. Afterwards Groq's response headers showed plenty of per-minute token capacity, so the per-minute limit wasn't the cause. Total usage reached about 212k tokens across the three runs, which is consistent with a daily token cap of about 200k on this key. **This wasn't confirmed:** the client logged only the status line at the time. It now records the provider's error message (commit `109d3d1`).
 
-Better evidence of how it generalizes is in `tests/test_rules.py`:
+**What the run still shows.** The fallback chain degraded exactly as designed: no question went unanswered, and no failed citation reached the user. It doesn't measure the model. The model-only results are 50/50, 50/50 and 36/36 (the 33 pure-LLM answers plus 3 whose SQL came from the LLM).
 
-- **Held-out phrasings** never seen during development, all of which must answer correctly (7 at present).
-- **Questions that must be declined** (4), such as "which leads are most likely to churn" and "how many leads are flagged as spam". The parser is built to refuse rather than guess. A wrong answer with a green "verified" badge would be worse than no answer.
+### Rule-based (offline), 3 runs (`backend/evals/reports/offline.json`)
 
-**Perfect cleaning scores reflect synthetic noise.** The duplicate kinds (case changes, one-character typos, Gmail dots) were designed alongside the detector. Real CRM duplicates are messier: nicknames, job changes, shared inboxes. Expect lower recall on real data.
+| Metric | Result |
+|---|---|
+| Accuracy | 50/50 in every run (sd 0) |
+| Citation checker pass | 100% |
+| Declined | 0 |
+| Retry / fallback rate | n/a (no LLM) |
+| Latency p50 / p95 | 8 ms / 14 ms |
 
-**Latency figures are local and in-process.** Offline latency is DuckDB on a laptop. Live latency will be dominated by Groq calls: two per question, more on retries. On a free-tier key it will also include rate-limit backoff, which inflates p95.
+### Data cleaning (both modes)
 
-## Known failure cases and limits
+| Issue | Precision | Recall | F1 | Found / expected |
+|---|---|---|---|---|
+| Duplicate pairs | 1.000 | 1.000 | 1.000 | 192 / 192 |
+| Stale leads | 1.000 | 1.000 | 1.000 | 480 / 480 |
+| Missing fields | 1.000 | 1.000 | 1.000 | 240 / 240 |
 
-- **The checker verifies support, not correctness.** An answer that cites the right rows and repeats their numbers can still describe them wrongly, e.g. calling the lowest score the highest. Grading on returned rows covers the SQL; the prose is only checked for invented IDs and numbers.
-- **Numbers glued to units aren't checked.** Tokens like `12d` or `3x` are skipped by the number check.
-- **Numbers from the question are always allowed.** If a question says "top 10", an answer may say "10" even if fewer rows came back.
-- **Row cap.** Queries return at most 200 rows, so a question whose true answer is larger can't pass an `id_set` check. The golden questions are kept under the cap.
-- **One phrasing per question.** The golden set doesn't test paraphrase robustness. For offline mode that's partly covered by the held-out tests; for the LLM it isn't covered yet.
-- **Single dataset, single seed.** All results are on seed 42.
+## How we got here: failures found and fixed
+
+The first live run scored 8/10 on a 10-question subset, and the first full run 47/50. Every failure was traced to its cause and fixed in the prompt, the guardrails or the checker. No fix special-cases a question.
+
+| Symptom (question) | Root cause | Fix | Commit |
+|---|---|---|---|
+| Missing-email/phone counts too low (Q05, Q06: 47 vs 75, 31 vs 100) | The schema prompt never said that blanks are stored as `NULL`, `''` or whitespace | The prompt documents the encoding and the `trim(col) = ''` test | `6b5c930` |
+| The same invalid SQL repeated 3 times, then fell back (Q02) | Retry feedback included DuckDB's error but not the rejected SQL; the prompt also encouraged `ILIKE` on coded columns | Retries show the model its own SQL; coded columns take exact `=`/`IN`; dialect note (no `ILIKE ANY`) | `6b5c930` |
+| Correct counts rejected on first try (Q05–Q07) | For aggregate results with no IDs, the model invented a citation (`[row-0]`) because the prompt demanded citations | The prompt forbids invented references; the checker now rejects any bracketed text that isn't a real row ID | `6b5c930` |
+| "Which …" lists returned 10 of 75 rows (Q29, Q31, Q40) | The prompt's "default LIMIT 10" silently truncated complete lists | LIMIT applies only to top/best/first-N questions | `d6e6b56` |
+| Valid `JOIN … USING` queries rejected, forcing retries; one rewrite changed the meaning (Q28, Q30, Q32, Q39) | **A bug in our guard.** DuckDB 1.5's `get_table_names()` binds the query and fails on valid `USING` joins | The guard reads referenced tables from the parse tree (`json_serialize_sql`). This also rejects every table function structurally, and blocks CTE names that would shadow protected tables. | `1c91cb3` |
+| "Top 10 stale leads" used "never contacted" as the definition in 2 of 3 runs (Q30) | Business terms weren't defined in the prompt | The prompt defines stale / duplicate / missing field and names `data_issues` as the canonical source | `4e95197` |
+| Rule-based mode declined "flagged as duplicates" (Q04) | The parser knew issue types but not the verbs used to say a record has one | Accepts *flagged / marked / tagged …* only next to an issue type ("flagged as spam" is still declined) | `51c7975` |
+
+## Read these numbers with care
+
+- **The prompt fixes were made while looking at the golden set.** Each fix addresses a general cause: data encoding, definitions, dialect, retry context. But they were found using these 50 questions. Unseen questions may expose other gaps.
+- **The golden set is small and easy.** 50 questions, one phrasing each, 7 categories, all answerable with one query over 5 tables. 100% here means "reliable on common analytics questions", not "handles any question".
+- **The rule-based 50/50 is tuned on the test set.** Accuracy went from 22 to 47, 49 and then 50 as vocabulary gaps were fixed. `tests/test_rules.py` holds 7 held-out phrasings and 4 must-decline questions as a fairer check.
+- **Perfect cleaning scores reflect synthetic noise.** The duplicate kinds (case changes, one-character typos, Gmail dots) were designed alongside the detector. Real CRM duplicates (nicknames, job changes, shared inboxes) would lower recall.
+- **Three runs is a small sample.** Zero unstable questions across 3 runs doesn't rule out rarer flips at temperature 0 on a reasoning model.
+- **Latency depends on the free tier.** On this key, rate-limit waits made up 56% and 42% of total question time in the two clean runs (88% in run 3). Use the "excluding backoff" rows to judge model speed. A paid key would change end-to-end latency but not correctness.
+
+## Known limits
+
+- **The checker verifies support, not correctness.** An answer that cites the right rows and repeats their numbers can still describe them wrongly. Grading on returned rows covers the SQL; the prose is only checked for invented IDs, labels and numbers.
+- **Numbers glued to units (`12d`, `3x`) aren't checked,** and numbers from the question are always allowed.
+- **Queries return at most 200 rows.** Golden `id_set` answers are kept below that.
+- **Single dataset, single seed (42).**
 
 ## Reproduce
 
 From `backend/`, with the venv active:
 
 ```bash
-python -m evals.build_golden                                       # rebuild expected answers (only after changing seed/questions)
+python -m evals.build_golden                                                  # rebuild expected answers (after changing seed/questions)
 python -m evals.run --mode offline --runs 3 --out evals/reports/offline.json
-python -m evals.run --mode live --runs 3 --out evals/reports/live.json    # needs GROQ_API_KEY in backend/.env
+python -m evals.run --mode live --runs 3 --out evals/reports/live.json        # needs GROQ_API_KEY in backend/.env
 ```
 
-Each run seeds a fresh temporary database, so it never touches your working data. Without `--out`, the report goes to `evals/latest.json`, which the UI's Evals page shows. `--limit N` runs only the first N questions, for a quick check.
+Each run seeds a fresh temporary database, so it never touches your working data. Without `--out`, the report goes to `evals/latest.json`, which the UI's Evals page shows. A live run uses about 80k tokens and about 100 requests (2 per question, plus retries). On a free-tier key with a daily token cap, **a clean 3-run live eval may not fit in one day**, as run 3 above shows.

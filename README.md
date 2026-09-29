@@ -91,21 +91,23 @@ Scores and issues for the affected leads are then recomputed. Decided actions ca
 
 ## Results
 
-Rule-based (offline) mode, 3 runs. Method, definitions and known failure cases are in **[docs/EVALS.md](docs/EVALS.md)**.
+Three runs of each mode. Method, per-run numbers, the failures found and fixed, and known limits are in **[docs/EVALS.md](docs/EVALS.md)**.
 
-| Metric | Result |
-|---|---|
-| Golden questions answered correctly | 50 / 50 (every run) |
-| Answers passing the citation checker | 100% |
-| Duplicate detection P / R | 1.000 / 1.000 (192 pairs) |
-| Stale detection P / R | 1.000 / 1.000 (480) |
-| Missing-field detection P / R | 1.000 / 1.000 (240) |
+| Metric | Live LLM (Groq `gpt-oss-120b`) | Rule-based (offline) |
+|---|---|---|
+| Golden questions answered correctly | 50/50 in each of 3 runs* | 50/50 in each of 3 runs |
+| Answers passing the citation checker | 100% | 100% |
+| Retry rate (mean of 3 runs) | 0.7% | n/a |
+| Latency p50 / p95, excluding rate-limit waits | about 3.3s / 5–6s (clean runs) | 8 ms / 14 ms |
+| Duplicate / stale / missing-field detection P = R | 1.000 / 1.000 / 1.000 | same |
 
-Caveats on these numbers:
+\* In run 3 the free-tier quota ran out and 17 questions fell back (14 to the rule-based parser). The model's own record is 50/50, 50/50 and 36/36.
 
-- **The offline rules were developed while looking at the golden questions**, so 50/50 overstates how well offline mode handles new phrasings. `tests/test_rules.py` has held-out phrasings and questions it must decline.
-- **Cleaning is perfect because the injected noise is synthetic** and the detectors were designed alongside it. Real CRM data would be harder.
-- **The live LLM path hasn't been benchmarked yet.** Run `python -m evals.run --mode live --runs 3` with `GROQ_API_KEY` set to measure it.
+Caveats:
+
+- **The prompt fixes and the offline rules were developed against these 50 questions.** Treat the scores as "reliable on common analytics questions", not as proof of generalization. `tests/test_rules.py` has held-out and must-decline checks for offline mode.
+- **Cleaning is perfect because the injected noise is synthetic.** Real CRM data would be harder.
+- **The spec's `llama-3.3-70b-versatile` is no longer served by Groq,** so live results use `openai/gpt-oss-120b`.
 
 ## API
 
