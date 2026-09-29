@@ -60,3 +60,21 @@ def test_provider_error_message_is_recorded_and_redacted(groq_only: list[float],
         llm.complete("sys", "user")
     assert "tokens per day" in str(err.value) and "org_01abcXYZ" not in str(err.value)
     assert llm.last_call["error"].startswith("HTTP 429")
+
+
+def test_json_mode_prompt_always_mentions_json(groq_only: list[float], monkeypatch: pytest.MonkeyPatch) -> None:
+    sent: list[dict[str, Any]] = []
+
+    def post(url: str, json: dict[str, Any], **_: Any) -> FakeResponse:
+        sent.append(json)
+        return FakeResponse(200, OK)
+
+    monkeypatch.setattr(llm.httpx, "post", post)
+    llm.complete_json('Return {"sql": "..."}', "question")
+    assert "json" in sent[0]["messages"][0]["content"].lower()
+
+
+def test_app_prompts_mention_json() -> None:
+    from app import ask, explain
+    for prompt in (ask.SQL_SYSTEM, ask.ANSWER_SYSTEM, explain.SYSTEM, explain.DRAFT_SYSTEM):
+        assert "json" in prompt.lower()

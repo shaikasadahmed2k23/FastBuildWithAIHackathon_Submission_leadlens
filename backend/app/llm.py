@@ -159,6 +159,9 @@ def _describe(exc: Exception) -> str:
 
 def complete(system: str, user: str, json_mode: bool = True, purpose: str = "") -> LLMReply:
     """Return the first successful provider reply, or raise ``LLMUnavailable``."""
+    if json_mode and "json" not in system.lower():
+        # Groq rejects JSON mode unless the prompt mentions JSON (HTTP 400). Never let a prompt edit break that.
+        system += "\nRespond in JSON."
     providers = []
     if settings.groq_api_key:
         providers.append(("groq", settings.groq_model, _groq))

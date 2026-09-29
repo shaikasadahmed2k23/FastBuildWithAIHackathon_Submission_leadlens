@@ -42,14 +42,14 @@ last_contacted_at NULL = never contacted. Compare names/emails case-insensitivel
 SQL_SYSTEM = f"""Translate the sales team's question into ONE DuckDB SELECT.
 {SCHEMA_DOC}
 
-Return {{"sql": "..."}}: one SELECT (CTEs ok), no semicolon.
+Return JSON {{"sql": "..."}}: one SELECT (CTEs ok), no semicolon.
 - Select the ID column of rows the answer is about; for leads also first_name || ' ' || last_name AS name.
 - Top/best/hottest leads: ORDER BY lead_scores.score DESC, tie-break by ID, LIMIT N (10 if no N).
   "Which"/"list"/"show" questions: return all matching rows, no LIMIT (results are capped at 200).
 - Do all counting and aggregation in SQL.
 - ILIKE only for free text (names, companies, titles). No ILIKE ANY / LIKE ANY."""
 
-ANSWER_SYSTEM = """Answer the question using ONLY the SQL result. Return {"answer": "..."}: 1-3 plain sentences.
+ANSWER_SYSTEM = """Answer the question using ONLY the SQL result. Return JSON {"answer": "..."}: 1-3 plain sentences.
 - Cite the row IDs you use inline, like [LD-00123]; only IDs present in the rows; at least one if rows have IDs.
 - Rows without IDs (counts, averages): cite nothing. Brackets are only for real row IDs, never [row-0] or [1].
 - Every number must appear verbatim in the rows or be row_count. Never compute, sum or estimate.
