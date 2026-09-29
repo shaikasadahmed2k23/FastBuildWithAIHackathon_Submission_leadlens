@@ -131,7 +131,14 @@ def list_actions(status: ActionStatus | None = None, lead_id: str | None = None)
     where = f"WHERE {' AND '.join(conds)}" if conds else ""
     with db.cursor() as cur:
         rows = db.fetch_dicts(cur, f"SELECT * FROM actions {where} ORDER BY created_at DESC, action_id DESC", params)
-    return [_row_to_action(r) for r in rows]
+        audit: dict[str, list[AuditEntry]] = {}
+        if rows:
+            ids = [r["action_id"] for r in rows]
+            for r in db.fetch_dicts(
+                    cur, 'SELECT id, action_id, event, "at", actor FROM audit_log WHERE list_contains(?, action_id) ORDER BY id',
+                    [ids]):
+                audit.setdefault(r["action_id"], []).append(AuditEntry(**r))
+    return [_row_to_action(r, audit.get(r["action_id"])) for r in rows]
 
 
 def _decide(action_id: str, status: Literal["approved", "rejected"], actor: str, note: str | None) -> None:

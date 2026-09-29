@@ -50,6 +50,20 @@ def test_reject_changes_nothing(fresh_db: GroundTruth) -> None:
     assert _count("SELECT count(*) FROM leads WHERE lead_id = ? AND stage = 'won'", [lead_id]) == 0
 
 
+def test_listed_actions_carry_their_own_audit_trail(fresh_db: GroundTruth) -> None:
+    # The Approvals screen renders from the list, so each listed action needs its audit entries.
+    approved = actions.create("stage_change", [fresh_db.stale[4]], {"stage": "lost"}, "alice")
+    rejected = actions.create("stage_change", [fresh_db.stale[5]], {"stage": "won"}, "alice")
+    actions.approve(approved.action_id, "bob")
+    actions.reject(rejected.action_id, "carol", "not yet")
+    listed = {a.action_id: a for a in actions.list_actions()}
+    assert [e.event.split(":")[0] for e in listed[approved.action_id].audit] == [
+        f"created stage_change for {fresh_db.stale[4]}", "approved", "executed"]
+    assert [(e.event, e.actor) for e in listed[rejected.action_id].audit][1:] == [("rejected: not yet", "carol")]
+    assert [a.action_id for a in actions.list_actions("rejected")] == [rejected.action_id]
+    assert len(actions.list_actions("rejected")[0].audit) == 2
+
+
 def test_decided_actions_cannot_be_decided_again(fresh_db: GroundTruth) -> None:
     a = actions.create("stage_change", [fresh_db.stale[3]], {"stage": "qualified"}, "alice")
     actions.reject(a.action_id, "bob")
