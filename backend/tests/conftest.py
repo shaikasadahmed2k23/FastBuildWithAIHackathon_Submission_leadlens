@@ -6,6 +6,7 @@ import pytest
 
 from app import db
 from app.config import settings
+from app.ratelimit import limiter
 from app.seed import GroundTruth, write_database
 
 
@@ -36,3 +37,14 @@ def fresh_db(seeded: GroundTruth, tmp_path: Path, monkeypatch: pytest.MonkeyPatc
 def offline(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings, "groq_api_key", "")
     monkeypatch.setattr(settings, "gemini_api_key", "")
+
+
+@pytest.fixture(autouse=True)
+def isolate_llm_side_effects(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    """Each test starts with an empty answer cache and rate limiter, and never writes the real call log."""
+    monkeypatch.setattr(settings, "llm_log_path", str(tmp_path / "llm_calls.jsonl"))
+    monkeypatch.setattr(settings, "llm_rate_limit_per_min", 10_000)
+    limiter.reset()
+    if db._conn is not None:
+        db._conn.execute("DELETE FROM llm_cache")
+    yield

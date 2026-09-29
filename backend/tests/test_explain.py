@@ -29,7 +29,7 @@ def test_template_is_valid_and_cites_breakdown(seeded: GroundTruth, monkeypatch:
 def test_llm_note_with_bad_citation_falls_back(seeded: GroundTruth, monkeypatch: pytest.MonkeyPatch) -> None:
     replies: list[dict[str, Any]] = [{"why_now": "Hot lead [ACT-99999]."}, {"why_now": "Score is 999 [LD-00001]."}]
     monkeypatch.setattr(settings, "groq_api_key", "test")
-    monkeypatch.setattr(llm, "complete_json", lambda s, u: (replies.pop(0), "fake"))
+    monkeypatch.setattr(llm, "complete_json", lambda s, u, **_: (replies.pop(0), "fake"))
     e = explain.explain(_top_breakdown())
     assert e.source == "template" and e.valid and len(e.notes) == 2
 
@@ -40,6 +40,6 @@ def test_llm_note_with_valid_citation_is_used(seeded: GroundTruth, monkeypatch: 
     company = next(c for c in b.fit.contributions if c.source == "company")
     note = f"Showed fresh intent [{act.ref}] and fits the ICP [{company.ref}]."
     monkeypatch.setattr(settings, "groq_api_key", "test")
-    monkeypatch.setattr(llm, "complete_json", lambda s, u: ({"why_now": note}, "fake"))
+    monkeypatch.setattr(llm, "complete_json", lambda s, u, **_: ({"why_now": note}, "fake"))
     e = explain.explain(b)
     assert e.source == "llm" and e.valid and e.why_now == note

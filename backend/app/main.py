@@ -6,13 +6,15 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Annotated, Any, Literal
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from app import actions, ask, db, explain, llm
 from app.citations import jsonable
 from app.config import AS_OF, BACKEND_DIR, settings
+from app.demo import DEMO_QUESTIONS
+from app.ratelimit import limiter
 from app.scoring import ScoreBreakdown, score_one
 
 log = logging.getLogger("leadlens")
@@ -188,16 +190,21 @@ def get_lead(lead_id: str) -> dict[str, Any]:
     }
 
 
-_explain_cache: dict[tuple[str, float], explain.Explanation] = {}
+def llm_rate_limit(request: Request) -> None:
+    """Per-client limit on endpoints that may spend LLM tokens."""
+    client = request.client.host if request.client else "unknown"
+    wait = limiter.check(client, settings.llm_rate_limit_per_min)
+    if wait is not None:
+        raise HTTPException(
+            429,
+            f"Rate limit: at most {settings.llm_rate_limit_per_min} requests per minute. Try again in {wait:.0f}s.",
+            headers={"Retry-After": str(max(1, round(wait)))},
+        )
 
 
-@app.post("/leads/{lead_id}/explain")
+@app.post("/leads/{lead_id}/explain", dependencies=[Depends(llm_rate_limit)])
 def explain_lead(lead_id: str) -> explain.Explanation:
-    b = _breakdown(lead_id)
-    key = (lead_id, b.score)
-    if key not in _explain_cache:
-        _explain_cache[key] = explain.explain(b)
-    return _explain_cache[key]
+    return explain.explain(_breakdown(lead_id))
 
 
 @app.get("/rows/{row_id}")
@@ -241,9 +248,15 @@ class AskRequest(BaseModel):
     question: str = Field(min_length=3, max_length=500)
 
 
-@app.post("/ask")
+@app.post("/ask", dependencies=[Depends(llm_rate_limit)])
 def ask_question(req: AskRequest) -> ask.AskResponse:
     return ask.ask(req.question)
+
+
+@app.get("/ask/examples")
+def ask_examples() -> list[str]:
+    """Demo questions; the pre-warm script caches exactly these."""
+    return DEMO_QUESTIONS
 
 
 # ---------------------------------------------------------------- actions

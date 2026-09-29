@@ -5,7 +5,8 @@ services:
     rootDir: backend
     plan: free
     buildCommand: pip install -r requirements.txt && python -m app.seed
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    # --proxy-headers: the per-client rate limit must see the caller's IP, not Render's proxy.
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION

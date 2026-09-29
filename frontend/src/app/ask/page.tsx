@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, ChevronRight, CornerDownLeft, XCircle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
@@ -15,14 +15,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api, type AskResult } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-const EXAMPLES = [
-  "Top 10 open leads in Fintech",
-  "How many stale leads does each owner have?",
-  "Which Healthcare leads had a meeting in the last 2 days?",
-  "Average lead score by industry",
-  "How many leads are missing a phone number?",
-  "Total open pipeline deal value by owner",
-];
 const MAX_TABLE_ROWS = 50;
 
 export default function AskPage() {
@@ -38,6 +30,8 @@ function Ask() {
   const [history, setHistory] = React.useState<AskResult[]>([]);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const qc = useQueryClient();
+  // Same list the pre-warm script caches, so clicking an example costs no tokens.
+  const examples = useQuery({ queryKey: ["ask-examples"], queryFn: api.askExamples, staleTime: Infinity });
 
   const ask = useMutation({
     mutationFn: api.ask,
@@ -107,7 +101,7 @@ function Ask() {
               Try one of these, or press <Kbd>/</Kbd> to type your own.
             </p>
             <div className="flex flex-wrap gap-1.5">
-              {EXAMPLES.map((ex) => (
+              {(examples.data ?? []).map((ex) => (
                 <button
                   key={ex}
                   onClick={() => submit(ex)}
@@ -159,6 +153,7 @@ function AnsweredBy({ result: r }: { result: AskResult }) {
     <span className={cn("shrink-0 text-2xs", tone)}>
       {label}
       {retries ? ` · ${retries} ${retries === 1 ? "retry" : "retries"}` : ""}
+      {r.cached ? " · cached, 0 tokens" : r.tokens ? ` · ${r.tokens.toLocaleString()} tokens` : ""}
     </span>
   );
 }

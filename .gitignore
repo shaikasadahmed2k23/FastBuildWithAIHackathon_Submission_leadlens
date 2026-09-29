@@ -12,6 +12,7 @@ __pycache__/
 # Generated data (rebuilt by `python -m app.seed`)
 backend/data/*.duckdb
 backend/data/*.duckdb.wal
+backend/data/*.jsonl
 backend/evals/results/
 
 # Node

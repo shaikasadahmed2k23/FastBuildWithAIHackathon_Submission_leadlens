@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     leadlens_db_path: str = str(DATA_DIR / "leadlens.duckdb")
     cors_origins: str = "http://localhost:3000"
     llm_timeout_s: float = 20.0
+    # JSONL ledger of every LLM call (tokens, latency, errors). Gitignored.
+    llm_log_path: str = str(DATA_DIR / "llm_calls.jsonl")
+    # Per-client limit on LLM-backed endpoints (/ask, /explain), requests per minute.
+    llm_rate_limit_per_min: int = 10
 
     @property
     def db_path(self) -> Path:

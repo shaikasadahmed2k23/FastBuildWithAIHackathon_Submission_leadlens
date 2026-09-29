@@ -61,7 +61,7 @@ def run_questions(golden: list[dict[str, Any]]) -> list[dict[str, Any]]:
         tokens_before, limited_before = llm.stats["tokens"], llm.stats["rate_limited"]
         backoff_before = llm.stats["backoff_ms"]
         started = time.perf_counter()
-        r = ask.ask(g["question"])
+        r = ask.ask(g["question"], use_cache=False)  # measure the model, not the cache
         latency_ms = round((time.perf_counter() - started) * 1000)
         got = extract(g["kind"], r.rows) if r.sql else None
         results.append({

@@ -174,6 +174,8 @@ export interface AskResult {
   attempts: number;
   answer_attempts: number;
   fallback: "none" | "template" | "rules";
+  cached: boolean;
+  tokens: number;
   notes: string[];
 }
 
@@ -270,4 +272,5 @@ export const api = {
   decide: (id: string, decision: "approve" | "reject", body: { actor: string; note?: string }) =>
     request<Action>(`/actions/${id}/${decision}`, { method: "POST", body: JSON.stringify(body) }),
   evals: () => request<EvalReport>("/evals/latest"),
+  askExamples: () => request<string[]>("/ask/examples"),
 };

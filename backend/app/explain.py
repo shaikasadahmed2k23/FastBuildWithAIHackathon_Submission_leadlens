@@ -5,7 +5,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel
 
-from app import citations, llm
+from app import cache, citations, llm
+from app.config import settings
 from app.scoring import ScoreBreakdown
 
 MAX_ATTEMPTS = 2
@@ -26,6 +27,8 @@ class Explanation(BaseModel):
     valid: bool
     source: Literal["llm", "template"]
     provider: str | None = None
+    cached: bool = False
+    tokens: int = 0
     notes: list[str] = []
 
 
@@ -58,7 +61,23 @@ def template(b: ScoreBreakdown) -> str:
     return text[0].upper() + text[1:] + "."
 
 
-def explain(b: ScoreBreakdown, context: dict[str, Any] | None = None) -> Explanation:
+def explain(b: ScoreBreakdown, context: dict[str, Any] | None = None, use_cache: bool = True) -> Explanation:
+    """Why-now note for a lead. Verified LLM notes are cached until the lead's score or the data changes."""
+    key = None
+    if use_cache and llm.available():
+        prompt = cache.fingerprint(SYSTEM, settings.groq_model, settings.groq_reasoning_effort, settings.gemini_model)
+        key = cache.make_key("explain", f"{b.lead_id}|{b.score}", prompt)
+        if hit := cache.get("explain", key):
+            return Explanation(**{**hit, "cached": True, "tokens": 0})
+    with llm.track_usage() as usage:
+        result = _explain(b, context)
+    result.tokens = usage.tokens
+    if key and result.source == "llm" and result.valid:
+        cache.put("explain", key, result.model_dump())
+    return result
+
+
+def _explain(b: ScoreBreakdown, context: dict[str, Any] | None) -> Explanation:
     rows = evidence_rows(b)
     # Summaries embed numbers (e.g. "600-person"), so they count as evidence too.
     evidence = rows + [{"fit": b.fit.summary, "intent": b.intent.summary, "recency": b.recency.summary}]
@@ -73,7 +92,7 @@ def explain(b: ScoreBreakdown, context: dict[str, Any] | None = None) -> Explana
             if feedback:
                 user += f"\n\nYour previous note was rejected: {feedback}. Fix it."
             try:
-                data, provider = llm.complete_json(SYSTEM, user)
+                data, provider = llm.complete_json(SYSTEM, user, purpose="explain")
             except llm.LLMUnavailable as exc:
                 notes.append(f"LLM unavailable: {exc}")
                 break
@@ -125,7 +144,7 @@ def draft_outreach(b: ScoreBreakdown, lead: dict[str, Any], company: dict[str, A
                  "stage": lead.get("stage"), "recent_activity": [c.field for c in b.intent.contributions[:3]],
                  "follow_up_status": b.recency.summary}
         try:
-            data, _ = llm.complete_json(DRAFT_SYSTEM, json.dumps(facts, default=str))
+            data, _ = llm.complete_json(DRAFT_SYSTEM, json.dumps(facts, default=str), purpose="draft")
             subject, body = str(data.get("subject", "")).strip(), str(data.get("body", "")).strip()
             evidence = [{k: str(v) for k, v in facts.items()}]
             if subject and body and citations.check(f"{subject} {body}", evidence, require_citation=False).valid:

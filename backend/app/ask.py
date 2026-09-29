@@ -6,70 +6,62 @@ from typing import Any, Literal
 
 from pydantic import BaseModel
 
-from app import citations, llm, rules, sql_guard
-from app.config import AS_OF_SQL, OPEN_STAGES
+from app import cache, citations, llm, rules, sql_guard
+from app.config import AS_OF_SQL, settings
 
 MAX_SQL_ATTEMPTS = 3
 MAX_ANSWER_ATTEMPTS = 2
-PROMPT_ROWS = 40
+PROMPT_ROWS = 12  # rows shown to the answer writer; the checker still sees all rows
 TEMPLATE_ROWS = 5
 
-SCHEMA_DOC = f"""DuckDB tables (read-only):
-companies(company_id VARCHAR 'CO-00001', name, domain, industry, employees INT, country, created_at TIMESTAMP)
-leads(lead_id VARCHAR 'LD-00001', company_id, first_name, last_name, email, phone, title,
-      seniority ['c_level','vp','director','manager','individual'],
-      source ['website','referral','linkedin','event','cold_outbound','partner'], stage, deal_value DOUBLE NULL,
-      owner, created_at, last_contacted_at TIMESTAMP NULL (NULL = never contacted), updated_at)
-activities(activity_id VARCHAR 'ACT-00001', lead_id, type, occurred_at TIMESTAMP)
-  type in ['email_open','email_reply','call','meeting','demo_request','website_visit','pricing_page_visit']
-data_issues(issue_id VARCHAR 'ISS-00001', lead_id, issue_type ['duplicate','stale','missing_field'],
-            details VARCHAR (e.g. 'Missing email'), related_lead_id VARCHAR NULL)
-lead_scores(lead_id, score DOUBLE 0-100, fit 0-40, intent 0-40, recency 0-20)
+# Kept deliberately terse: every line carries a fact the model got wrong without it
+# (blank encoding, exact codes, definitions, dialect, LIMIT rule). See docs/EVALS.md.
+SCHEMA_DOC = f"""DuckDB tables (read-only). IDs look like LD-00001, CO-00001, ACT-00001, ISS-00001.
+companies(company_id, name, domain, industry, employees, country, created_at)
+leads(lead_id, company_id, first_name, last_name, email, phone, title, seniority, source, stage,
+      deal_value, owner, created_at, last_contacted_at, updated_at)
+activities(activity_id, lead_id, type, occurred_at)
+data_issues(issue_id, lead_id, issue_type, details, related_lead_id)
+lead_scores(lead_id, score 0-100, fit 0-40, intent 0-40, recency 0-20)
 
-Stages: open = {list(OPEN_STAGES)}, closed = ['won','lost'].
-Industries: Software, Fintech, Healthcare, E-commerce, Logistics, Manufacturing, Education, Media.
-Owners are full names, e.g. 'Maya Chen'. Countries are ISO codes ('US','GB','DE','IN','CA','AU','FR').
-The dataset is frozen: "now" is {AS_OF_SQL}. Never use now(), current_date or current_timestamp.
+Exact codes (compare with = or IN, never LIKE):
+seniority: c_level vp director manager individual
+source: website referral linkedin event cold_outbound partner
+stage: open = new contacted qualified proposal negotiation; closed = won lost
+activities.type: email_open email_reply call meeting demo_request website_visit pricing_page_visit
+issue_type: duplicate stale missing_field (details like 'Missing email')
+industry: Software Fintech Healthcare E-commerce Logistics Manufacturing Education Media
+country: US GB DE IN CA AU FR. owner: full name, e.g. 'Maya Chen'.
 
-Definitions (data_issues is the canonical source for data-quality questions; use it rather
-than re-deriving these rules):
-- stale: an open lead with no contact for more than 90 days (issue_type 'stale').
-- duplicate: lead_id is the newer duplicate record; related_lead_id is the record it duplicates.
-- missing field: details says which field, e.g. 'Missing email' (issue_type 'missing_field').
+Now is {AS_OF_SQL} (frozen data; never now()/current_date).
+Data-quality questions: use data_issues. stale = open lead with no contact for >90 days.
+duplicate: lead_id is the newer copy of related_lead_id.
+Missing text is NULL, '' or whitespace: (col IS NULL OR trim(col) = '').
+last_contacted_at NULL = never contacted. Compare names/emails case-insensitively."""
 
-Data quirks (the CRM is messy on purpose):
-- A missing email/phone/title may be stored as NULL, '' or whitespace. Test "missing" with
-  (col IS NULL OR trim(col) = ''). data_issues rows with issue_type 'missing_field' list the same leads.
-- Names and emails can have inconsistent case; compare them case-insensitively."""
-
-SQL_SYSTEM = f"""You translate a sales team's question into ONE DuckDB SELECT query.
+SQL_SYSTEM = f"""Translate the sales team's question into ONE DuckDB SELECT.
 {SCHEMA_DOC}
 
-Rules:
-- Return JSON: {{"sql": "..."}}. One SELECT (CTEs allowed). No DDL/DML, no semicolons.
-- When the answer concerns specific leads/companies/activities, SELECT their ID column
-  (lead_id, company_id, activity_id, issue_id) so the answer can cite them.
-- For "top"/"best"/"hottest" leads, rank by lead_scores.score DESC, tie-break by lead_id.
-- Include a readable name column when listing leads (first_name || ' ' || last_name AS name).
-- LIMIT only for ranking questions ("top", "best", "hottest", "first N"): use N, or 10 if no
-  number is given. For "which"/"list"/"show" questions return every matching row (no LIMIT;
-  the system caps results at 200). Never truncate a complete list silently.
-- Aggregate in SQL; never expect the reader to count or compute.
-- Coded columns (stage, seniority, source, type, issue_type, industry, country, owner) hold the exact
-  values listed above: compare with = or IN (...). Use ILIKE only for free text such as names,
-  company names or titles.
-- DuckDB dialect: no ILIKE ANY/ALL, no LIKE ANY; write separate conditions joined with OR instead."""
+Return {{"sql": "..."}}: one SELECT (CTEs ok), no semicolon.
+- Select the ID column of rows the answer is about; for leads also first_name || ' ' || last_name AS name.
+- Top/best/hottest leads: ORDER BY lead_scores.score DESC, tie-break by ID, LIMIT N (10 if no N).
+  "Which"/"list"/"show" questions: return all matching rows, no LIMIT (results are capped at 200).
+- Do all counting and aggregation in SQL.
+- ILIKE only for free text (names, companies, titles). No ILIKE ANY / LIKE ANY."""
 
-ANSWER_SYSTEM = """You answer a sales team's question using ONLY the SQL result rows provided.
-Return JSON: {"answer": "..."}.
-- 1-3 short sentences, plain and specific. No preamble, no markdown headers.
-- Cite the row IDs you rely on inline in square brackets, e.g. [LD-00123] or [ACT-04567].
-  Cite only IDs that appear in the rows. If rows have IDs, you must cite at least one.
-- If the rows have no ID values (e.g. a count or an average), cite nothing. Never invent
-  reference labels such as [row-0] or [1]; square brackets are only for real row IDs.
-- Every number you write must appear verbatim in the rows (or be the row count).
-  Do not compute, sum, average or estimate anything yourself.
-- If the rows are empty, say no matching records were found."""
+ANSWER_SYSTEM = """Answer the question using ONLY the SQL result. Return {"answer": "..."}: 1-3 plain sentences.
+- Cite the row IDs you use inline, like [LD-00123]; only IDs present in the rows; at least one if rows have IDs.
+- Rows without IDs (counts, averages): cite nothing. Brackets are only for real row IDs, never [row-0] or [1].
+- Every number must appear verbatim in the rows or be row_count. Never compute, sum or estimate.
+- Only the first rows may be shown; row_count is the total. Empty result: say nothing matched."""
+
+# Cached answers are only reused by the exact prompts and models that produced them.
+PROMPT_FINGERPRINT = cache.fingerprint(SQL_SYSTEM, ANSWER_SYSTEM)
+
+
+def _model_fingerprint() -> str:
+    return cache.fingerprint(PROMPT_FINGERPRINT, settings.groq_model, settings.groq_reasoning_effort,
+                             settings.gemini_model)
 
 
 class AskResponse(BaseModel):
@@ -87,6 +79,8 @@ class AskResponse(BaseModel):
     # How the final answer was produced when the LLM path didn't fully succeed:
     # "template" = LLM SQL + deterministic summary; "rules" = rule-based parser after an LLM failure.
     fallback: Literal["none", "template", "rules"] = "none"
+    cached: bool = False  # served from the answer cache: no LLM call, zero tokens
+    tokens: int = 0  # LLM tokens spent producing this response
     notes: list[str] = []
 
 
@@ -126,16 +120,17 @@ def template_answer(columns: list[str], rows: list[dict[str, Any]]) -> str:
 
 def _answer_with_llm(question: str, sql: str, columns: list[str], rows: list[dict[str, Any]],
                      feedback: str | None) -> tuple[str, str]:
+    # Column names once plus value arrays: far fewer tokens than a list of dicts.
     payload = {
         "question": question,
-        "sql": sql,
         "row_count": len(rows),
-        "rows": [{k: citations.jsonable(v) for k, v in r.items()} for r in rows[:PROMPT_ROWS]],
+        "columns": columns,
+        "rows": [[citations.jsonable(r[c]) for c in columns] for r in rows[:PROMPT_ROWS]],
     }
-    user = json.dumps(payload, default=str)
+    user = json.dumps(payload, default=str, separators=(",", ":"))
     if feedback:
         user += f"\n\nYour previous answer was rejected: {feedback}. Fix it."
-    data, provider = llm.complete_json(ANSWER_SYSTEM, user)
+    data, provider = llm.complete_json(ANSWER_SYSTEM, user, purpose="ask.answer")
     return str(data.get("answer", "")).strip(), provider
 
 
@@ -166,7 +161,7 @@ def _ask_llm(question: str, notes: list[str]) -> AskResponse | None:
             user += f"\n\n{feedback}\nWrite a corrected query."
         candidate = ""
         try:
-            data, provider = llm.complete_json(SQL_SYSTEM, user)
+            data, provider = llm.complete_json(SQL_SYSTEM, user, purpose="ask.sql")
             candidate = str(data.get("sql", ""))
             sql, columns, rows = sql_guard.run(candidate)
         except llm.LLMUnavailable as exc:
@@ -201,15 +196,25 @@ def _ask_llm(question: str, notes: list[str]) -> AskResponse | None:
     return None
 
 
-def ask(question: str) -> AskResponse:
+def ask(question: str, use_cache: bool = True) -> AskResponse:
+    """Answer a question. Valid LLM answers are cached until the data changes."""
     question = question.strip()
     notes: list[str] = []
     llm_failed = False
+    spent = 0
     if llm.available():
-        result = _ask_llm(question, notes)
+        key = cache.make_key("ask", cache.normalize_question(question), _model_fingerprint()) if use_cache else None
+        if key and (hit := cache.get("ask", key)):
+            return AskResponse(**{**hit, "question": question, "cached": True, "tokens": 0})
+        with llm.track_usage() as usage:
+            result = _ask_llm(question, notes)
         if result is not None:
+            result.tokens = usage.tokens
+            # Only fully-LLM, verified answers are reused; fallbacks may reflect a transient outage.
+            if key and result.valid and result.fallback == "none":
+                cache.put("ask", key, result.model_dump())
             return result
-        llm_failed = True
+        llm_failed, spent = True, usage.tokens
         notes.append("Used the rule-based parser instead.")
     else:
         notes.append("No LLM key configured; used the rule-based parser.")
@@ -221,8 +226,11 @@ def ask(question: str) -> AskResponse:
             answer="I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", "
                    "\"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
             sql=None, columns=[], rows=[], citations=[], valid=False, source="none",
-            attempts=MAX_SQL_ATTEMPTS if llm_failed else 0, fallback="rules" if llm_failed else "none", notes=notes,
+            attempts=MAX_SQL_ATTEMPTS if llm_failed else 0, fallback="rules" if llm_failed else "none",
+            tokens=spent, notes=notes,
         )
     sql, columns, rows = sql_guard.run(matched.sql)
-    return _finish(question, sql, columns, rows, template_answer(columns, rows), source="rules",
-                   fallback="rules" if llm_failed else "none", notes=notes + [f"Matched rule: {matched.rule}"])
+    result = _finish(question, sql, columns, rows, template_answer(columns, rows), source="rules",
+                     fallback="rules" if llm_failed else "none", notes=notes + [f"Matched rule: {matched.rule}"])
+    result.tokens = spent
+    return result

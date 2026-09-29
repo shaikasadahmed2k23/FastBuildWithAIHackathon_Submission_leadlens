@@ -18,7 +18,7 @@ class FakeLLM:
         self.replies = replies
         self.prompts: list[str] = []
 
-    def __call__(self, system: str, user: str) -> tuple[dict[str, Any], str]:
+    def __call__(self, system: str, user: str, purpose: str = "") -> tuple[dict[str, Any], str]:
         self.prompts.append(user)
         if not self.replies:
             raise llm.LLMUnavailable("script exhausted")
@@ -103,7 +103,7 @@ def test_fallback_labels_and_attempt_counts(seeded: GroundTruth, fake_llm: Calla
     assert (r.fallback, r.attempts, r.answer_attempts) == ("none", 1, 2)
 
     fake_llm([{"sql": TOP3}, {"answer": "Top is [LD-99999]."}, {"answer": "Top is [LD-99998]."}])
-    assert ask.ask("top 3 leads").fallback == "template"
+    assert ask.ask("top 3 leads", use_cache=False).fallback == "template"
 
 
 def test_repeated_bad_sql_falls_back_to_rules(seeded: GroundTruth, fake_llm: Callable[..., FakeLLM]) -> None:

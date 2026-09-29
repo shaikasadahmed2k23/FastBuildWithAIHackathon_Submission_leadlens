@@ -75,6 +75,18 @@ CREATE TABLE IF NOT EXISTS audit_log (
     "at"       TIMESTAMP NOT NULL,
     actor      VARCHAR NOT NULL
 );
+CREATE TABLE IF NOT EXISTS meta (
+    key    VARCHAR PRIMARY KEY,
+    value  VARCHAR NOT NULL
+);
+CREATE TABLE IF NOT EXISTS llm_cache (
+    kind        VARCHAR NOT NULL,
+    key         VARCHAR NOT NULL,
+    payload     VARCHAR NOT NULL,
+    created_at  TIMESTAMP NOT NULL,
+    hits        INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (kind, key)
+);
 CREATE INDEX IF NOT EXISTS idx_activities_lead ON activities(lead_id);
 CREATE INDEX IF NOT EXISTS idx_issues_lead ON data_issues(lead_id);
 """
