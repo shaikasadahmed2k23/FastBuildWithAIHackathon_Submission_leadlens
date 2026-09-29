@@ -207,13 +207,15 @@ def ask(question: str, use_cache: bool = True) -> AskResponse:
         key = cache.make_key("ask", cache.normalize_question(question), _model_fingerprint()) if use_cache else None
         if key and (hit := cache.get("ask", key)):
             return AskResponse(**{**hit, "question": question, "cached": True, "tokens": 0})
+        snap = cache.snapshot() if key else {}
         with llm.track_usage() as usage:
             result = _ask_llm(question, notes)
         if result is not None:
             result.tokens = usage.tokens
             # Only fully-LLM, verified answers are reused; fallbacks may reflect a transient outage.
-            if key and result.valid and result.fallback == "none":
-                cache.put("ask", key, result.model_dump())
+            if key and result.valid and result.fallback == "none" and result.sql:
+                # The entry stays valid until a table this SQL reads changes.
+                cache.put("ask", key, result.model_dump(), snap, sql_guard.referenced_tables(result.sql))
             return result
         llm_failed, spent = True, usage.tokens
         notes.append("Used the rule-based parser instead.")

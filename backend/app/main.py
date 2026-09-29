@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field
 from app import actions, ask, db, explain, importer, llm
 from app.citations import jsonable
 from app.config import AS_OF, BACKEND_DIR, settings
-from app.demo import DEMO_QUESTIONS
+from app.demo import DEMO_QUESTIONS, ResetResult, reset_demo_data
 from app.ratelimit import limiter
 from app.scoring import ScoreBreakdown, score_one
 
@@ -325,6 +325,16 @@ def approve_action(action_id: str, d: Decision) -> actions.Action:
 @app.post("/actions/{action_id}/reject")
 def reject_action(action_id: str, d: Decision) -> actions.Action:
     return _transition(actions.reject, action_id, d)
+
+
+# ---------------------------------------------------------------- demo
+
+@app.post("/admin/reset-demo")
+def reset_demo() -> ResetResult:
+    """Restore the seed-42 dataset and the pre-computed answer cache (discards approvals and imports)."""
+    if not settings.demo_reset_enabled:
+        raise HTTPException(403, "demo reset is disabled on this deployment")
+    return reset_demo_data()
 
 
 # ---------------------------------------------------------------- import

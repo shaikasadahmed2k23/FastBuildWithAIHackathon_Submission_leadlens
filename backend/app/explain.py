@@ -10,6 +10,8 @@ from app.config import settings
 from app.scoring import ScoreBreakdown
 
 MAX_ATTEMPTS = 2
+# score_one() reads exactly these; a cached note is stale once any of them changes.
+BREAKDOWN_TABLES = ("leads", "companies", "activities")
 PROMPT_CONTRIBUTIONS = 8
 
 SYSTEM = """You write a one-line "why now" note telling a salesperson why to act on a lead today.
@@ -62,18 +64,19 @@ def template(b: ScoreBreakdown) -> str:
 
 
 def explain(b: ScoreBreakdown, context: dict[str, Any] | None = None, use_cache: bool = True) -> Explanation:
-    """Why-now note for a lead. Verified LLM notes are cached until the lead's score or the data changes."""
+    """Why-now note for a lead. Verified LLM notes are cached until a table the breakdown reads changes."""
     key = None
     if use_cache and llm.available():
         prompt = cache.fingerprint(SYSTEM, settings.groq_model, settings.groq_reasoning_effort, settings.gemini_model)
         key = cache.make_key("explain", f"{b.lead_id}|{b.score}", prompt)
         if hit := cache.get("explain", key):
             return Explanation(**{**hit, "cached": True, "tokens": 0})
+    snap = cache.snapshot() if key else {}
     with llm.track_usage() as usage:
         result = _explain(b, context)
     result.tokens = usage.tokens
     if key and result.source == "llm" and result.valid:
-        cache.put("explain", key, result.model_dump())
+        cache.put("explain", key, result.model_dump(), snap, BREAKDOWN_TABLES)
     return result
 
 

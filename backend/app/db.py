@@ -75,14 +75,11 @@ CREATE TABLE IF NOT EXISTS audit_log (
     "at"       TIMESTAMP NOT NULL,
     actor      VARCHAR NOT NULL
 );
-CREATE TABLE IF NOT EXISTS meta (
-    key    VARCHAR PRIMARY KEY,
-    value  VARCHAR NOT NULL
-);
 CREATE TABLE IF NOT EXISTS llm_cache (
     kind        VARCHAR NOT NULL,
     key         VARCHAR NOT NULL,
     payload     VARCHAR NOT NULL,
+    deps        VARCHAR NOT NULL DEFAULT '{}',  -- JSON {table: content hash} the answer read
     created_at  TIMESTAMP NOT NULL,
     hits        INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY (kind, key)
@@ -109,6 +106,8 @@ def connect(path: Path | None = None) -> duckdb.DuckDBPyConnection:
         target.parent.mkdir(parents=True, exist_ok=True)
         _conn = duckdb.connect(str(target))
         _conn.execute(SCHEMA)
+        # Databases created before per-table invalidation lack this column.
+        _conn.execute("ALTER TABLE llm_cache ADD COLUMN IF NOT EXISTS deps VARCHAR DEFAULT '{}'")
         # Sandbox: generated SQL can never read files, URLs or attach databases.
         _conn.execute("SET enable_external_access = false")
         _conn_path = target
@@ -137,6 +136,13 @@ def write_cursor() -> Iterator[duckdb.DuckDBPyConnection]:
     """Serialize writes so read-modify-write sequences don't interleave."""
     with _write_lock, cursor() as cur:
         yield cur
+
+
+@contextmanager
+def exclusive() -> Iterator[None]:
+    """Hold the write lock without a cursor, e.g. while the database file is replaced."""
+    with _write_lock:
+        yield
 
 
 def fetch_dicts(cur: duckdb.DuckDBPyConnection, sql: str, params: list[Any] | None = None) -> list[dict[str, Any]]:

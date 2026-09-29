@@ -4,7 +4,7 @@ from collections.abc import Iterator
 import pytest
 from fastapi.testclient import TestClient
 
-from app import cache, db, importer
+from app import db, importer
 from app.config import DATA_DIR
 from app.main import app
 from app.seed import GroundTruth
@@ -71,7 +71,6 @@ def test_preview_matches_sample_file() -> None:
 def test_import_sample_runs_cleaning_and_scoring(fresh_db: GroundTruth) -> None:
     with db.cursor() as cur:
         leads_before = cur.execute("SELECT count(*) FROM leads").fetchone()[0]
-        version_before = cache.data_version(cur)
     p = importer.preview(SAMPLE.read_bytes(), SAMPLE.name)
     result = importer.run_import(SAMPLE.read_bytes(), SAMPLE.name, p.mapping, "tester")
 
@@ -92,7 +91,6 @@ def test_import_sample_runs_cleaning_and_scoring(fresh_db: GroundTruth) -> None:
         scored = cur.execute("SELECT count(*) FROM lead_scores WHERE lead_id IN (SELECT unnest(?))",
                              [result.lead_ids]).fetchone()[0]
         assert scored == 288
-        assert cache.data_version(cur) == version_before + 1  # cached answers are invalidated
         audit = cur.execute("SELECT event FROM audit_log WHERE action_id = ?", [result.batch_id]).fetchone()[0]
     assert "imported 288 leads" in audit
 

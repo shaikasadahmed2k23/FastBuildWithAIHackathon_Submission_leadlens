@@ -14,7 +14,7 @@ from typing import Any
 import pandas as pd
 from pydantic import BaseModel
 
-from app import cache, db
+from app import db
 from app.cleaning import detect_issues
 from app.config import ALL_STAGES, AS_OF, ICP
 from app.scoring import rescore
@@ -368,7 +368,6 @@ def run_import(content: bytes, filename: str, mapping: dict[str, str | None], ac
         # Derived data: duplicates can span old and new leads, so cleaning runs over everything.
         detect_issues(cur)
         rescore(cur, lead_ids)
-        cache.bump_data_version(cur)
         # Imported leads involved in each issue; for duplicates an imported lead may be either side of the pair.
         issues = dict(cur.execute(
             """SELECT issue_type, count(DISTINCT imported) FROM (

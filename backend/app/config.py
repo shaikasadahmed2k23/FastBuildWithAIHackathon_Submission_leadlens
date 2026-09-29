@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     llm_log_path: str = str(DATA_DIR / "llm_calls.jsonl")
     # Per-client limit on LLM-backed endpoints (/ask, /explain), requests per minute.
     llm_rate_limit_per_min: int = 10
+    # "Reset demo data": rebuild the seed-42 database and load this pre-computed answer cache.
+    demo_reset_enabled: bool = True
+    answer_cache_seed_path: str = str(DATA_DIR / "answer_cache_seed.json")
 
     @property
     def db_path(self) -> Path:

@@ -3,6 +3,7 @@
 import json
 import re
 import threading
+from dataclasses import dataclass
 from typing import Any
 
 import duckdb
@@ -53,6 +54,39 @@ def _walk(node: Any, visit: Any) -> None:
             _walk(value, visit)
 
 
+@dataclass
+class _Refs:
+    tables: list[tuple[str, str]]  # (schema, table) for every base-table reference
+    functions: list[str]  # table functions (read_csv, range, ...)
+    ctes: list[str]
+
+
+def _parse_refs(sql: str, cur: duckdb.DuckDBPyConnection) -> _Refs:
+    """Table references from DuckDB's parse tree (no binding needed)."""
+    tree = json.loads(cur.execute("SELECT json_serialize_sql(?)", [sql]).fetchone()[0])
+    if tree.get("error"):
+        raise UnsafeSQL(f"syntax error: {tree.get('error_message', 'could not parse')}")
+    refs = _Refs([], [], [])
+
+    def visit(node: dict[str, Any]) -> None:
+        if node.get("type") == "BASE_TABLE":
+            refs.tables.append((node.get("schema_name") or "", node.get("table_name", "")))
+        elif node.get("type") == "TABLE_FUNCTION":
+            refs.functions.append(str(node.get("function", {}).get("function_name", "?")))
+        if isinstance(node.get("cte_map"), dict):
+            refs.ctes.extend(entry["key"] for entry in node["cte_map"].get("map", []))
+
+    _walk(tree, visit)
+    return refs
+
+
+def referenced_tables(sql: str) -> set[str]:
+    """Real tables a (validated) query reads; CTE names are excluded."""
+    with db.cursor() as cur:
+        refs = _parse_refs(sql, cur)
+    return {t for _, t in refs.tables if t not in refs.ctes}
+
+
 def _check_tables(sql: str, cur: duckdb.DuckDBPyConnection) -> None:
     """Allow only queryable tables, found from the parse tree.
 
@@ -60,30 +94,15 @@ def _check_tables(sql: str, cur: duckdb.DuckDBPyConnection) -> None:
     fails on valid ``JOIN ... USING`` clauses. Parsing needs no binding; column
     errors surface at execution with a precise message for the model to fix.
     """
-    tree = json.loads(cur.execute("SELECT json_serialize_sql(?)", [sql]).fetchone()[0])
-    if tree.get("error"):
-        raise UnsafeSQL(f"syntax error: {tree.get('error_message', 'could not parse')}")
-    tables: list[tuple[str, str]] = []
-    functions: list[str] = []
-    ctes: list[str] = []
-
-    def visit(node: dict[str, Any]) -> None:
-        if node.get("type") == "BASE_TABLE":
-            tables.append((node.get("schema_name") or "", node.get("table_name", "")))
-        elif node.get("type") == "TABLE_FUNCTION":
-            functions.append(str(node.get("function", {}).get("function_name", "?")))
-        if isinstance(node.get("cte_map"), dict):
-            ctes.extend(entry["key"] for entry in node["cte_map"].get("map", []))
-
-    _walk(tree, visit)
-    if functions:
-        raise UnsafeSQL(f"table functions are not allowed: {', '.join(sorted(set(functions)))}")
+    refs = _parse_refs(sql, cur)
+    if refs.functions:
+        raise UnsafeSQL(f"table functions are not allowed: {', '.join(sorted(set(refs.functions)))}")
     protected = {r[0] for r in cur.execute("SELECT table_name FROM duckdb_tables()").fetchall()} - set(db.QUERYABLE_TABLES)
-    shadowing = sorted(set(ctes) & protected)
+    shadowing = sorted(set(refs.ctes) & protected)
     if shadowing:
         raise UnsafeSQL(f"CTE name not allowed: {', '.join(shadowing)}")
-    disallowed = sorted({f"{s}.{t}" if s else t for s, t in tables
-                         if t not in ctes and (s not in ("", "main") or t not in db.QUERYABLE_TABLES)})
+    disallowed = sorted({f"{s}.{t}" if s else t for s, t in refs.tables
+                         if t not in refs.ctes and (s not in ("", "main") or t not in db.QUERYABLE_TABLES)})
     if disallowed:
         raise UnsafeSQL(f"table not allowed: {', '.join(disallowed)}")
 

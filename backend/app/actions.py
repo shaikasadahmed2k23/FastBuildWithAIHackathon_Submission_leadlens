@@ -11,7 +11,7 @@ from typing import Any, Literal
 import duckdb
 from pydantic import BaseModel, Field
 
-from app import cache, db
+from app import db
 from app.cleaning import refresh_issues
 from app.config import AS_OF, ALL_STAGES
 from app.scoring import rescore
@@ -169,7 +169,6 @@ def approve(action_id: str, actor: str, note: str | None = None) -> Action:
         # Derived tables are recomputed after the commit; they can always be rebuilt.
         refresh_issues(cur, touched)
         rescore(cur, touched)
-        cache.bump_data_version(cur)  # cached answers describe the old data
     return get(action_id)
 
 
