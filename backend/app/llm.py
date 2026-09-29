@@ -6,6 +6,7 @@ scores or numbers; callers verify everything it returns.
 
 import json
 import logging
+import re
 import time
 from collections import Counter
 from dataclasses import dataclass
@@ -94,6 +95,19 @@ def _gemini(system: str, user: str, json_mode: bool) -> str:
     return data["candidates"][0]["content"]["parts"][0]["text"]
 
 
+def _describe(exc: Exception) -> str:
+    """Short error text, including the provider's own message (e.g. which quota was hit)."""
+    if isinstance(exc, httpx.HTTPStatusError) and exc.response is not None:
+        try:
+            message = exc.response.json().get("error", {}).get("message", "")
+        except ValueError:
+            message = exc.response.text
+        # Provider messages can name the account's organization ID; it surfaces in /health and notes.
+        message = re.sub(r"\borg_[A-Za-z0-9]+\b", "org_…", str(message))
+        return f"HTTP {exc.response.status_code}: {message[:200]}".rstrip(": ")
+    return f"{type(exc).__name__}: {str(exc)[:200]}".rstrip(": ")
+
+
 def complete(system: str, user: str, json_mode: bool = True) -> LLMReply:
     """Return the first successful provider reply, or raise ``LLMUnavailable``."""
     providers = []
@@ -107,11 +121,12 @@ def complete(system: str, user: str, json_mode: bool = True) -> LLMReply:
         try:
             text = call(system, user, json_mode)
         except (httpx.HTTPError, KeyError, IndexError, ValueError) as exc:
-            log.warning("LLM provider %s failed: %s", name, exc)
+            detail = _describe(exc)
+            log.warning("LLM provider %s failed: %s", name, detail)
             stats["failures"] += 1
-            errors.append(f"{name}: {type(exc).__name__}")
+            errors.append(f"{name}: {detail}")
             last_call.update(provider=name, ok=False, at=datetime.now(UTC).isoformat(timespec="seconds"),
-                             error=type(exc).__name__)
+                             error=detail)
             continue
         last_call.update(provider=name, ok=True, at=datetime.now(UTC).isoformat(timespec="seconds"), error=None)
         return LLMReply(text=text, provider=name)

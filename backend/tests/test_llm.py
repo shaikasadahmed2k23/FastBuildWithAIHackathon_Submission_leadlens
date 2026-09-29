@@ -50,3 +50,13 @@ def test_persistent_rate_limit_raises_unavailable(groq_only: list[float], monkey
         llm.complete("sys", "user")
     assert len(groq_only) == llm.MAX_RATE_LIMIT_RETRIES
     assert llm.last_call["ok"] is False
+
+
+def test_provider_error_message_is_recorded_and_redacted(groq_only: list[float], monkeypatch: pytest.MonkeyPatch) -> None:
+    body = {"error": {"message": "Rate limit reached for model in organization `org_01abcXYZ` on tokens per day (TPD)"}}
+    response = httpx.Response(429, json=body, request=httpx.Request("POST", llm.GROQ_URL))
+    monkeypatch.setattr(llm.httpx, "post", lambda *a, **k: response)
+    with pytest.raises(llm.LLMUnavailable) as err:
+        llm.complete("sys", "user")
+    assert "tokens per day" in str(err.value) and "org_01abcXYZ" not in str(err.value)
+    assert llm.last_call["error"].startswith("HTTP 429")
