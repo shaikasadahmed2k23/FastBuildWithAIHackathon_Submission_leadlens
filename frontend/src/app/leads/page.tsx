@@ -127,10 +127,12 @@ function Leads() {
     document.querySelector(`[data-row="${cursor}"]`)?.scrollIntoView({ block: "nearest" });
   }, [cursor]);
 
+  // Sorting is server-side; the accessors only make TanStack treat these columns as sortable.
   const columns = React.useMemo<ColumnDef<LeadRow>[]>(
     () => [
       {
         id: "name",
+        accessorFn: (l) => `${l.last_name} ${l.first_name}`,
         header: "Lead",
         cell: ({ row: { original: l } }) => (
           <div className="min-w-0">
@@ -145,6 +147,7 @@ function Leads() {
       },
       {
         id: "company",
+        accessorFn: (l) => l.company,
         header: "Company",
         cell: ({ row: { original: l } }) => (
           <div className="min-w-0">
@@ -155,10 +158,11 @@ function Leads() {
           </div>
         ),
       },
-      { id: "stage", header: "Stage", cell: ({ row }) => <StageBadge stage={row.original.stage} /> },
-      { id: "owner", header: "Owner", cell: ({ row }) => <span className="text-zinc-700">{row.original.owner}</span> },
+      { id: "stage", accessorFn: (l) => l.stage, header: "Stage", cell: ({ row }) => <StageBadge stage={row.original.stage} /> },
+      { id: "owner", accessorFn: (l) => l.owner, header: "Owner", cell: ({ row }) => <span className="text-zinc-700">{row.original.owner}</span> },
       {
         id: "last_contacted_at",
+        accessorFn: (l) => l.last_contacted_at,
         header: "Last contact",
         cell: ({ row }) => {
           const d = asOf ? daysSince(asOf, row.original.last_contacted_at) : null;
@@ -191,7 +195,7 @@ function Leads() {
           </span>
         ),
       },
-      { id: "score", header: "Score", cell: ({ row }) => <ScoreCell score={row.original.score} /> },
+      { id: "score", accessorFn: (l) => l.score, header: "Score", cell: ({ row }) => <ScoreCell score={row.original.score} /> },
     ],
     [asOf],
   );
