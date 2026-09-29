@@ -28,10 +28,10 @@ export function ApiGate({ children }: { children: React.ReactNode }) {
 
   if (health.isError) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-6">
-        <div className="max-w-sm space-y-3 text-center">
-          <p className="text-sm font-medium">The API isn&apos;t responding</p>
-          <p className="text-sm text-zinc-500">
+      <div className="flex min-h-screen items-center justify-center p-8">
+        <div className="max-w-md space-y-3 border-t border-ink pt-4">
+          <p className="font-serif text-2xl font-semibold">The API isn&apos;t responding</p>
+          <p className="text-sm leading-6 text-ink-600">
             Tried for {elapsed}s. It may still be starting, or the backend URL may be misconfigured.
           </p>
           <Button
@@ -48,20 +48,23 @@ export function ApiGate({ children }: { children: React.ReactNode }) {
     );
   }
   if (now - started.current < SHOW_AFTER_MS) return null;
+  const ticks = 30;
+  const filled = Math.min(ticks - 1, elapsed);
   return (
-    <div className="flex min-h-screen items-center justify-center p-6" role="status" aria-live="polite">
-      <div className="w-72 space-y-3 text-center">
-        <p className="text-sm font-medium">Waking up server (~30s)</p>
-        <p className="text-xs text-zinc-500">
-          The API runs on a free instance that sleeps when idle. This happens once; everything is fast afterwards.
+    <div className="fade-in flex min-h-screen items-center justify-center p-8" role="status" aria-live="polite">
+      <div className="w-[360px] space-y-3 border-t border-ink pt-4">
+        <p className="smallcaps text-xs font-semibold text-ink-500">Before the first call</p>
+        <p className="font-serif text-2xl font-semibold">Waking up server (~30s)</p>
+        <p className="text-sm leading-6 text-ink-600">
+          The API runs on a free instance that sleeps when nobody is reading. The first page of the day takes about half
+          a minute; everything after that is quick.
         </p>
-        <div className="h-1 overflow-hidden rounded-full bg-zinc-100">
-          <div
-            className="h-full rounded-full bg-zinc-800 transition-[width] duration-500"
-            style={{ width: `${Math.min(95, (elapsed / 30) * 100)}%` }}
-          />
+        <div className="flex items-end justify-between pt-1" aria-hidden>
+          {Array.from({ length: ticks }, (_, i) => (
+            <span key={i} className={i < filled ? "h-3 w-px bg-ink" : "h-2 w-px bg-ink-300"} />
+          ))}
         </div>
-        <p className="tnum font-mono text-2xs text-zinc-400">{elapsed}s</p>
+        <p className="tnum font-mono text-2xs text-ink-500">{elapsed}s elapsed</p>
       </div>
     </div>
   );

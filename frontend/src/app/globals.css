@@ -2,16 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Sales ledger visual system. Channels are "R G B" so Tailwind can apply opacity.
+ * Text colours on --paper meet WCAG AA: ink 15.5:1, ink-400/500 5.2:1 (4.8:1 on hover tone ink-50),
+ * accent 7.1:1, alert 4.7:1, pending-ink 6.2:1. --pending itself (3.3:1) is for dots and rules only.
+ */
+:root {
+  --paper: 246 243 236; /* #F6F3EC */
+  --panel: 251 249 244; /* #FBF9F4 */
+  --rule: 217 211 199; /* #D9D3C7 hairline */
+  --ink: 28 27 25; /* #1C1B19 */
+  --ink-50: 240 236 227;
+  --ink-100: 232 227 216;
+  --ink-300: 190 182 167;
+  --ink-400: 107 102 92; /* lightest text tone: equal to secondary so it stays AA on every surface */
+  --ink-500: 107 102 92; /* #6B665C secondary */
+  --ink-600: 88 84 76;
+  --ink-700: 68 65 59;
+  --ink-800: 46 44 40;
+  --accent: 31 92 74; /* #1F5C4A ledger green */
+  --accent-hover: 23 71 57;
+  --accent-subtle: 228 237 231;
+  --alert: 194 65 12; /* #C2410C vermilion: stale, overdue, failures */
+  --alert-subtle: 248 232 222;
+  --pending: 183 121 31; /* #B7791F amber: pending */
+  --pending-ink: 122 82 18;
+  --pending-subtle: 245 234 212;
+}
+
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
   }
   body {
-    @apply bg-white text-sm text-zinc-900;
-    font-feature-settings: "cv11";
+    @apply bg-paper text-sm text-ink;
+  }
+  /* Paper grain: fractal noise at 2.5%, above everything, never interactive. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   *:focus-visible {
-    @apply outline-none ring-2 ring-accent/40 ring-offset-1;
+    @apply outline-none ring-1 ring-accent ring-offset-1 ring-offset-paper;
   }
   /* Dialogs and sheets focus their own panel on open; a ring around the whole panel is noise. */
   [role="dialog"]:focus-visible {
@@ -24,6 +61,23 @@
 
 @layer utilities {
   .tnum {
-    font-variant-numeric: tabular-nums;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  .smallcaps {
+    font-variant-caps: all-small-caps;
+    letter-spacing: 0.06em;
+  }
+  /* Loading placeholder drawn as ruled lines, like an empty ledger page. */
+  .ruled {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='16'%3E%3Crect y='15' width='8' height='1' fill='%23D9D3C7'/%3E%3C/svg%3E");
+  }
+  .fade-in {
+    animation: fade-in 120ms ease-out;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
   }
 }

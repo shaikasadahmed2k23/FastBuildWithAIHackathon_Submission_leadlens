@@ -64,10 +64,10 @@ function OverviewSkeleton() {
 
 function Stat({ label, value, sub }: { label: string; value: React.ReactNode; sub?: React.ReactNode }) {
   return (
-    <div className="rounded border border-zinc-200 bg-white px-4 py-3">
-      <div className="text-xs text-zinc-500">{label}</div>
+    <div className="rounded border border-ink-200 bg-panel px-4 py-3">
+      <div className="text-xs text-ink-500">{label}</div>
       <div className="tnum mt-1 text-xl font-semibold tracking-tight">{value}</div>
-      {sub ? <div className="mt-0.5 text-2xs text-zinc-500">{sub}</div> : null}
+      {sub ? <div className="mt-0.5 text-2xs text-ink-500">{sub}</div> : null}
     </div>
   );
 }
@@ -109,7 +109,7 @@ function OverviewBody({ data }: { data: Overview }) {
         >
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-200 text-left text-xs text-zinc-500">
+              <tr className="border-b border-ink-200 text-left text-xs text-ink-500">
                 <th className="px-3 py-2 font-normal">Lead</th>
                 <th className="px-3 py-2 font-normal">Company</th>
                 <th className="px-3 py-2 font-normal">Stage</th>
@@ -123,20 +123,20 @@ function OverviewBody({ data }: { data: Overview }) {
                 <tr
                   key={l.lead_id}
                   onClick={() => open(l.lead_id)}
-                  className="cursor-pointer border-b border-zinc-100 last:border-0 hover:bg-zinc-50"
+                  className="cursor-pointer border-b border-ink-100 last:border-0 hover:bg-ink-50"
                 >
                   <td className="px-3 py-2">
                     <div className="whitespace-nowrap font-medium">{l.name}</div>
-                    <div className="font-mono text-2xs text-zinc-500">{l.lead_id}</div>
+                    <div className="font-mono text-2xs text-ink-500">{l.lead_id}</div>
                   </td>
-                  <td className="max-w-[128px] truncate px-3 py-2 text-zinc-700" title={l.company}>
+                  <td className="max-w-[128px] truncate px-3 py-2 text-ink-700" title={l.company}>
                     {l.company}
                   </td>
                   <td className="px-3 py-2">
                     <StageBadge stage={l.stage} />
                   </td>
-                  <td className="whitespace-nowrap px-3 py-2 text-zinc-700">{l.owner}</td>
-                  <td className="tnum whitespace-nowrap px-3 py-2 text-right font-mono text-xs text-zinc-500">
+                  <td className="whitespace-nowrap px-3 py-2 text-ink-700">{l.owner}</td>
+                  <td className="tnum whitespace-nowrap px-3 py-2 text-right font-mono text-xs text-ink-500">
                     {l.fit.toFixed(0)}/{l.intent.toFixed(0)}/{l.recency.toFixed(0)}
                   </td>
                   <td className="px-3 py-2">
@@ -150,14 +150,14 @@ function OverviewBody({ data }: { data: Overview }) {
 
         <div className="space-y-4">
           <Panel title="Data health">
-            <ul className="divide-y divide-zinc-100">
+            <ul className="divide-y divide-ink-100">
               {data.issues.map((i) => (
                 <li key={i.issue_type}>
                   <Link
                     href={`/leads?issue=${i.issue_type}`}
-                    className="flex items-center justify-between px-3 py-2 text-sm hover:bg-zinc-50"
+                    className="flex items-center justify-between px-3 py-2 text-sm hover:bg-ink-50"
                   >
-                    <span className="text-zinc-700">{issueLabel(i.issue_type)}</span>
+                    <span className="text-ink-700">{issueLabel(i.issue_type)}</span>
                     <span className="tnum font-mono text-xs">{fmt.int(i.count)}</span>
                   </Link>
                 </li>
@@ -173,7 +173,7 @@ function OverviewBody({ data }: { data: Overview }) {
       <Panel title="Pipeline by stage">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-200 text-left text-xs text-zinc-500">
+            <tr className="border-b border-ink-200 text-left text-xs text-ink-500">
               <th className="px-3 py-2 font-normal">Stage</th>
               <th className="px-3 py-2 text-right font-normal">Leads</th>
               <th className="px-3 py-2 text-right font-normal">Share</th>
@@ -182,14 +182,14 @@ function OverviewBody({ data }: { data: Overview }) {
           </thead>
           <tbody>
             {data.stages.map((s) => (
-              <tr key={s.stage} className="border-b border-zinc-100 last:border-0">
+              <tr key={s.stage} className="border-b border-ink-100 last:border-0">
                 <td className="px-3 py-2">
                   <Link href={`/leads?stage=${s.stage}`} className="hover:underline">
                     <StageBadge stage={s.stage} />
                   </Link>
                 </td>
                 <td className="tnum px-3 py-2 text-right font-mono text-xs">{fmt.int(s.count)}</td>
-                <td className="tnum px-3 py-2 text-right font-mono text-xs text-zinc-500">
+                <td className="tnum px-3 py-2 text-right font-mono text-xs text-ink-500">
                   {fmt.pct(s.count / totals.leads)}
                 </td>
                 <td className="tnum px-3 py-2 text-right font-mono text-xs">{fmt.score(s.avg_score)}</td>
@@ -210,12 +210,12 @@ function Histogram({ buckets }: { buckets: Overview["score_histogram"] }) {
   return (
     <div>
       <div className="mb-2 flex items-baseline justify-between text-xs">
-        <span className="text-zinc-500">
+        <span className="text-ink-500">
           Score {active * 10}–{active * 10 + (active === 9 ? 10 : 9.9)}
         </span>
         <span className="tnum font-mono">{fmt.int(all[active])} leads</span>
       </div>
-      <div className="flex h-28 items-end gap-[2px] border-b border-zinc-200" role="img" aria-label="Lead count per score band">
+      <div className="flex h-28 items-end gap-[2px] border-b border-ink-200" role="img" aria-label="Lead count per score band">
         {all.map((count, i) => (
           <div
             key={i}
@@ -225,13 +225,13 @@ function Histogram({ buckets }: { buckets: Overview["score_histogram"] }) {
             title={`${i * 10}–${i * 10 + 9}: ${count} leads`}
           >
             <div
-              className={`w-full rounded-t-[4px] ${i === active ? "bg-zinc-900" : "bg-zinc-400"}`}
+              className={`w-full rounded-t-[4px] ${i === active ? "bg-ink-900" : "bg-ink-400"}`}
               style={{ height: `${Math.max((count / max) * 100, count ? 2 : 0)}%` }}
             />
           </div>
         ))}
       </div>
-      <div className="tnum mt-1 flex justify-between font-mono text-2xs text-zinc-400">
+      <div className="tnum mt-1 flex justify-between font-mono text-2xs text-ink-400">
         <span>0</span>
         <span>50</span>
         <span>100</span>

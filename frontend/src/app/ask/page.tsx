@@ -97,7 +97,7 @@ function Ask() {
 
         {history.length === 0 && !ask.isPending ? (
           <div>
-            <p className="mb-2 text-xs text-zinc-500">
+            <p className="mb-2 text-xs text-ink-500">
               Try one of these, or press <Kbd>/</Kbd> to type your own.
             </p>
             <div className="flex flex-wrap gap-1.5">
@@ -105,7 +105,7 @@ function Ask() {
                 <button
                   key={ex}
                   onClick={() => submit(ex)}
-                  className="rounded border border-zinc-200 bg-white px-2.5 py-1 text-sm text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
+                  className="rounded border border-ink-200 bg-panel px-2.5 py-1 text-sm text-ink-700 hover:border-ink-300 hover:bg-ink-50"
                 >
                   {ex}
                 </button>
@@ -115,8 +115,8 @@ function Ask() {
         ) : null}
 
         {ask.isPending ? (
-          <div className="space-y-2 rounded border border-zinc-200 p-4">
-            <p className="text-sm text-zinc-500">Writing SQL, running it, and checking citations…</p>
+          <div className="space-y-2 rounded border border-ink-200 p-4">
+            <p className="text-sm text-ink-500">Writing SQL, running it, and checking citations…</p>
             <Skeleton className="h-4" />
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-24" />
@@ -136,7 +136,7 @@ function Ask() {
 function AnsweredBy({ result: r }: { result: AskResult }) {
   const provider = r.provider ? r.provider.charAt(0).toUpperCase() + r.provider.slice(1) : "LLM";
   let label: string;
-  let tone = "text-zinc-500";
+  let tone = "text-ink-500";
   if (r.source === "llm" && r.fallback === "template") {
     label = `SQL by ${provider} · template answer (LLM prose failed checks)`;
     tone = "text-amber-700";
@@ -177,8 +177,8 @@ function AnswerCard({ result: r, onAsk }: { result: AskResult; onAsk: (q: string
   }, [r]);
   const numeric = (c: string) => r.rows.some((row) => typeof row[c] === "number") && r.rows.every((row) => row[c] == null || typeof row[c] === "number");
   return (
-    <article className="rounded border border-zinc-200 bg-white">
-      <header className="flex items-start justify-between gap-3 border-b border-zinc-200 px-4 py-2.5">
+    <article className="rounded border border-ink-200 bg-panel">
+      <header className="flex items-start justify-between gap-3 border-b border-ink-200 px-4 py-2.5">
         <h2 className="text-sm font-medium">{r.question}</h2>
         <AnsweredBy result={r} />
       </header>
@@ -192,7 +192,7 @@ function AnswerCard({ result: r, onAsk }: { result: AskResult; onAsk: (q: string
                 <button
                   key={s}
                   onClick={() => onAsk(s)}
-                  className="rounded border border-zinc-200 bg-white px-2.5 py-1 text-sm text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
+                  className="rounded border border-ink-200 bg-panel px-2.5 py-1 text-sm text-ink-700 hover:border-ink-300 hover:bg-ink-50"
                 >
                   {s}
                 </button>
@@ -207,7 +207,7 @@ function AnswerCard({ result: r, onAsk }: { result: AskResult; onAsk: (q: string
         <div
           className={cn(
             "flex items-center gap-1.5 text-xs",
-            r.valid ? "text-emerald-700" : r.sql ? "text-red-700" : "text-zinc-500",
+            r.valid ? "text-emerald-700" : r.sql ? "text-red-700" : "text-ink-500",
           )}
         >
           {r.valid ? <CheckCircle2 className="size-3.5" /> : <XCircle className="size-3.5" />}
@@ -220,7 +220,7 @@ function AnswerCard({ result: r, onAsk }: { result: AskResult; onAsk: (q: string
               : "No query was run"}
         </div>
         {r.notes.length ? (
-          <ul className="space-y-0.5 text-2xs text-zinc-500">
+          <ul className="space-y-0.5 text-2xs text-ink-500">
             {r.notes.map((n, i) => (
               <li key={i}>· {n}</li>
             ))}
@@ -229,16 +229,16 @@ function AnswerCard({ result: r, onAsk }: { result: AskResult; onAsk: (q: string
       </div>
 
       {r.sql ? (
-        <div className="border-t border-zinc-200">
+        <div className="border-t border-ink-200">
           <button
             onClick={() => setShowSql((s) => !s)}
-            className="flex w-full items-center gap-1 px-4 py-2 text-xs text-zinc-500 hover:text-zinc-900"
+            className="flex w-full items-center gap-1 px-4 py-2 text-xs text-ink-500 hover:text-ink-900"
           >
             <ChevronRight className={cn("size-3.5 transition-transform", showSql && "rotate-90")} />
             SQL
           </button>
           {showSql ? (
-            <pre className="mx-4 mb-3 overflow-x-auto whitespace-pre-wrap break-words rounded border border-zinc-200 bg-zinc-50 p-3 font-mono text-xs leading-5 text-zinc-800">
+            <pre className="mx-4 mb-3 overflow-x-auto whitespace-pre-wrap break-words rounded border border-ink-200 bg-ink-50 p-3 font-mono text-xs leading-5 text-ink-800">
               {r.sql}
             </pre>
           ) : null}
@@ -246,15 +246,15 @@ function AnswerCard({ result: r, onAsk }: { result: AskResult; onAsk: (q: string
       ) : null}
 
       {r.rows.length ? (
-        <div className="border-t border-zinc-200">
-          <div className="px-4 py-2 text-xs text-zinc-500">
+        <div className="border-t border-ink-200">
+          <div className="px-4 py-2 text-xs text-ink-500">
             {r.rows.length} {r.rows.length === 1 ? "row" : "rows"}
             {r.rows.length > MAX_TABLE_ROWS ? `, showing first ${MAX_TABLE_ROWS}` : ""}
           </div>
           <div className="max-h-96 overflow-auto">
             <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-white">
-                <tr className="border-b border-zinc-200 text-left text-xs text-zinc-500">
+              <thead className="sticky top-0 bg-panel">
+                <tr className="border-b border-ink-200 text-left text-xs text-ink-500">
                   {r.columns.map((c) => (
                     <th key={c} className={cn("whitespace-nowrap px-4 py-1.5 font-mono font-normal", numeric(c) && "text-right")}>
                       {c}
@@ -264,13 +264,13 @@ function AnswerCard({ result: r, onAsk }: { result: AskResult; onAsk: (q: string
               </thead>
               <tbody>
                 {r.rows.slice(0, MAX_TABLE_ROWS).map((row, i) => (
-                  <tr key={i} className="border-b border-zinc-100 last:border-0">
+                  <tr key={i} className="border-b border-ink-100 last:border-0">
                     {r.columns.map((c) => {
                       const v = row[c];
                       return (
-                        <td key={c} className={cn("tnum whitespace-nowrap px-4 py-1.5 text-zinc-800", numeric(c) && "text-right")}>
+                        <td key={c} className={cn("tnum whitespace-nowrap px-4 py-1.5 text-ink-800", numeric(c) && "text-right")}>
                           {v == null ? (
-                            <span className="text-zinc-400">null</span>
+                            <span className="text-ink-400">null</span>
                           ) : idColumns.has(c) ? (
                             <CitationChip id={String(v)} />
                           ) : typeof v === "number" ? (

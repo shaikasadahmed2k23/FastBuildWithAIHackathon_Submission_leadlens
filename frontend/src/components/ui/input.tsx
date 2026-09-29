@@ -7,7 +7,7 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
     <input
       ref={ref}
       className={cn(
-        "h-8 w-full rounded border border-zinc-200 bg-white px-2.5 text-sm placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus-visible:ring-0",
+        "h-8 w-full rounded border border-rule bg-panel px-2.5 text-sm placeholder:text-ink-400 focus:border-accent focus:outline-none focus-visible:ring-0",
         className,
       )}
       {...props}
@@ -21,7 +21,7 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTML
     <textarea
       ref={ref}
       className={cn(
-        "w-full rounded border border-zinc-200 bg-white px-2.5 py-1.5 text-sm placeholder:text-zinc-400 focus:border-zinc-400 focus:outline-none focus-visible:ring-0",
+        "w-full rounded border border-rule bg-panel px-2.5 py-1.5 text-sm placeholder:text-ink-400 focus:border-accent focus:outline-none focus-visible:ring-0",
         className,
       )}
       {...props}
@@ -34,7 +34,7 @@ export function Select({ className, ...props }: React.SelectHTMLAttributes<HTMLS
   return (
     <select
       className={cn(
-        "h-8 rounded border border-zinc-200 bg-white pl-2 pr-7 text-sm text-zinc-700 focus:border-zinc-400 focus:outline-none focus-visible:ring-0",
+        "h-8 rounded border border-rule bg-panel pl-2 pr-7 text-sm text-ink-700 focus:border-accent focus:outline-none focus-visible:ring-0",
         className,
       )}
       {...props}

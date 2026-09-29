@@ -46,10 +46,10 @@ const secs = (ms: number | undefined) => `${((ms ?? 0) / 1000).toFixed(1)}s`;
 
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="rounded border border-zinc-200 bg-white px-4 py-3">
-      <div className="text-xs text-zinc-500">{label}</div>
+    <div className="rounded border border-ink-200 bg-panel px-4 py-3">
+      <div className="text-xs text-ink-500">{label}</div>
       <div className="tnum mt-1 text-xl font-semibold tracking-tight">{value}</div>
-      {sub ? <div className="mt-0.5 text-2xs text-zinc-500">{sub}</div> : null}
+      {sub ? <div className="mt-0.5 text-2xs text-ink-500">{sub}</div> : null}
     </div>
   );
 }
@@ -87,7 +87,7 @@ function Report({ data }: { data: EvalReport }) {
       </div>
 
       {data.variance ? (
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-ink-500">
           Across {data.variance.runs} runs: accuracy {fmt.pct(data.variance.accuracy.min, 0)}–{fmt.pct(data.variance.accuracy.max, 0)}{" "}
           (sd {(data.variance.accuracy.stdev * 100).toFixed(1)} pts); unstable questions:{" "}
           {data.variance.unstable_questions.length ? data.variance.unstable_questions.join(", ") : "none"}. Figures above are
@@ -99,7 +99,7 @@ function Report({ data }: { data: EvalReport }) {
         <Panel title="Runs">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-200 text-left text-xs text-zinc-500">
+              <tr className="border-b border-ink-200 text-left text-xs text-ink-500">
                 <th className="px-3 py-2 font-normal">Run</th>
                 <th className="px-3 py-2 text-right font-normal">Accuracy</th>
                 <th className="px-3 py-2 text-right font-normal">Answered by LLM</th>
@@ -112,7 +112,7 @@ function Report({ data }: { data: EvalReport }) {
             </thead>
             <tbody className="tnum font-mono text-xs">
               {data.run_summaries.map((r, i) => (
-                <tr key={i} className="border-b border-zinc-100 last:border-0">
+                <tr key={i} className="border-b border-ink-100 last:border-0">
                   <td className="px-3 py-2 font-sans text-sm">{i + 1}</td>
                   <td className="px-3 py-2 text-right">
                     {r.passed}/{r.total}
@@ -135,7 +135,7 @@ function Report({ data }: { data: EvalReport }) {
               ))}
             </tbody>
           </table>
-          <p className="border-t border-zinc-200 px-3 py-2 text-2xs text-zinc-500">
+          <p className="border-t border-ink-200 px-3 py-2 text-2xs text-ink-500">
             Fallbacks happen when the LLM provider fails (e.g. quota exhausted). Rule-based answers count toward accuracy
             but are not model results. See docs/EVALS.md.
           </p>
@@ -146,7 +146,7 @@ function Report({ data }: { data: EvalReport }) {
         <Panel title="Data cleaning vs. injected ground truth">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-200 text-left text-xs text-zinc-500">
+              <tr className="border-b border-ink-200 text-left text-xs text-ink-500">
                 <th className="px-3 py-2 font-normal">Issue</th>
                 <th className="px-3 py-2 text-right font-normal">Precision</th>
                 <th className="px-3 py-2 text-right font-normal">Recall</th>
@@ -156,12 +156,12 @@ function Report({ data }: { data: EvalReport }) {
             </thead>
             <tbody>
               {Object.entries(data.cleaning).map(([k, m]) => (
-                <tr key={k} className="border-b border-zinc-100 last:border-0">
+                <tr key={k} className="border-b border-ink-100 last:border-0">
                   <td className="px-3 py-2">{fmt.label(k)}</td>
                   <td className="tnum px-3 py-2 text-right font-mono text-xs">{m.precision.toFixed(3)}</td>
                   <td className="tnum px-3 py-2 text-right font-mono text-xs">{m.recall.toFixed(3)}</td>
                   <td className="tnum px-3 py-2 text-right font-mono text-xs">{m.f1.toFixed(3)}</td>
-                  <td className="tnum px-3 py-2 text-right font-mono text-xs text-zinc-500">
+                  <td className="tnum px-3 py-2 text-right font-mono text-xs text-ink-500">
                     {m.found} / {m.expected}
                   </td>
                 </tr>
@@ -173,14 +173,14 @@ function Report({ data }: { data: EvalReport }) {
           <table className="w-full text-sm">
             <tbody>
               {Object.entries(s.by_category).map(([cat, v]) => (
-                <tr key={cat} className="border-b border-zinc-100 last:border-0">
+                <tr key={cat} className="border-b border-ink-100 last:border-0">
                   <td className="px-3 py-2">{fmt.label(cat)}</td>
                   <td className="tnum px-3 py-2 text-right font-mono text-xs">
                     {v.passed} / {v.total}
                   </td>
                   <td className="w-40 px-3 py-2">
-                    <div className="h-1 overflow-hidden rounded-full bg-zinc-100">
-                      <div className="h-full rounded-full bg-zinc-800" style={{ width: `${(v.passed / v.total) * 100}%` }} />
+                    <div className="h-1 overflow-hidden rounded-full bg-ink-100">
+                      <div className="h-full rounded-full bg-ink-800" style={{ width: `${(v.passed / v.total) * 100}%` }} />
                     </div>
                   </td>
                 </tr>
@@ -193,7 +193,7 @@ function Report({ data }: { data: EvalReport }) {
       <Panel
         title="Golden questions"
         actions={
-          <label className="flex items-center gap-1.5 text-xs text-zinc-500">
+          <label className="flex items-center gap-1.5 text-xs text-ink-500">
             <input type="checkbox" checked={failuresOnly} onChange={(e) => setFailuresOnly(e.target.checked)} />
             Failures only
           </label>
@@ -201,7 +201,7 @@ function Report({ data }: { data: EvalReport }) {
       >
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-zinc-200 text-left text-xs text-zinc-500">
+            <tr className="border-b border-ink-200 text-left text-xs text-ink-500">
               <th className="w-8 px-3 py-2" />
               <th className="px-3 py-2 font-normal">ID</th>
               <th className="px-3 py-2 font-normal">Question</th>
@@ -215,16 +215,16 @@ function Report({ data }: { data: EvalReport }) {
             {results.map((r) => (
               <React.Fragment key={r.id}>
                 <tr
-                  className="cursor-pointer border-b border-zinc-100 hover:bg-zinc-50"
+                  className="cursor-pointer border-b border-ink-100 hover:bg-ink-50"
                   onClick={() => setExpanded((e) => (e === r.id ? null : r.id))}
                 >
-                  <td className="px-3 py-2 text-zinc-400">
+                  <td className="px-3 py-2 text-ink-400">
                     <ChevronRight className={cn("size-3.5 transition-transform", expanded === r.id && "rotate-90")} />
                   </td>
-                  <td className="px-3 py-2 font-mono text-xs text-zinc-500">{r.id}</td>
+                  <td className="px-3 py-2 font-mono text-xs text-ink-500">{r.id}</td>
                   <td className="px-3 py-2">{r.question}</td>
-                  <td className="px-3 py-2 text-zinc-600">{fmt.label(r.category)}</td>
-                  <td className="px-3 py-2 text-zinc-600">{r.source}</td>
+                  <td className="px-3 py-2 text-ink-600">{fmt.label(r.category)}</td>
+                  <td className="px-3 py-2 text-ink-600">{r.source}</td>
                   <td className="px-3 py-2">
                     {r.passed ? (
                       <span className="inline-flex items-center gap-1 text-xs text-emerald-700">
@@ -236,21 +236,21 @@ function Report({ data }: { data: EvalReport }) {
                       </span>
                     )}
                   </td>
-                  <td className="tnum px-3 py-2 text-right font-mono text-xs text-zinc-500">{r.latency_ms}</td>
+                  <td className="tnum px-3 py-2 text-right font-mono text-xs text-ink-500">{r.latency_ms}</td>
                 </tr>
                 {expanded === r.id ? (
-                  <tr className="border-b border-zinc-100 bg-zinc-50/60">
+                  <tr className="border-b border-ink-100 bg-ink-50/60">
                     <td />
                     <td colSpan={6} className="space-y-2 px-3 py-3">
-                      <div className="text-xs text-zinc-500">
-                        Expected <span className="font-mono text-zinc-800">{JSON.stringify(r.expected)}</span> · Got{" "}
-                        <span className="font-mono text-zinc-800">{JSON.stringify(r.got)}</span>
+                      <div className="text-xs text-ink-500">
+                        Expected <span className="font-mono text-ink-800">{JSON.stringify(r.expected)}</span> · Got{" "}
+                        <span className="font-mono text-ink-800">{JSON.stringify(r.got)}</span>
                       </div>
                       <p className="text-sm">
                         <CitedText text={r.answer} />
                       </p>
                       {r.sql ? (
-                        <pre className="overflow-x-auto whitespace-pre-wrap rounded border border-zinc-200 bg-white p-2 font-mono text-xs text-zinc-700">
+                        <pre className="overflow-x-auto whitespace-pre-wrap rounded border border-ink-200 bg-panel p-2 font-mono text-xs text-ink-700">
                           {r.sql}
                         </pre>
                       ) : null}

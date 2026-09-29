@@ -2,6 +2,7 @@ import type * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+/** A ledger section: an ink rule on top, a small-caps heading, content on the paper. No box. */
 export function Panel({
   title,
   actions,
@@ -16,10 +17,10 @@ export function Panel({
   bodyClassName?: string;
 }) {
   return (
-    <section className={cn("rounded border border-zinc-200 bg-white", className)}>
+    <section className={cn("border-t border-ink", className)}>
       {title ? (
-        <header className="flex h-10 items-center justify-between gap-2 border-b border-zinc-200 px-3">
-          <h2 className="text-xs font-medium text-zinc-900">{title}</h2>
+        <header className="flex h-9 items-center justify-between gap-2 border-b border-rule">
+          <h2 className="smallcaps text-xs font-semibold text-ink">{title}</h2>
           {actions}
         </header>
       ) : null}

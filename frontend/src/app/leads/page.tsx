@@ -139,7 +139,7 @@ function Leads() {
             <div className="truncate font-medium">
               {l.first_name} {l.last_name}
             </div>
-            <div className="truncate text-2xs text-zinc-500">
+            <div className="truncate text-2xs text-ink-500">
               <span className="font-mono">{l.lead_id}</span> · {l.title?.trim() || "No title"}
             </div>
           </div>
@@ -151,15 +151,15 @@ function Leads() {
         header: "Company",
         cell: ({ row: { original: l } }) => (
           <div className="min-w-0">
-            <div className="truncate text-zinc-800">{l.company}</div>
-            <div className="truncate text-2xs text-zinc-500">
+            <div className="truncate text-ink-800">{l.company}</div>
+            <div className="truncate text-2xs text-ink-500">
               {l.industry} · {fmt.int(l.employees)}
             </div>
           </div>
         ),
       },
       { id: "stage", accessorFn: (l) => l.stage, header: "Stage", cell: ({ row }) => <StageBadge stage={row.original.stage} /> },
-      { id: "owner", accessorFn: (l) => l.owner, header: "Owner", cell: ({ row }) => <span className="text-zinc-700">{row.original.owner}</span> },
+      { id: "owner", accessorFn: (l) => l.owner, header: "Owner", cell: ({ row }) => <span className="text-ink-700">{row.original.owner}</span> },
       {
         id: "last_contacted_at",
         accessorFn: (l) => l.last_contacted_at,
@@ -167,7 +167,7 @@ function Leads() {
         cell: ({ row }) => {
           const d = asOf ? daysSince(asOf, row.original.last_contacted_at) : null;
           return (
-            <span className="tnum font-mono text-xs text-zinc-600">
+            <span className="tnum font-mono text-xs text-ink-600">
               {row.original.last_contacted_at ? (d != null ? `${d}d ago` : fmt.date(row.original.last_contacted_at)) : "never"}
             </span>
           );
@@ -190,7 +190,7 @@ function Leads() {
         header: "F/I/R",
         enableSorting: false,
         cell: ({ row: { original: l } }) => (
-          <span className="tnum whitespace-nowrap font-mono text-xs text-zinc-500">
+          <span className="tnum whitespace-nowrap font-mono text-xs text-ink-500">
             {l.fit.toFixed(0)}/{l.intent.toFixed(0)}/{l.recency.toFixed(0)}
           </span>
         ),
@@ -223,15 +223,15 @@ function Leads() {
         title="Leads"
         description={q.data ? `${fmt.int(q.data.total)} ${activeFilters ? "matching" : "total"}` : undefined}
         actions={
-          <span className="hidden items-center gap-1.5 text-2xs text-zinc-500 md:flex">
+          <span className="hidden items-center gap-1.5 text-2xs text-ink-500 md:flex">
             <Kbd>/</Kbd> search <Kbd>J</Kbd>
             <Kbd>K</Kbd> move <Kbd>↵</Kbd> open
           </span>
         }
       />
-      <div className="flex flex-wrap items-center gap-2 border-b border-zinc-200 px-6 py-2.5">
+      <div className="flex flex-wrap items-center gap-2 border-b border-ink-200 px-6 py-2.5">
         <div className="relative w-64">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-zinc-400" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-ink-400" />
           <Input
             ref={searchRef}
             value={search}
@@ -300,9 +300,9 @@ function Leads() {
               <col className="w-[9%]" />
               <col className="w-[11%]" />
             </colgroup>
-            <thead className="sticky top-12 z-10 bg-white">
+            <thead className="sticky top-12 z-10 bg-panel">
               {table.getHeaderGroups().map((hg) => (
-                <tr key={hg.id} className="border-b border-zinc-200 text-left text-xs text-zinc-500">
+                <tr key={hg.id} className="border-b border-ink-200 text-left text-xs text-ink-500">
                   {hg.headers.map((h) => {
                     const sortable = h.column.getCanSort();
                     const dir = h.column.getIsSorted();
@@ -310,7 +310,7 @@ function Leads() {
                       <th key={h.id} className="px-3 py-2 font-normal first:pl-6">
                         {sortable ? (
                           <button
-                            className="inline-flex items-center gap-1 hover:text-zinc-900"
+                            className="inline-flex items-center gap-1 hover:text-ink-900"
                             onClick={h.column.getToggleSortingHandler()}
                           >
                             {flexRender(h.column.columnDef.header, h.getContext())}
@@ -328,7 +328,7 @@ function Leads() {
             <tbody>
               {q.isLoading
                 ? Array.from({ length: 12 }).map((_, i) => (
-                    <tr key={i} className="border-b border-zinc-100">
+                    <tr key={i} className="border-b border-ink-100">
                       {columns.map((_, j) => (
                         <td key={j} className="px-3 py-3 first:pl-6">
                           <Skeleton className="h-4" />
@@ -345,8 +345,8 @@ function Leads() {
                         open(row.original.lead_id);
                       }}
                       className={cn(
-                        "cursor-pointer border-b border-zinc-100 hover:bg-zinc-50",
-                        i === cursor && "bg-zinc-50 shadow-[inset_2px_0_0_theme(colors.accent.DEFAULT)]",
+                        "cursor-pointer border-b border-ink-100 hover:bg-ink-50",
+                        i === cursor && "bg-ink-50 shadow-[inset_2px_0_0_theme(colors.accent.DEFAULT)]",
                       )}
                     >
                       {row.getVisibleCells().map((cell) => (
@@ -362,7 +362,7 @@ function Leads() {
             <EmptyState title="No leads match these filters" hint="Try clearing a filter or searching for something broader." />
           ) : null}
           {q.data && q.data.total > 0 ? (
-            <div className="flex items-center justify-between px-6 py-3 text-xs text-zinc-500">
+            <div className="flex items-center justify-between px-6 py-3 text-xs text-ink-500">
               <span className="tnum">
                 {fmt.int((filters.page - 1) * PAGE_SIZE + 1)}–{fmt.int(Math.min(filters.page * PAGE_SIZE, q.data.total))} of{" "}
                 {fmt.int(q.data.total)}

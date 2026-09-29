@@ -9,10 +9,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-accent text-white hover:bg-accent-hover",
-        secondary: "border border-zinc-200 bg-white text-zinc-900 hover:bg-zinc-50",
-        ghost: "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900",
-        danger: "border border-zinc-200 bg-white text-red-700 hover:bg-red-50",
+        primary: "bg-accent text-panel hover:bg-accent-hover",
+        secondary: "border border-rule bg-panel text-ink hover:border-ink-300 hover:bg-ink-50",
+        ghost: "text-ink-600 hover:bg-ink-50 hover:text-ink",
+        danger: "border border-rule bg-panel text-alert hover:border-alert/40 hover:bg-alert-subtle",
       },
       size: {
         sm: "h-7 px-2.5 text-xs",

@@ -24,7 +24,7 @@ export function Sheet({
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-zinc-900/10" />
+        <Dialog.Overlay className="fade-in fixed inset-0 z-40 bg-ink/10" />
         <Dialog.Content
           // Focus the panel itself rather than the close button, so no ring shows on open.
           onOpenAutoFocus={(e) => {
@@ -32,20 +32,20 @@ export function Sheet({
             (e.currentTarget as HTMLElement).focus();
           }}
           className={cn(
-            "fixed inset-y-0 right-0 z-50 flex w-full max-w-[560px] flex-col border-l border-zinc-200 bg-white shadow-sm focus:outline-none",
+            "fade-in fixed inset-y-0 right-0 z-50 flex w-full max-w-[560px] flex-col border-l border-ink bg-panel focus:outline-none",
             className,
           )}
         >
-          <div className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-zinc-200 px-4">
+          <div className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-rule px-5">
             <div className="min-w-0">
-              <Dialog.Title className="truncate text-sm font-medium">{title}</Dialog.Title>
+              <Dialog.Title className="truncate font-serif text-lg leading-6">{title}</Dialog.Title>
               {description ? (
-                <Dialog.Description className="truncate text-xs text-zinc-500">{description}</Dialog.Description>
+                <Dialog.Description className="truncate text-xs text-ink-500">{description}</Dialog.Description>
               ) : (
                 <Dialog.Description className="sr-only">Details</Dialog.Description>
               )}
             </div>
-            <Dialog.Close className="rounded p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900" aria-label="Close">
+            <Dialog.Close className="rounded p-1 text-ink-500 hover:bg-ink-50 hover:text-ink" aria-label="Close">
               <X className="size-4" />
             </Dialog.Close>
           </div>

@@ -5,8 +5,8 @@ import { GitMerge, Mail } from "lucide-react";
 import * as React from "react";
 
 import { IssueBadge, StageBadge, StatusBadge } from "@/components/badges";
-import { CitationChip, CitedText } from "@/components/inspector";
-import { ScoreBar } from "@/components/score-bar";
+import { CitationChip, CitedText, Footnoted, Sources } from "@/components/inspector";
+import { Ticks } from "@/components/score-bar";
 import { ErrorState } from "@/components/states";
 import { useToast } from "@/components/toast";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ export function LeadDrawer({ leadId, onClose }: { leadId: string | null; onClose
       title={
         lead ? (
           <span>
-            {lead.first_name} {lead.last_name} <span className="ml-1 font-mono text-xs text-zinc-500">{lead.lead_id}</span>
+            {lead.first_name} {lead.last_name} <span className="ml-1 font-mono text-xs text-ink-500">{lead.lead_id}</span>
           </span>
         ) : (
           <span className="font-mono">{leadId}</span>
@@ -60,9 +60,9 @@ function DrawerSkeleton() {
 
 function Section({ title, children, aside }: { title: string; children: React.ReactNode; aside?: React.ReactNode }) {
   return (
-    <section className="border-b border-zinc-200 px-4 py-4 last:border-b-0">
-      <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-xs font-medium text-zinc-500">{title}</h3>
+    <section className="border-b border-rule px-5 py-4 last:border-b-0">
+      <div className="mb-2.5 flex items-center justify-between">
+        <h3 className="smallcaps text-xs font-semibold text-ink">{title}</h3>
         {aside}
       </div>
       {children}
@@ -74,16 +74,16 @@ function LeadBody({ detail }: { detail: LeadDetail }) {
   const { lead, breakdown, issues, activities, actions } = detail;
   return (
     <div>
-      <div className="grid grid-cols-4 gap-px border-b border-zinc-200 bg-zinc-200">
+      <div className="grid grid-cols-4 divide-x divide-rule border-b border-rule">
         {[
           ["Score", breakdown.score.toFixed(1)],
           ["Stage", <StageBadge key="s" stage={lead.stage} />],
           ["Owner", lead.owner],
           ["Deal value", fmt.money(lead.deal_value)],
         ].map(([label, value]) => (
-          <div key={label as string} className="bg-white px-4 py-2.5">
-            <div className="text-2xs text-zinc-500">{label}</div>
-            <div className="tnum mt-0.5 truncate text-sm font-medium">{value}</div>
+          <div key={label as string} className="px-5 py-3">
+            <div className="smallcaps text-2xs font-semibold text-ink-500">{label}</div>
+            <div className="tnum mt-1 truncate font-serif text-lg leading-6">{value}</div>
           </div>
         ))}
       </div>
@@ -91,7 +91,7 @@ function LeadBody({ detail }: { detail: LeadDetail }) {
       <WhyNow leadId={lead.lead_id} />
       <ActionBar detail={detail} />
 
-      <Section title="Score breakdown" aside={<span className="font-mono text-xs text-zinc-500">{breakdown.score.toFixed(1)} / 100</span>}>
+      <Section title="Score breakdown" aside={<span className="font-mono text-xs text-ink-500">{breakdown.score.toFixed(1)} / 100</span>}>
         <div className="space-y-4">
           <ComponentRow name="Fit" comp={breakdown.fit} />
           <ComponentRow name="Intent" comp={breakdown.intent} />
@@ -105,7 +105,7 @@ function LeadBody({ detail }: { detail: LeadDetail }) {
             {issues.map((i) => (
               <li key={i.issue_id} className="flex items-start gap-2 text-sm">
                 <IssueBadge issue={i.issue_type} />
-                <CitedText text={i.details} className="text-zinc-700" />
+                <CitedText text={i.details} className="text-ink-700" />
                 <CitationChip id={i.issue_id} className="ml-auto shrink-0" />
               </li>
             ))}
@@ -127,8 +127,8 @@ function LeadBody({ detail }: { detail: LeadDetail }) {
             ] as const
           ).map(([k, v]) => (
             <React.Fragment key={k}>
-              <dt className="text-zinc-500">{k}</dt>
-              <dd className="min-w-0 truncate">{v && v.trim() ? v : <span className="text-amber-700">Missing</span>}</dd>
+              <dt className="text-ink-500">{k}</dt>
+              <dd className="min-w-0 truncate">{v && v.trim() ? v : <span className="smallcaps text-pending-ink">missing</span>}</dd>
             </React.Fragment>
           ))}
         </dl>
@@ -136,14 +136,14 @@ function LeadBody({ detail }: { detail: LeadDetail }) {
 
       <Section title={`Activity (${activities.length}${activities.length === 50 ? "+" : ""})`}>
         {activities.length === 0 ? (
-          <p className="text-sm text-zinc-500">No recorded activity.</p>
+          <p className="text-sm text-ink-500">No recorded activity.</p>
         ) : (
-          <ul className="divide-y divide-zinc-100">
+          <ul className="divide-y divide-dotted divide-rule">
             {activities.map((a) => (
               <li key={a.activity_id} className="flex items-center gap-3 py-1.5 text-sm">
-                <CitationChip id={a.activity_id} />
-                <span className="text-zinc-700">{fmt.label(a.type)}</span>
-                <span className="tnum ml-auto text-xs text-zinc-500">{fmt.dateTime(a.occurred_at)}</span>
+                <CitationChip id={a.activity_id} className="w-[68px] shrink-0" />
+                <span className="text-ink-700">{fmt.label(a.type)}</span>
+                <span className="tnum ml-auto text-xs text-ink-500">{fmt.dateTime(a.occurred_at)}</span>
               </li>
             ))}
           </ul>
@@ -155,10 +155,10 @@ function LeadBody({ detail }: { detail: LeadDetail }) {
           <ul className="space-y-1.5">
             {actions.map((a) => (
               <li key={a.action_id} className="flex items-center gap-2 text-sm">
-                <span className="font-mono text-xs text-zinc-500">{a.action_id}</span>
+                <span className="font-mono text-xs text-ink-500">{a.action_id}</span>
                 <span>{fmt.label(a.type)}</span>
                 <StatusBadge status={a.status} />
-                <span className="tnum ml-auto text-xs text-zinc-500">{fmt.dateTime(a.created_at)}</span>
+                <span className="tnum ml-auto text-xs text-ink-500">{fmt.dateTime(a.created_at)}</span>
               </li>
             ))}
           </ul>
@@ -174,21 +174,23 @@ function ComponentRow({ name, comp }: { name: string; comp: Component }) {
   return (
     <div>
       <div className="flex items-baseline justify-between gap-3">
-        <span className="text-sm font-medium">{name}</span>
-        <span className="tnum font-mono text-xs text-zinc-600">
+        <span className="font-serif text-base">{name}</span>
+        <span className="tnum font-mono text-xs text-ink-600">
           {comp.points.toFixed(1)} / {comp.max_points}
         </span>
       </div>
-      <ScoreBar value={comp.points} max={comp.max_points} className="mt-1.5" />
-      <p className="mt-1.5 text-xs text-zinc-500">{comp.summary}</p>
+      <div className="mt-1.5 flex items-center gap-3">
+        <Ticks value={comp.points} max={comp.max_points} />
+        <p className="truncate text-xs text-ink-500">{comp.summary}</p>
+      </div>
       {comp.contributions.length > 0 ? (
         <ul className="mt-2 space-y-1">
           {shown.map((c, i) => (
-            <li key={`${c.ref}-${c.field}-${i}`} className="flex items-center gap-2 text-xs">
-              <CitationChip id={c.ref} />
-              <span className="text-zinc-600">{fmt.label(c.field)}</span>
-              <span className="truncate text-zinc-500">{c.value}</span>
-              <span className="tnum ml-auto font-mono text-zinc-700">+{c.points.toFixed(1)}</span>
+            <li key={`${c.ref}-${c.field}-${i}`} className="flex items-baseline gap-2 border-b border-dotted border-rule py-0.5 text-xs last:border-0">
+              <CitationChip id={c.ref} className="w-[68px] shrink-0" />
+              <span className="text-ink-600">{fmt.label(c.field)}</span>
+              <span className="truncate text-ink-500">{c.value}</span>
+              <span className="tnum ml-auto font-mono text-ink-700">+{c.points.toFixed(1)}</span>
             </li>
           ))}
           {comp.contributions.length > 4 ? (
@@ -211,7 +213,7 @@ function WhyNow({ leadId }: { leadId: string }) {
       title="Why now"
       aside={
         q.data ? (
-          <span className={cn("text-2xs", q.data.valid ? "text-emerald-700" : "text-red-700")}>
+          <span className={cn("text-2xs", q.data.valid ? "text-accent" : "text-alert")}>
             {q.data.valid ? `${q.data.citations.length} citations verified` : "Citations failed verification"}
             {q.data.source === "template" ? " · rule-based" : ""}
           </span>
@@ -226,9 +228,12 @@ function WhyNow({ leadId }: { leadId: string }) {
       ) : q.isError ? (
         <ErrorState error={q.error} onRetry={() => q.refetch()} />
       ) : q.data ? (
-        <p className="text-sm leading-6 text-zinc-800">
-          <CitedText text={q.data.why_now} />
-        </p>
+        <>
+          <p className="font-serif text-[15px] leading-7 text-ink">
+            <Footnoted text={q.data.why_now} />
+          </p>
+          <Sources text={q.data.why_now} className="mt-3" />
+        </>
       ) : null}
     </Section>
   );
@@ -257,7 +262,7 @@ function ActionBar({ detail }: { detail: LeadDetail }) {
   return (
     <Section
       title="Propose an action"
-      aside={pending.length ? <span className="text-2xs text-amber-700">{pending.length} pending approval</span> : null}
+      aside={pending.length ? <span className="text-2xs text-pending-ink">{pending.length} pending approval</span> : null}
     >
       <div className="flex flex-wrap items-center gap-2">
         <Button
@@ -299,7 +304,7 @@ function ActionBar({ detail }: { detail: LeadDetail }) {
           </Button>
         </div>
       </div>
-      <p className="mt-2 text-2xs text-zinc-500">Nothing changes in the CRM until a reviewer approves it.</p>
+      <p className="mt-2 text-2xs text-ink-500">Nothing changes in the CRM until a reviewer approves it.</p>
     </Section>
   );
 }

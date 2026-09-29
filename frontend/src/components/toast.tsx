@@ -23,13 +23,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <div
             key={t.id}
             className={cn(
-              "pointer-events-auto flex items-center gap-3 rounded border bg-white px-3 py-2 text-sm shadow-sm",
-              t.tone === "error" ? "border-red-200 text-red-800" : "border-zinc-200 text-zinc-900",
+              "fade-in pointer-events-auto flex items-center gap-3 rounded border border-l-2 bg-panel px-3 py-2 text-sm",
+              t.tone === "error" ? "border-rule border-l-alert text-ink" : "border-rule border-l-accent text-ink",
             )}
           >
             {t.message}
             <button
-              className="text-zinc-400 hover:text-zinc-700"
+              className="text-ink-500 hover:text-ink"
               onClick={() => setToasts((all) => all.filter((x) => x.id !== t.id))}
               aria-label="Dismiss"
             >

@@ -2,7 +2,6 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { RotateCcw } from "lucide-react";
 import * as React from "react";
 
 import { useToast } from "@/components/toast";
@@ -30,15 +29,15 @@ export function ResetDemoButton() {
   return (
     <Dialog.Root open={open} onOpenChange={(o) => !reset.isPending && setOpen(o)}>
       <Dialog.Trigger asChild>
-        <button className="flex items-center gap-1.5 text-zinc-500 hover:text-zinc-900">
-          <RotateCcw className="size-3" /> Reset demo data
+        <button className="flex items-center gap-1.5 text-ink-500 underline decoration-ink-300 underline-offset-2 hover:text-ink">
+          Reset demo data
         </button>
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-zinc-900/20" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white p-5 shadow-sm focus:outline-none">
-          <Dialog.Title className="text-sm font-semibold">Reset demo data?</Dialog.Title>
-          <Dialog.Description className="mt-2 text-sm text-zinc-600">
+        <Dialog.Overlay className="fade-in fixed inset-0 z-40 bg-ink/15" />
+        <Dialog.Content className="fade-in fixed left-1/2 top-1/2 z-50 w-[440px] -translate-x-1/2 -translate-y-1/2 rounded border border-ink bg-panel p-6 focus:outline-none">
+          <Dialog.Title className="font-serif text-xl font-semibold">Reset demo data?</Dialog.Title>
+          <Dialog.Description className="mt-2 text-sm text-ink-600">
             Restores the original seed dataset (4,992 leads) and the pre-computed answers for the example questions.
             Approvals, imports and merges made since are discarded for everyone using this deployment.
           </Dialog.Description>

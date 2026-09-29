@@ -62,24 +62,24 @@ export default function ApprovalsPage() {
         title="Approvals"
         description="Every change to CRM data waits here for a human decision"
         actions={
-          <label className="flex items-center gap-2 text-xs text-zinc-500">
+          <label className="flex items-center gap-2 text-xs text-ink-500">
             Reviewing as
             <Input value={reviewer} onChange={(e) => setReviewer(e.target.value)} className="h-7 w-36 text-xs" maxLength={80} />
           </label>
         }
       />
-      <div className="flex gap-4 border-b border-zinc-200 px-6">
+      <div className="flex gap-4 border-b border-ink-200 px-6">
         {TABS.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={cn(
               "-mb-px flex h-10 items-center gap-1.5 border-b-2 text-sm",
-              tab === t.key ? "border-zinc-900 text-zinc-900" : "border-transparent text-zinc-500 hover:text-zinc-900",
+              tab === t.key ? "border-ink-900 text-ink-900" : "border-transparent text-ink-500 hover:text-ink-900",
             )}
           >
             {t.label}
-            <span className="tnum font-mono text-2xs text-zinc-400">{counts[t.key] ?? 0}</span>
+            <span className="tnum font-mono text-2xs text-ink-400">{counts[t.key] ?? 0}</span>
           </button>
         ))}
       </div>
@@ -122,21 +122,21 @@ function ActionCard({ action: a, reviewer }: { action: Action; reviewer: string 
   });
 
   return (
-    <article className="rounded border border-zinc-200 bg-white">
-      <header className="flex items-center gap-2 border-b border-zinc-200 px-4 py-2.5">
+    <article className="rounded border border-ink-200 bg-panel">
+      <header className="flex items-center gap-2 border-b border-ink-200 px-4 py-2.5">
         <span className="text-sm font-medium">{TYPE_LABEL[a.type]}</span>
-        <span className="font-mono text-2xs text-zinc-500">{a.action_id}</span>
+        <span className="font-mono text-2xs text-ink-500">{a.action_id}</span>
         <StatusBadge status={a.status} />
-        <span className="tnum ml-auto text-2xs text-zinc-500">Proposed {fmt.dateTime(a.created_at)}</span>
+        <span className="tnum ml-auto text-2xs text-ink-500">Proposed {fmt.dateTime(a.created_at)}</span>
       </header>
 
       <div className="space-y-3 px-4 py-3 text-sm">
         <Payload action={a} />
-        {a.note ? <p className="text-xs text-zinc-500">Note: {a.note}</p> : null}
+        {a.note ? <p className="text-xs text-ink-500">Note: {a.note}</p> : null}
       </div>
 
       {a.status === "pending" ? (
-        <div className="flex items-center gap-2 border-t border-zinc-200 bg-zinc-50/60 px-4 py-2.5">
+        <div className="flex items-center gap-2 border-t border-ink-200 bg-ink-50/60 px-4 py-2.5">
           <Input
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -154,12 +154,12 @@ function ActionCard({ action: a, reviewer }: { action: Action; reviewer: string 
       ) : null}
 
       {a.audit.length ? (
-        <ol className="space-y-1 border-t border-zinc-200 px-4 py-2.5">
+        <ol className="space-y-1 border-t border-ink-200 px-4 py-2.5">
           {a.audit.map((e) => (
             <li key={e.id} className="flex gap-3 text-2xs">
-              <span className="tnum w-28 shrink-0 text-zinc-400">{fmt.dateTime(e.at)}</span>
-              <span className="w-20 shrink-0 truncate text-zinc-500">{e.actor}</span>
-              <span className="text-zinc-700">{e.event}</span>
+              <span className="tnum w-28 shrink-0 text-ink-400">{fmt.dateTime(e.at)}</span>
+              <span className="w-20 shrink-0 truncate text-ink-500">{e.actor}</span>
+              <span className="text-ink-700">{e.event}</span>
             </li>
           ))}
         </ol>
@@ -177,9 +177,9 @@ function Payload({ action: a }: { action: Action }) {
         {others.map((id) => (
           <CitationChip key={id} id={id} />
         ))}
-        <ArrowRight className="size-3.5 text-zinc-400" />
+        <ArrowRight className="size-3.5 text-ink-400" />
         <CitationChip id={primary} />
-        <span className="text-xs text-zinc-500">Activities move to the primary record; blank fields are filled from the duplicate.</span>
+        <span className="text-xs text-ink-500">Activities move to the primary record; blank fields are filled from the duplicate.</span>
       </div>
     );
   }
@@ -189,7 +189,7 @@ function Payload({ action: a }: { action: Action }) {
         {a.lead_ids.map((id) => (
           <CitationChip key={id} id={id} />
         ))}
-        <span className="text-zinc-500">move to</span>
+        <span className="text-ink-500">move to</span>
         <span className="font-medium">{String(a.payload.stage)}</span>
       </div>
     );
@@ -197,7 +197,7 @@ function Payload({ action: a }: { action: Action }) {
   const cites = (a.payload.citations as string[] | undefined) ?? [];
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-ink-500">
         To
         {a.lead_ids.map((id) => (
           <CitationChip key={id} id={id} />
@@ -211,11 +211,11 @@ function Payload({ action: a }: { action: Action }) {
           </>
         ) : null}
       </div>
-      <div className="rounded border border-zinc-200">
-        <div className="border-b border-zinc-200 px-3 py-1.5 text-sm font-medium">{String(a.payload.subject)}</div>
-        <p className="whitespace-pre-line px-3 py-2 text-sm text-zinc-700">{String(a.payload.body)}</p>
+      <div className="rounded border border-ink-200">
+        <div className="border-b border-ink-200 px-3 py-1.5 text-sm font-medium">{String(a.payload.subject)}</div>
+        <p className="whitespace-pre-line px-3 py-2 text-sm text-ink-700">{String(a.payload.body)}</p>
       </div>
-      <p className="text-2xs text-zinc-500">Sending is simulated: approval logs the touch and updates recency.</p>
+      <p className="text-2xs text-ink-500">Sending is simulated: approval logs the touch and updates recency.</p>
     </div>
   );
 }
