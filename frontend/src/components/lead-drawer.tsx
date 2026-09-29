@@ -62,7 +62,7 @@ function Section({ title, children, aside }: { title: string; children: React.Re
   return (
     <section className="border-b border-rule px-5 py-4 last:border-b-0">
       <div className="mb-2.5 flex items-center justify-between">
-        <h3 className="smallcaps text-xs font-semibold text-ink">{title}</h3>
+        <h3 className="smallcaps text-sm font-semibold text-ink">{title}</h3>
         {aside}
       </div>
       {children}
@@ -82,7 +82,7 @@ function LeadBody({ detail }: { detail: LeadDetail }) {
           ["Deal value", fmt.money(lead.deal_value)],
         ].map(([label, value]) => (
           <div key={label as string} className="px-5 py-3">
-            <div className="smallcaps text-2xs font-semibold text-ink-500">{label}</div>
+            <div className="smallcaps text-xs font-semibold text-ink-500">{label}</div>
             <div className="tnum mt-1 truncate font-serif text-lg leading-6">{value}</div>
           </div>
         ))}

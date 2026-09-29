@@ -158,7 +158,7 @@ export function Sources({
   if (!ids.length) return null;
   return (
     <div className={cn("border-t border-rule pt-2", className)}>
-      <h4 className="smallcaps mb-1 text-2xs font-semibold text-ink-500">Sources</h4>
+      <h4 className="smallcaps mb-1 text-xs font-semibold text-ink-500">Sources</h4>
       <ol className="space-y-0.5 text-xs">
         {ids.map((id, i) => (
           <li key={id} className="flex items-baseline gap-2">

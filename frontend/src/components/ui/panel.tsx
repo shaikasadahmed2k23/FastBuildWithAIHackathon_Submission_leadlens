@@ -20,7 +20,7 @@ export function Panel({
     <section className={cn("border-t border-ink", className)}>
       {title ? (
         <header className="flex h-9 items-center justify-between gap-2 border-b border-rule">
-          <h2 className="smallcaps text-xs font-semibold text-ink">{title}</h2>
+          <h2 className="smallcaps text-sm font-semibold text-ink">{title}</h2>
           {actions}
         </header>
       ) : null}

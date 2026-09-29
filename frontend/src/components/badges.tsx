@@ -15,7 +15,7 @@ const DOT: Record<Dot, string> = {
 /** Small-caps text label with a coloured dot; the ledger's replacement for pill badges. */
 export function DotLabel({ dot, children, className }: { dot: Dot; children: React.ReactNode; className?: string }) {
   return (
-    <span className={cn("smallcaps inline-flex items-center gap-1.5 whitespace-nowrap text-xs text-ink-700", className)}>
+    <span className={cn("smallcaps inline-flex items-center gap-1.5 whitespace-nowrap text-sm text-ink-700", className)}>
       <span aria-hidden className={cn("size-[7px] shrink-0 rounded-full", DOT[dot])} />
       {children}
     </span>

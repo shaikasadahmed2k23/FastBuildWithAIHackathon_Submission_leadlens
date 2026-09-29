@@ -92,7 +92,7 @@ export function ImportSheet({ open, onOpenChange }: { open: boolean; onOpenChang
             {preview ? (
               <>
                 <section>
-                  <h3 className="smallcaps mb-2 text-xs font-semibold text-ink">
+                  <h3 className="smallcaps mb-2 text-sm font-semibold text-ink">
                     Column mapping · {fmt.int(preview.rows)} rows
                   </h3>
                   <table className="w-full text-sm">
@@ -146,7 +146,7 @@ export function ImportSheet({ open, onOpenChange }: { open: boolean; onOpenChang
 
                 {preview.will_reject ? (
                   <section>
-                    <h3 className="smallcaps mb-2 text-xs font-semibold text-ink">
+                    <h3 className="smallcaps mb-2 text-sm font-semibold text-ink">
                       {preview.will_reject} rows will be rejected (with the proposed mapping)
                     </h3>
                     <RejectedList rows={preview.rejections} />
@@ -200,13 +200,13 @@ function ImportSummary({ result, onAnother }: { result: ImportResult; onAnother:
       <div className="grid grid-cols-4 divide-x divide-rule border-y border-ink">
         {stats.map(([label, value]) => (
           <div key={label} className="px-4 py-2.5">
-            <div className="smallcaps text-2xs font-semibold text-ink-500">{label}</div>
+            <div className="smallcaps text-xs font-semibold text-ink-500">{label}</div>
             <div className="tnum font-serif text-2xl leading-8">{fmt.int(value)}</div>
           </div>
         ))}
       </div>
       <section>
-        <h3 className="smallcaps mb-2 text-xs font-semibold text-ink">Cleaning ran on the imported leads</h3>
+        <h3 className="smallcaps mb-2 text-sm font-semibold text-ink">Cleaning ran on the imported leads</h3>
         <ul className="space-y-1 text-sm">
           <li>
             <span className="tnum font-mono">{result.issues.duplicate}</span> involved in duplicates (within the file or
@@ -222,7 +222,7 @@ function ImportSummary({ result, onAnother }: { result: ImportResult; onAnother:
       </section>
       {result.lead_ids.length ? (
         <section>
-          <h3 className="smallcaps mb-2 text-xs font-semibold text-ink">Imported leads (first 12)</h3>
+          <h3 className="smallcaps mb-2 text-sm font-semibold text-ink">Imported leads (first 12)</h3>
           <div className="flex flex-wrap gap-1">
             {result.lead_ids.slice(0, 12).map((id) => (
               <CitationChip key={id} id={id} />
@@ -232,7 +232,7 @@ function ImportSummary({ result, onAnother }: { result: ImportResult; onAnother:
       ) : null}
       {result.rejected.length ? (
         <section>
-          <h3 className="smallcaps mb-2 text-xs font-semibold text-ink">Rejected rows</h3>
+          <h3 className="smallcaps mb-2 text-sm font-semibold text-ink">Rejected rows</h3>
           <RejectedList rows={result.rejected} />
         </section>
       ) : null}

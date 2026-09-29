@@ -53,7 +53,7 @@ export function ApiGate({ children }: { children: React.ReactNode }) {
   return (
     <div className="fade-in flex min-h-screen items-center justify-center p-8" role="status" aria-live="polite">
       <div className="w-[360px] space-y-3 border-t border-ink pt-4">
-        <p className="smallcaps text-xs font-semibold text-ink-500">Before the first call</p>
+        <p className="smallcaps text-sm font-semibold text-ink-500">Before the first call</p>
         <p className="font-serif text-2xl font-semibold">Waking up server (~30s)</p>
         <p className="text-sm leading-6 text-ink-600">
           The API runs on a free instance that sleeps when nobody is reading. The first page of the day takes about half

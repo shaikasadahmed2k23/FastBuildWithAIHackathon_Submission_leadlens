@@ -67,6 +67,9 @@ export type ActionType = "outreach" | "merge" | "stage_change";
 export type ActionStatus = "pending" | "approved" | "rejected" | "executed";
 
 export const STAGES: Stage[] = ["new", "contacted", "qualified", "proposal", "negotiation", "won", "lost"];
+export const OPEN_STAGES: Stage[] = ["new", "contacted", "qualified", "proposal", "negotiation"];
+/** An open lead at or above this score is on the call sheet. */
+export const CALL_SHEET_MIN_SCORE = 80;
 
 export interface Health {
   status: string;
@@ -292,6 +295,11 @@ export const api = {
   health: () => request<Health>("/health"),
   overview: () => request<Overview>("/overview"),
   leads: (q: LeadQuery) => request<Page<LeadRow>>(`/leads${qs(q)}`),
+  /** Open leads scoring at least CALL_SHEET_MIN_SCORE, highest first (the backend's own filters, no new logic). */
+  callSheet: (pageSize = 1) =>
+    request<Page<LeadRow>>(
+      `/leads?${OPEN_STAGES.map((s) => `stage=${s}`).join("&")}&min_score=${CALL_SHEET_MIN_SCORE}&page_size=${pageSize}`,
+    ),
   lead: (id: string) => request<LeadDetail>(`/leads/${id}`),
   explain: (id: string) => request<Explanation>(`/leads/${id}/explain`, { method: "POST" }),
   row: (id: string) => request<SourceRow>(`/rows/${id}`),
