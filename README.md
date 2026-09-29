@@ -23,6 +23,20 @@ cd backend && pytest -q          # 83 tests
 python -m evals.run              # golden eval + cleaning precision/recall -> evals/latest.json
 ```
 
+### Before a demo (LLM quota)
+
+Free-tier keys have small quotas (Groq: 8k tokens/min, 200k tokens/day on this model). LeadLens protects them in four ways:
+
+- **Answer cache.** `/ask` and "why now" results are cached in DuckDB, keyed on the normalized question, a fingerprint of the prompts and model, and a data version. Approving an action or importing a CSV bumps the data version, so cached answers never describe stale data. Cached responses say `cached` and cost 0 tokens.
+- **Compact prompts.** About 1,080 tokens per question, down from about 1,400 on the same questions. On list questions the answer payload is 82% smaller.
+- **Rate limit.** 10 requests per minute per client on `/ask` and `/explain` (`LLM_RATE_LIMIT_PER_MIN`).
+- **Call ledger.** Every provider call (purpose, tokens, latency, error) is appended to `backend/data/llm_calls.jsonl`.
+
+```bash
+python -m app.prewarm --api http://localhost:8000   # cache the demo questions shown on the Ask page
+python -m app.llm_usage --since 2026-09-30           # tokens and errors from the ledger (UTC)
+```
+
 ## What it does
 
 | Screen | What you get |

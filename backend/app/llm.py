@@ -152,7 +152,7 @@ def _describe(exc: Exception) -> str:
         except ValueError:
             message = exc.response.text
         # Provider messages can name the account's organization ID; it surfaces in /health and notes.
-        message = re.sub(r"\borg_[A-Za-z0-9]+\b", "org_…", str(message))
+        message = re.sub(r"\borg_[A-Za-z0-9]+\b", "org_[redacted]", str(message))
         return f"HTTP {exc.response.status_code}: {message[:200]}".rstrip(": ")
     return f"{type(exc).__name__}: {str(exc)[:200]}".rstrip(": ")
 
