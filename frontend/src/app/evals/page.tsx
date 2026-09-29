@@ -4,7 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, ChevronRight, XCircle } from "lucide-react";
 import * as React from "react";
 
-import { CitedText } from "@/components/inspector";
+import { Footnoted, Sources } from "@/components/inspector";
+import { Ticks } from "@/components/score-bar";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState, ErrorState } from "@/components/states";
 import { Panel } from "@/components/ui/panel";
@@ -20,14 +21,10 @@ export default function EvalsPage() {
         title="Evals"
         description={q.data ? `Last run ${fmt.dateTime(q.data.run_at)} · ${q.data.mode === "full" ? q.data.model : "offline, rule-based"}` : undefined}
       />
-      <div className="space-y-4 p-6">
+      <div className="space-y-9 px-8 pb-12 pt-6">
         {q.isLoading ? (
           <>
-            <div className="grid grid-cols-4 gap-3">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-[74px]" />
-              ))}
-            </div>
+            <Skeleton className="h-24" />
             <Skeleton className="h-64" />
           </>
         ) : q.error instanceof ApiError && q.error.status === 404 ? (
@@ -46,10 +43,10 @@ const secs = (ms: number | undefined) => `${((ms ?? 0) / 1000).toFixed(1)}s`;
 
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
-    <div className="rounded border border-ink-200 bg-panel px-4 py-3">
-      <div className="text-xs text-ink-500">{label}</div>
-      <div className="tnum mt-1 text-xl font-semibold tracking-tight">{value}</div>
-      {sub ? <div className="mt-0.5 text-2xs text-ink-500">{sub}</div> : null}
+    <div className="min-w-0 px-4 py-3 first:pl-0">
+      <dt className="smallcaps text-xs font-semibold text-ink-500">{label}</dt>
+      <dd className="tnum mt-1 truncate font-serif text-[22px] leading-7">{value}</dd>
+      {sub ? <dd className="mt-0.5 text-2xs text-ink-500">{sub}</dd> : null}
     </div>
   );
 }
@@ -62,7 +59,7 @@ function Report({ data }: { data: EvalReport }) {
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <dl className="grid grid-cols-5 divide-x divide-rule border-y border-ink">
         <Stat label="Answer accuracy" value={fmt.pct(s.accuracy, 0)} sub={`${s.passed} of ${s.total} golden questions`} />
         <Stat
           label="Citation checker pass"
@@ -84,10 +81,10 @@ function Report({ data }: { data: EvalReport }) {
               : "End to end, per question"
           }
         />
-      </div>
+      </dl>
 
       {data.variance ? (
-        <p className="text-xs text-ink-500">
+        <p className="-mt-6 text-xs text-ink-500">
           Across {data.variance.runs} runs: accuracy {fmt.pct(data.variance.accuracy.min, 0)}–{fmt.pct(data.variance.accuracy.max, 0)}{" "}
           (sd {(data.variance.accuracy.stdev * 100).toFixed(1)} pts); unstable questions:{" "}
           {data.variance.unstable_questions.length ? data.variance.unstable_questions.join(", ") : "none"}. Figures above are
@@ -97,22 +94,22 @@ function Report({ data }: { data: EvalReport }) {
 
       {data.run_summaries && data.run_summaries.length > 1 ? (
         <Panel title="Runs">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm [&_td:first-child]:pl-1 [&_td:last-child]:pr-1 [&_th:first-child]:pl-1 [&_th:last-child]:pr-1">
             <thead>
-              <tr className="border-b border-ink-200 text-left text-xs text-ink-500">
-                <th className="px-3 py-2 font-normal">Run</th>
-                <th className="px-3 py-2 text-right font-normal">Accuracy</th>
-                <th className="px-3 py-2 text-right font-normal">Answered by LLM</th>
-                <th className="px-3 py-2 text-right font-normal">Citation pass</th>
-                <th className="px-3 py-2 text-right font-normal">Retry</th>
-                <th className="px-3 py-2 text-right font-normal">Fallback (template / rules)</th>
-                <th className="px-3 py-2 text-right font-normal">p50 / p95</th>
-                <th className="px-3 py-2 text-right font-normal">p50 / p95 excl. rate-limit waits</th>
+              <tr className="smallcaps border-b border-ink text-left text-sm text-ink-600">
+                <th className="px-3 py-2 font-semibold">Run</th>
+                <th className="px-3 py-2 text-right font-semibold">Accuracy</th>
+                <th className="px-3 py-2 text-right font-semibold">Answered by LLM</th>
+                <th className="px-3 py-2 text-right font-semibold">Citation pass</th>
+                <th className="px-3 py-2 text-right font-semibold">Retry</th>
+                <th className="px-3 py-2 text-right font-semibold">Fallback (template / rules)</th>
+                <th className="px-3 py-2 text-right font-semibold">p50 / p95</th>
+                <th className="px-3 py-2 text-right font-semibold">p50 / p95 excl. rate-limit waits</th>
               </tr>
             </thead>
             <tbody className="tnum font-mono text-xs">
               {data.run_summaries.map((r, i) => (
-                <tr key={i} className="border-b border-ink-100 last:border-0">
+                <tr key={i} className="border-b border-rule last:border-0 even:bg-panel">
                   <td className="px-3 py-2 font-sans text-sm">{i + 1}</td>
                   <td className="px-3 py-2 text-right">
                     {r.passed}/{r.total}
@@ -120,7 +117,7 @@ function Report({ data }: { data: EvalReport }) {
                   <td className="px-3 py-2 text-right">{(r.by_source.llm ?? 0) - r.fallbacks.template}</td>
                   <td className="px-3 py-2 text-right">{fmt.pct(r.citation_valid_rate, 0)}</td>
                   <td className="px-3 py-2 text-right">{fmt.pct(r.retry_rate, 0)}</td>
-                  <td className={cn("px-3 py-2 text-right", r.fallback_rate > 0 && "text-amber-700")}>
+                  <td className={cn("px-3 py-2 text-right", r.fallback_rate > 0 && "text-pending-ink")}>
                     {fmt.pct(r.fallback_rate, 0)} ({r.fallbacks.template} / {r.fallbacks.rules})
                   </td>
                   <td className="px-3 py-2 text-right">
@@ -135,28 +132,28 @@ function Report({ data }: { data: EvalReport }) {
               ))}
             </tbody>
           </table>
-          <p className="border-t border-ink-200 px-3 py-2 text-2xs text-ink-500">
+          <p className="border-t border-rule py-2 text-2xs text-ink-500">
             Fallbacks happen when the LLM provider fails (e.g. quota exhausted). Rule-based answers count toward accuracy
             but are not model results. See docs/EVALS.md.
           </p>
         </Panel>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-x-10 gap-y-9 xl:grid-cols-2">
         <Panel title="Data cleaning vs. injected ground truth">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm [&_td:first-child]:pl-1 [&_td:last-child]:pr-1 [&_th:first-child]:pl-1 [&_th:last-child]:pr-1">
             <thead>
-              <tr className="border-b border-ink-200 text-left text-xs text-ink-500">
-                <th className="px-3 py-2 font-normal">Issue</th>
-                <th className="px-3 py-2 text-right font-normal">Precision</th>
-                <th className="px-3 py-2 text-right font-normal">Recall</th>
-                <th className="px-3 py-2 text-right font-normal">F1</th>
-                <th className="px-3 py-2 text-right font-normal">Found / expected</th>
+              <tr className="smallcaps border-b border-ink text-left text-sm text-ink-600">
+                <th className="px-3 py-2 font-semibold">Issue</th>
+                <th className="px-3 py-2 text-right font-semibold">Precision</th>
+                <th className="px-3 py-2 text-right font-semibold">Recall</th>
+                <th className="px-3 py-2 text-right font-semibold">F1</th>
+                <th className="px-3 py-2 text-right font-semibold">Found / expected</th>
               </tr>
             </thead>
             <tbody>
               {Object.entries(data.cleaning).map(([k, m]) => (
-                <tr key={k} className="border-b border-ink-100 last:border-0">
+                <tr key={k} className="border-b border-rule last:border-0 even:bg-panel">
                   <td className="px-3 py-2">{fmt.label(k)}</td>
                   <td className="tnum px-3 py-2 text-right font-mono text-xs">{m.precision.toFixed(3)}</td>
                   <td className="tnum px-3 py-2 text-right font-mono text-xs">{m.recall.toFixed(3)}</td>
@@ -170,18 +167,16 @@ function Report({ data }: { data: EvalReport }) {
           </table>
         </Panel>
         <Panel title="Accuracy by category">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm [&_td:first-child]:pl-1 [&_td:last-child]:pr-1 [&_th:first-child]:pl-1 [&_th:last-child]:pr-1">
             <tbody>
               {Object.entries(s.by_category).map(([cat, v]) => (
-                <tr key={cat} className="border-b border-ink-100 last:border-0">
+                <tr key={cat} className="border-b border-rule last:border-0 even:bg-panel">
                   <td className="px-3 py-2">{fmt.label(cat)}</td>
                   <td className="tnum px-3 py-2 text-right font-mono text-xs">
                     {v.passed} / {v.total}
                   </td>
-                  <td className="w-40 px-3 py-2">
-                    <div className="h-1 overflow-hidden rounded-full bg-ink-100">
-                      <div className="h-full rounded-full bg-ink-800" style={{ width: `${(v.passed / v.total) * 100}%` }} />
-                    </div>
+                  <td className="w-28 px-3 py-2 text-right">
+                    <Ticks value={v.passed} max={v.total} />
                   </td>
                 </tr>
               ))}
@@ -199,26 +194,26 @@ function Report({ data }: { data: EvalReport }) {
           </label>
         }
       >
-        <table className="w-full text-sm">
+        <table className="w-full text-sm [&_td:first-child]:pl-1 [&_td:last-child]:pr-1 [&_th:first-child]:pl-1 [&_th:last-child]:pr-1">
           <thead>
-            <tr className="border-b border-ink-200 text-left text-xs text-ink-500">
+            <tr className="smallcaps border-b border-ink text-left text-sm text-ink-600">
               <th className="w-8 px-3 py-2" />
-              <th className="px-3 py-2 font-normal">ID</th>
-              <th className="px-3 py-2 font-normal">Question</th>
-              <th className="px-3 py-2 font-normal">Category</th>
-              <th className="px-3 py-2 font-normal">Source</th>
-              <th className="px-3 py-2 font-normal">Result</th>
-              <th className="px-3 py-2 text-right font-normal">ms</th>
+              <th className="px-3 py-2 font-semibold">ID</th>
+              <th className="px-3 py-2 font-semibold">Question</th>
+              <th className="px-3 py-2 font-semibold">Category</th>
+              <th className="px-3 py-2 font-semibold">Source</th>
+              <th className="px-3 py-2 font-semibold">Result</th>
+              <th className="px-3 py-2 text-right font-semibold">ms</th>
             </tr>
           </thead>
           <tbody>
             {results.map((r) => (
               <React.Fragment key={r.id}>
                 <tr
-                  className="cursor-pointer border-b border-ink-100 hover:bg-ink-50"
+                  className="cursor-pointer border-b border-rule hover:bg-ink-50"
                   onClick={() => setExpanded((e) => (e === r.id ? null : r.id))}
                 >
-                  <td className="px-3 py-2 text-ink-400">
+                  <td className="px-3 py-2 text-ink-500">
                     <ChevronRight className={cn("size-3.5 transition-transform", expanded === r.id && "rotate-90")} />
                   </td>
                   <td className="px-3 py-2 font-mono text-xs text-ink-500">{r.id}</td>
@@ -227,11 +222,11 @@ function Report({ data }: { data: EvalReport }) {
                   <td className="px-3 py-2 text-ink-600">{r.source}</td>
                   <td className="px-3 py-2">
                     {r.passed ? (
-                      <span className="inline-flex items-center gap-1 text-xs text-emerald-700">
+                      <span className="inline-flex items-center gap-1 text-xs text-accent">
                         <CheckCircle2 className="size-3.5" /> Pass
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-xs text-red-700">
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-alert">
                         <XCircle className="size-3.5" /> Fail
                       </span>
                     )}
@@ -239,18 +234,19 @@ function Report({ data }: { data: EvalReport }) {
                   <td className="tnum px-3 py-2 text-right font-mono text-xs text-ink-500">{r.latency_ms}</td>
                 </tr>
                 {expanded === r.id ? (
-                  <tr className="border-b border-ink-100 bg-ink-50/60">
+                  <tr className="border-b border-rule bg-panel">
                     <td />
                     <td colSpan={6} className="space-y-2 px-3 py-3">
                       <div className="text-xs text-ink-500">
                         Expected <span className="font-mono text-ink-800">{JSON.stringify(r.expected)}</span> · Got{" "}
                         <span className="font-mono text-ink-800">{JSON.stringify(r.got)}</span>
                       </div>
-                      <p className="text-sm">
-                        <CitedText text={r.answer} />
+                      <p className="text-sm leading-6">
+                        <Footnoted text={r.answer} />
                       </p>
+                      <Sources text={r.answer} />
                       {r.sql ? (
-                        <pre className="overflow-x-auto whitespace-pre-wrap rounded border border-ink-200 bg-panel p-2 font-mono text-xs text-ink-700">
+                        <pre className="overflow-x-auto whitespace-pre-wrap border border-rule bg-paper p-3 font-mono text-xs text-ink-700">
                           {r.sql}
                         </pre>
                       ) : null}
