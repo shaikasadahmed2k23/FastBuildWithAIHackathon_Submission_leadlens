@@ -12,9 +12,11 @@ export class ApiError extends Error {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
+    // FormData uploads need the browser to set the multipart boundary itself.
+    const isForm = typeof FormData !== "undefined" && init?.body instanceof FormData;
     res = await fetch(`${API_URL}${path}`, {
       ...init,
-      headers: { "Content-Type": "application/json", ...init?.headers },
+      headers: isForm ? init?.headers : { "Content-Type": "application/json", ...init?.headers },
     });
   } catch {
     throw new ApiError(0, `Can't reach the API at ${API_URL}. Is the backend running?`);
@@ -33,6 +35,31 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 // ---------------------------------------------------------------- types
+
+export interface ImportPreview {
+  filename: string;
+  rows: number;
+  headers: string[];
+  mapping: Record<string, string | null>;
+  labels: Record<string, string>;
+  required: string[];
+  unmapped_headers: string[];
+  sample: Record<string, unknown>[];
+  will_reject: number;
+  rejections: { row: number; reasons: string[] }[];
+}
+
+export interface ImportResult {
+  batch_id: string;
+  filename: string;
+  imported: number;
+  rejected: { row: number; reasons: string[] }[];
+  warnings: { row: number; message: string }[];
+  new_companies: number;
+  matched_companies: number;
+  lead_ids: string[];
+  issues: { duplicate: number; stale: number; missing_field: number };
+}
 
 export type Stage = "new" | "contacted" | "qualified" | "proposal" | "negotiation" | "won" | "lost";
 export type IssueType = "duplicate" | "stale" | "missing_field";
@@ -273,4 +300,16 @@ export const api = {
     request<Action>(`/actions/${id}/${decision}`, { method: "POST", body: JSON.stringify(body) }),
   evals: () => request<EvalReport>("/evals/latest"),
   askExamples: () => request<string[]>("/ask/examples"),
+  importPreview: (file: File) => {
+    const body = new FormData();
+    body.append("file", file);
+    return request<ImportPreview>("/import/preview", { method: "POST", body });
+  },
+  importCsv: (file: File, mapping: Record<string, string | null>, actor: string) => {
+    const body = new FormData();
+    body.append("file", file);
+    body.append("mapping", JSON.stringify(mapping));
+    body.append("actor", actor);
+    return request<ImportResult>("/import", { method: "POST", body });
+  },
 };

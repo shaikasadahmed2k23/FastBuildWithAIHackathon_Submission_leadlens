@@ -81,8 +81,11 @@ def fit_component(lead: dict[str, Any], company: dict[str, Any] | None) -> Compo
         ]
     points = round(sen_pts + size_pts + ind_pts, 1)
     label = SENIORITY_LABELS.get(seniority, seniority)
-    summary = (f"{label} at a {company['employees']}-person {company['industry']} company" if company
-               else f"{label}, company unknown")
+    if company:
+        size = f"{company['employees']}-person" if company.get("employees") else "unknown-size"
+        summary = f"{label} at a {size} {company.get('industry') or 'unclassified'} company"
+    else:
+        summary = f"{label}, company unknown"
     return Component(points=points, max_points=40, summary=summary, contributions=contribs)
 
 

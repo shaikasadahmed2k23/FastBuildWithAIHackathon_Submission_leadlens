@@ -6,11 +6,12 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Annotated, Any, Literal
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, Form, HTTPException, Query, Request, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from app import actions, ask, db, explain, llm
+from app import actions, ask, db, explain, importer, llm
 from app.citations import jsonable
 from app.config import AS_OF, BACKEND_DIR, settings
 from app.demo import DEMO_QUESTIONS
@@ -324,6 +325,47 @@ def approve_action(action_id: str, d: Decision) -> actions.Action:
 @app.post("/actions/{action_id}/reject")
 def reject_action(action_id: str, d: Decision) -> actions.Action:
     return _transition(actions.reject, action_id, d)
+
+
+# ---------------------------------------------------------------- import
+
+async def _read_upload(file: UploadFile) -> bytes:
+    if not (file.filename or "").lower().endswith(".csv"):
+        raise HTTPException(400, "upload a .csv file")
+    content = await file.read(importer.MAX_BYTES + 1)
+    if len(content) > importer.MAX_BYTES:
+        raise HTTPException(413, f"file is larger than {importer.MAX_BYTES // 1_000_000} MB")
+    return content
+
+
+@app.post("/import/preview")
+async def import_preview(file: UploadFile) -> importer.Preview:
+    """Propose a column mapping and show sample rows and would-be rejections. Writes nothing."""
+    content = await _read_upload(file)
+    try:
+        return importer.preview(content, file.filename or "upload.csv")
+    except importer.ImportRejected as exc:
+        raise HTTPException(400, str(exc)) from None
+
+
+@app.post("/import")
+async def import_csv(
+    file: UploadFile,
+    mapping: Annotated[str, Form(description="JSON object: field -> CSV column (or null)")],
+    actor: Annotated[str, Form(max_length=80)] = "reviewer",
+) -> importer.ImportResult:
+    """Import with a user-confirmed mapping, then re-run cleaning and scoring."""
+    content = await _read_upload(file)
+    try:
+        parsed = json.loads(mapping)
+    except json.JSONDecodeError:
+        raise HTTPException(400, "mapping must be a JSON object") from None
+    if not isinstance(parsed, dict):
+        raise HTTPException(400, "mapping must be a JSON object")
+    try:
+        return await run_in_threadpool(importer.run_import, content, file.filename or "upload.csv", parsed, actor)
+    except importer.ImportRejected as exc:
+        raise HTTPException(400, str(exc)) from None
 
 
 # ---------------------------------------------------------------- evals

@@ -4,11 +4,15 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import * as React from "react";
 
+import { Upload } from "lucide-react";
+
 import { issueLabel, StageBadge } from "@/components/badges";
+import { ImportSheet } from "@/components/import-sheet";
 import { useInspector } from "@/components/inspector";
 import { PageHeader } from "@/components/page-header";
 import { ScoreCell } from "@/components/score-bar";
 import { ErrorState } from "@/components/states";
+import { Button } from "@/components/ui/button";
 import { Panel } from "@/components/ui/panel";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, type Overview } from "@/lib/api";
@@ -16,9 +20,19 @@ import { fmt } from "@/lib/utils";
 
 export default function OverviewPage() {
   const q = useQuery({ queryKey: ["overview"], queryFn: api.overview });
+  const [importing, setImporting] = React.useState(false);
   return (
     <>
-      <PageHeader title="Overview" description={q.data ? `CRM snapshot as of ${fmt.date(q.data.as_of)}` : undefined} />
+      <PageHeader
+        title="Overview"
+        description={q.data ? `CRM snapshot as of ${fmt.date(q.data.as_of)}` : undefined}
+        actions={
+          <Button size="sm" onClick={() => setImporting(true)}>
+            <Upload /> Import CSV
+          </Button>
+        }
+      />
+      <ImportSheet open={importing} onOpenChange={setImporting} />
       <div className="space-y-4 p-6">
         {q.isLoading ? (
           <OverviewSkeleton />
