@@ -4,6 +4,10 @@ on:
   push:
   pull_request:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   backend:
     runs-on: ubuntu-latest
@@ -19,8 +23,9 @@ jobs:
           cache-dependency-path: backend/requirements.txt
       - run: pip install -r requirements.txt
       - run: pytest -q
+      # Offline only: CI must never spend LLM tokens, even if keys are added as secrets.
       - name: Offline eval smoke run
-        run: python -m evals.run --out /tmp/eval.json
+        run: python -m evals.run --mode offline --out /tmp/eval.json
 
   frontend:
     runs-on: ubuntu-latest
