@@ -210,6 +210,7 @@ export interface EvalReport {
     by_source: Record<string, number>;
   };
   cleaning: Record<string, { precision: number; recall: number; f1: number; found: number; expected: number }>;
+  run_summaries?: EvalReport["summary"][];
   variance?: {
     runs: number;
     accuracy: { mean: number; stdev: number; min: number; max: number };

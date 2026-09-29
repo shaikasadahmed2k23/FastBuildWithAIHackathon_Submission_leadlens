@@ -93,6 +93,53 @@ function Report({ data }: { data: EvalReport }) {
         </p>
       ) : null}
 
+      {data.run_summaries && data.run_summaries.length > 1 ? (
+        <Panel title="Runs">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-zinc-200 text-left text-xs text-zinc-500">
+                <th className="px-3 py-2 font-normal">Run</th>
+                <th className="px-3 py-2 text-right font-normal">Accuracy</th>
+                <th className="px-3 py-2 text-right font-normal">Answered by LLM</th>
+                <th className="px-3 py-2 text-right font-normal">Citation pass</th>
+                <th className="px-3 py-2 text-right font-normal">Retry</th>
+                <th className="px-3 py-2 text-right font-normal">Fallback (template / rules)</th>
+                <th className="px-3 py-2 text-right font-normal">p50 / p95</th>
+                <th className="px-3 py-2 text-right font-normal">p50 / p95 excl. rate-limit waits</th>
+              </tr>
+            </thead>
+            <tbody className="tnum font-mono text-xs">
+              {data.run_summaries.map((r, i) => (
+                <tr key={i} className="border-b border-zinc-100 last:border-0">
+                  <td className="px-3 py-2 font-sans text-sm">{i + 1}</td>
+                  <td className="px-3 py-2 text-right">
+                    {r.passed}/{r.total}
+                  </td>
+                  <td className="px-3 py-2 text-right">{(r.by_source.llm ?? 0) - r.fallbacks.template}</td>
+                  <td className="px-3 py-2 text-right">{fmt.pct(r.citation_valid_rate, 0)}</td>
+                  <td className="px-3 py-2 text-right">{fmt.pct(r.retry_rate, 0)}</td>
+                  <td className={cn("px-3 py-2 text-right", r.fallback_rate > 0 && "text-amber-700")}>
+                    {fmt.pct(r.fallback_rate, 0)} ({r.fallbacks.template} / {r.fallbacks.rules})
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    {(r.p50_latency_ms / 1000).toFixed(1)}s / {(r.p95_latency_ms / 1000).toFixed(1)}s
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    {r.p50_latency_ex_backoff_ms != null
+                      ? `${(r.p50_latency_ex_backoff_ms / 1000).toFixed(1)}s / ${((r.p95_latency_ex_backoff_ms ?? 0) / 1000).toFixed(1)}s`
+                      : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="border-t border-zinc-200 px-3 py-2 text-2xs text-zinc-500">
+            Fallbacks happen when the LLM provider fails (e.g. quota exhausted). Rule-based answers count toward accuracy
+            but are not model results. See docs/EVALS.md.
+          </p>
+        </Panel>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <Panel title="Data cleaning vs. injected ground truth">
           <table className="w-full text-sm">
