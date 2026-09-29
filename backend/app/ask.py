@@ -27,7 +27,8 @@ lead_scores(lead_id, score 0-100, fit 0-40, intent 0-40, recency 0-20)
 Exact codes (compare with = or IN, never LIKE):
 seniority: c_level vp director manager individual
 source: website referral linkedin event cold_outbound partner
-stage: open = new contacted qualified proposal negotiation; closed = won lost
+stage: new contacted qualified proposal negotiation won lost
+  ("open" is not a value: open = stage NOT IN ('won','lost'); closed = won or lost)
 activities.type: email_open email_reply call meeting demo_request website_visit pricing_page_visit
 issue_type: duplicate stale missing_field (details like 'Missing email')
 industry: Software Fintech Healthcare E-commerce Logistics Manufacturing Education Media
