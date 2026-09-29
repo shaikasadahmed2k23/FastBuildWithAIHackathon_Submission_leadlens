@@ -128,6 +128,46 @@ So the design claim that the parser "declines rather than guesses" doesn't hold.
 
 **Live LLM: pending.** The planned single live run couldn't happen on Sept 29: Groq returned `429 … tokens per day (TPD): Limit 200000` (the provider's message, now recorded in the call ledger). That day's earlier golden runs had used about 212k tokens. The run needs about 27k tokens (25 questions × ~1,080) and will be run once, unchanged, when the daily window frees up.
 
+### Held-out duplicate detection (`backend/evals/cleaning_heldout.py`)
+
+The seeded CRM only injects the duplicate kinds the detector was built alongside (case changes, one-character typos, Gmail dots), so its perfect score says little. This benchmark uses a separate generator (seed 2027, multilingual names, 520 leads) with six other kinds of duplicate, 10 each, plus 30 **precision traps** that must *not* be merged:
+
+- **Look-alike names at the same company:** Chris/Christine, Dan/Danielle, Alex/Alexis.
+- **Same name at an unrelated company.**
+- **Family members at the same company.**
+- **Colleagues sharing the office main line.**
+
+| Duplicate kind | Example | Held-out (detector untouched) | After fixes (no longer held-out) |
+|---|---|---|---|
+| Nickname | Robert Smith → Bob Smith, `bob.smith@` | 2/10 | 10/10 |
+| Swapped first/last | Jose Garcia → Garcia Jose, no email, same phone | 0/10 | 10/10 |
+| Company suffix | "Acme Labs Inc" vs "Acme Labs Ltd" (separate company records) | 6/10 | 10/10 |
+| Phone format | same name, personal email, `+1 415-555-0134` vs `(415) 555 0134` | 0/10 | 10/10 |
+| Accents | José Müller → Jose Muller, no email | 0/10 | 10/10 |
+| Whitespace / case | `" MARIA  "`, `"  Maria.Garcia@X.com "` | 10/10 | 10/10 |
+| **Precision / recall / F1** | | **0.90 / 0.30 / 0.45** | 1.00 / 1.00 / 1.00 |
+| Traps wrongly merged | | 2/30 (Alex/Alexis Lopez; Raul/Paulo Freitas) | 0/30 |
+
+**The held-out result is the left column** (`reports/cleaning_heldout_before.json`, committed before any detector change). The detector found almost none of the new noise, and its fuzzy whole-name matching merged two different people.
+
+**Fixes, all general techniques:**
+
+- **Names:** accents folded and whitespace/case normalized.
+- **First names** match if equal, if one is a known nickname of the other, or if they're one keystroke apart (edit distance ≤ 1, adjacent swaps included). Nicknames must resolve to *exactly* the other name, so Dan↔Daniel matches but Dan↔Danielle doesn't. Two short names (under 4 letters) must match exactly.
+- **Swapped fields:** first/last are compared crosswise.
+- **Company blocking** uses a normalized name with legal forms removed (Inc, Ltd, LLC, Pvt Ltd, GmbH, S.A., B.V., …) instead of the company record ID.
+- **Evidence:** a matching name must be backed by a similar email local part (nickname-canonicalized), the same phone (last 10 digits), or a missing email on one side. A shared phone alone never merges different names.
+
+**Why the right column is not a held-out score:**
+
+- I wrote both the generator's nickname list and the detector's nickname table, and the generator's 20 pairs are all in the table. Real nickname recall will be lower.
+- The "S.A." case (2 company-suffix misses) was found by inspecting held-out misses after the first round of fixes.
+- The first round of fixes regressed the main seeded set (recall 0.995, then 0.984). The misses were adjacent-letter swaps like Gary→Gayr, and dropped letters that left a 3-letter name (John→Jon). Replacing a similarity threshold with an explicit one-keystroke edit distance, and applying the short-name rule to the longer name, restored 1.000 on the main set.
+
+The benchmark now runs in CI as a regression guard (`tests/test_evals.py`). A fresh held-out set with different noise would be needed to measure generalization again.
+
+**Known remaining gaps:** initials ("J. Smith"), people who changed employer (different company *and* email), transliteration beyond accent stripping (Müller vs Mueller), and genuinely different people one letter apart at the same company (Maria vs Mario Garcia with similar work emails would still merge).
+
 ## How we got here: failures found and fixed
 
 The first live run scored 8/10 on a 10-question subset, and the first full run 47/50. Every failure was traced to its cause and fixed in the prompt, the guardrails or the checker. No fix special-cases a question.

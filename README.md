@@ -120,7 +120,8 @@ Three runs of each mode. Method, per-run numbers, the failures found and fixed, 
 Caveats:
 
 - **The prompt fixes and the offline rules were developed against these 50 questions.** Treat the scores as "reliable on common analytics questions", not as proof of generalization. `tests/test_rules.py` has held-out and must-decline checks for offline mode.
-- **Cleaning is perfect because the injected noise is synthetic.** Real CRM data would be harder.
+- **Cleaning is perfect on the seeded data because the detector was built alongside that noise.** On a held-out set with other noise (nicknames, swapped names, company-suffix variants, phone formats, accents), the untouched detector scored F1 0.45 (precision 0.90, recall 0.30). After general fixes it scores 1.00 there, but that set is no longer held-out. See docs/EVALS.md.
+- **The rule-based fallback scores 5/25 on held-out questions**, with 3 confident wrong answers. The live LLM held-out run is pending the provider's daily quota.
 - **The spec's `llama-3.3-70b-versatile` is no longer served by Groq,** so live results use `openai/gpt-oss-120b`.
 
 ## API

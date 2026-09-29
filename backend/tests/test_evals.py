@@ -35,3 +35,12 @@ def test_heldout_file_matches_current_data(seeded: GroundTruth) -> None:
     assert len(heldout) == 25 and sum(e["kind"] == "decline" for e in heldout) == 2
     golden_questions = {q[2].lower() for q in QUESTIONS}
     assert not any(e["question"].lower() in golden_questions for e in heldout)  # genuinely new phrasings
+
+
+def test_cleaning_benchmark_regression_guard() -> None:
+    """The held-out dedup set was used to fix the detector, so it is now a regression guard, not a held-out score."""
+    from evals.cleaning_heldout import evaluate, generate
+
+    report = evaluate(*generate())
+    assert report["precision"] >= 0.98 and report["recall"] >= 0.95
+    assert report["traps"]["merged"] == 0

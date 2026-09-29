@@ -1,0 +1,40 @@
+{
+ "leads": 498,
+ "true_pairs": 60,
+ "found_pairs": 60,
+ "precision": 1.0,
+ "recall": 1.0,
+ "f1": 1.0,
+ "recall_by_kind": {
+  "accents": {
+   "found": 10,
+   "total": 10
+  },
+  "company_suffix": {
+   "found": 10,
+   "total": 10
+  },
+  "nickname": {
+   "found": 10,
+   "total": 10
+  },
+  "phone_format": {
+   "found": 10,
+   "total": 10
+  },
+  "swapped": {
+   "found": 10,
+   "total": 10
+  },
+  "whitespace_case": {
+   "found": 10,
+   "total": 10
+  }
+ },
+ "traps": {
+  "total": 30,
+  "merged": 0,
+  "by_kind": {}
+ },
+ "false_positives": []
+}
