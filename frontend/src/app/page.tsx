@@ -114,7 +114,7 @@ function OverviewBody({ data }: { data: Overview }) {
                 <th className="px-3 py-2 font-normal">Company</th>
                 <th className="px-3 py-2 font-normal">Stage</th>
                 <th className="px-3 py-2 font-normal">Owner</th>
-                <th className="px-3 py-2 text-right font-normal">F / I / R</th>
+                <th className="px-3 py-2 text-right font-normal">F/I/R</th>
                 <th className="px-3 py-2 font-normal">Score</th>
               </tr>
             </thead>
@@ -126,16 +126,18 @@ function OverviewBody({ data }: { data: Overview }) {
                   className="cursor-pointer border-b border-zinc-100 last:border-0 hover:bg-zinc-50"
                 >
                   <td className="px-3 py-2">
-                    <div className="font-medium">{l.name}</div>
+                    <div className="whitespace-nowrap font-medium">{l.name}</div>
                     <div className="font-mono text-2xs text-zinc-500">{l.lead_id}</div>
                   </td>
-                  <td className="max-w-[180px] truncate px-3 py-2 text-zinc-700">{l.company}</td>
+                  <td className="max-w-[128px] truncate px-3 py-2 text-zinc-700" title={l.company}>
+                    {l.company}
+                  </td>
                   <td className="px-3 py-2">
                     <StageBadge stage={l.stage} />
                   </td>
-                  <td className="px-3 py-2 text-zinc-700">{l.owner}</td>
-                  <td className="tnum px-3 py-2 text-right font-mono text-xs text-zinc-500">
-                    {l.fit.toFixed(0)} / {l.intent.toFixed(0)} / {l.recency.toFixed(0)}
+                  <td className="whitespace-nowrap px-3 py-2 text-zinc-700">{l.owner}</td>
+                  <td className="tnum whitespace-nowrap px-3 py-2 text-right font-mono text-xs text-zinc-500">
+                    {l.fit.toFixed(0)}/{l.intent.toFixed(0)}/{l.recency.toFixed(0)}
                   </td>
                   <td className="px-3 py-2">
                     <ScoreCell score={l.score} />

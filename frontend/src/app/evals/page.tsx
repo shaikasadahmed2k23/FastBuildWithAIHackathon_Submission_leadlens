@@ -42,6 +42,8 @@ export default function EvalsPage() {
   );
 }
 
+const secs = (ms: number | undefined) => `${((ms ?? 0) / 1000).toFixed(1)}s`;
+
 function Stat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="rounded border border-zinc-200 bg-white px-4 py-3">
@@ -75,10 +77,10 @@ function Report({ data }: { data: EvalReport }) {
         />
         <Stat
           label="Latency p50 / p95"
-          value={`${fmt.int(s.p50_latency_ms)} / ${fmt.int(s.p95_latency_ms)} ms`}
+          value={`${secs(s.p50_latency_ms)} / ${secs(s.p95_latency_ms)}`}
           sub={
             s.backoff_ms
-              ? `${fmt.int(s.p50_latency_ex_backoff_ms)} / ${fmt.int(s.p95_latency_ex_backoff_ms)} ms excluding rate-limit waits`
+              ? `${secs(s.p50_latency_ex_backoff_ms)} / ${secs(s.p95_latency_ex_backoff_ms)} excluding rate-limit waits`
               : "End to end, per question"
           }
         />

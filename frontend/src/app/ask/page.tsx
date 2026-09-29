@@ -164,6 +164,18 @@ function AnswerCard({ result: r, onAsk }: { result: AskResult; onAsk: (q: string
     () => new Set(r.columns.filter((c) => r.rows.some((row) => /^(LD|CO|ACT|ISS)-\d+$/.test(String(row[c] ?? ""))))),
     [r],
   );
+  // JSON drops trailing zeros (93.0 arrives as 93), so pad each numeric column to its widest fraction, max 2.
+  const decimals = React.useMemo(() => {
+    const d: Record<string, number> = {};
+    for (const c of r.columns) {
+      d[c] = Math.min(2, Math.max(0, ...r.rows.map((row) => {
+        const v = row[c];
+        return typeof v === "number" && !Number.isInteger(v) ? (String(v).split(".")[1]?.length ?? 0) : 0;
+      })));
+    }
+    return d;
+  }, [r]);
+  const numeric = (c: string) => r.rows.some((row) => typeof row[c] === "number") && r.rows.every((row) => row[c] == null || typeof row[c] === "number");
   return (
     <article className="rounded border border-zinc-200 bg-white">
       <header className="flex items-start justify-between gap-3 border-b border-zinc-200 px-4 py-2.5">
@@ -244,7 +256,7 @@ function AnswerCard({ result: r, onAsk }: { result: AskResult; onAsk: (q: string
               <thead className="sticky top-0 bg-white">
                 <tr className="border-b border-zinc-200 text-left text-xs text-zinc-500">
                   {r.columns.map((c) => (
-                    <th key={c} className="whitespace-nowrap px-4 py-1.5 font-mono font-normal">
+                    <th key={c} className={cn("whitespace-nowrap px-4 py-1.5 font-mono font-normal", numeric(c) && "text-right")}>
                       {c}
                     </th>
                   ))}
@@ -256,13 +268,13 @@ function AnswerCard({ result: r, onAsk }: { result: AskResult; onAsk: (q: string
                     {r.columns.map((c) => {
                       const v = row[c];
                       return (
-                        <td key={c} className="tnum whitespace-nowrap px-4 py-1.5 text-zinc-800">
+                        <td key={c} className={cn("tnum whitespace-nowrap px-4 py-1.5 text-zinc-800", numeric(c) && "text-right")}>
                           {v == null ? (
                             <span className="text-zinc-400">null</span>
                           ) : idColumns.has(c) ? (
                             <CitationChip id={String(v)} />
                           ) : typeof v === "number" ? (
-                            <span className="font-mono text-xs">{v}</span>
+                            <span className="font-mono text-xs">{v.toFixed(decimals[c])}</span>
                           ) : (
                             String(v)
                           )}
