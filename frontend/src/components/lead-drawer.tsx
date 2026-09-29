@@ -74,7 +74,7 @@ function LeadBody({ detail }: { detail: LeadDetail }) {
   const { lead, breakdown, issues, activities, actions } = detail;
   return (
     <div>
-      <div className="grid grid-cols-4 divide-x divide-rule border-b border-rule">
+      <div className="grid grid-cols-[0.8fr_1fr_1.5fr_1fr] divide-x divide-rule border-b border-rule">
         {[
           ["Score", breakdown.score.toFixed(1)],
           ["Stage", <StageBadge key="s" stage={lead.stage} />],
@@ -83,7 +83,7 @@ function LeadBody({ detail }: { detail: LeadDetail }) {
         ].map(([label, value]) => (
           <div key={label as string} className="px-5 py-3">
             <div className="smallcaps text-xs font-semibold text-ink-500">{label}</div>
-            <div className="tnum mt-1 truncate font-serif text-lg leading-6">{value}</div>
+            <div className="tnum mt-1 truncate font-serif text-base leading-6">{value}</div>
           </div>
         ))}
       </div>

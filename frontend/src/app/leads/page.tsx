@@ -26,6 +26,7 @@ import { useHealth } from "@/lib/use-health";
 import { cn, daysSince, fmt } from "@/lib/utils";
 
 const PAGE_SIZE = 50;
+const RIGHT = new Set(["last_contacted_at", "fit", "score"]);
 const OWNERS = ["Aisha Bello", "Daniel Ortiz", "Hana Sato", "Lucas Martin", "Maya Chen", "Priya Nair", "Ravi Kumar", "Tom Becker"];
 const INDUSTRIES = ["E-commerce", "Education", "Fintech", "Healthcare", "Logistics", "Manufacturing", "Media", "Software"];
 const ISSUES = [
@@ -167,7 +168,7 @@ function Leads() {
         cell: ({ row }) => {
           const d = asOf ? daysSince(asOf, row.original.last_contacted_at) : null;
           return (
-            <span className="tnum font-mono text-xs text-ink-600">
+            <span className="tnum block text-right font-mono text-xs text-ink-600">
               {row.original.last_contacted_at ? (d != null ? `${d}d ago` : fmt.date(row.original.last_contacted_at)) : "never"}
             </span>
           );
@@ -190,12 +191,17 @@ function Leads() {
         header: "F/I/R",
         enableSorting: false,
         cell: ({ row: { original: l } }) => (
-          <span className="tnum whitespace-nowrap font-mono text-xs text-ink-500">
+          <span className="tnum block whitespace-nowrap text-right font-mono text-xs text-ink-500">
             {l.fit.toFixed(0)}/{l.intent.toFixed(0)}/{l.recency.toFixed(0)}
           </span>
         ),
       },
-      { id: "score", accessorFn: (l) => l.score, header: "Score", cell: ({ row }) => <ScoreCell score={row.original.score} /> },
+      {
+        id: "score",
+        accessorFn: (l) => l.score,
+        header: "Score",
+        cell: ({ row }) => <ScoreCell score={row.original.score} className="w-full justify-end" />,
+      },
     ],
     [asOf],
   );
@@ -229,7 +235,7 @@ function Leads() {
           </span>
         }
       />
-      <div className="flex flex-wrap items-center gap-2 border-b border-ink-200 px-6 py-2.5">
+      <div className="flex flex-wrap items-center gap-2 border-b border-rule px-8 py-3">
         <div className="relative w-64">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-ink-400" />
           <Input
@@ -300,17 +306,17 @@ function Leads() {
               <col className="w-[9%]" />
               <col className="w-[11%]" />
             </colgroup>
-            <thead className="sticky top-12 z-10 bg-panel">
+            <thead className="sticky top-14 z-10 bg-paper">
               {table.getHeaderGroups().map((hg) => (
-                <tr key={hg.id} className="border-b border-ink-200 text-left text-xs text-ink-500">
+                <tr key={hg.id} className="smallcaps border-b border-ink text-left text-sm font-semibold text-ink-600">
                   {hg.headers.map((h) => {
                     const sortable = h.column.getCanSort();
                     const dir = h.column.getIsSorted();
                     return (
-                      <th key={h.id} className="px-3 py-2 font-normal first:pl-6">
+                      <th key={h.id} className={cn("px-3 py-2 font-semibold first:pl-8 last:pr-8", RIGHT.has(h.column.id) && "text-right")}>
                         {sortable ? (
                           <button
-                            className="inline-flex items-center gap-1 hover:text-ink-900"
+                            className="smallcaps inline-flex items-center gap-1 hover:text-ink"
                             onClick={h.column.getToggleSortingHandler()}
                           >
                             {flexRender(h.column.columnDef.header, h.getContext())}
@@ -328,9 +334,9 @@ function Leads() {
             <tbody>
               {q.isLoading
                 ? Array.from({ length: 12 }).map((_, i) => (
-                    <tr key={i} className="border-b border-ink-100">
+                    <tr key={i} className="border-b border-rule">
                       {columns.map((_, j) => (
-                        <td key={j} className="px-3 py-3 first:pl-6">
+                        <td key={j} className="px-3 py-3 first:pl-8 last:pr-8">
                           <Skeleton className="h-4" />
                         </td>
                       ))}
@@ -340,17 +346,18 @@ function Leads() {
                     <tr
                       key={row.id}
                       data-row={i}
+                      data-cursor={i === cursor || undefined}
                       onClick={() => {
                         setCursor(i);
                         open(row.original.lead_id);
                       }}
                       className={cn(
-                        "cursor-pointer border-b border-ink-100 hover:bg-ink-50",
-                        i === cursor && "bg-ink-50 shadow-[inset_2px_0_0_theme(colors.accent.DEFAULT)]",
+                        "cursor-pointer border-b border-rule even:bg-panel hover:bg-ink-50",
+                        i === cursor && "bg-ink-50 shadow-[inset_3px_0_0_theme(colors.accent.DEFAULT)] even:bg-ink-50",
                       )}
                     >
                       {row.getVisibleCells().map((cell) => (
-                        <td key={cell.id} className="px-3 py-2 align-middle first:pl-6">
+                        <td key={cell.id} className="px-3 py-2 align-middle first:pl-8 last:pr-8">
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </td>
                       ))}
@@ -362,7 +369,7 @@ function Leads() {
             <EmptyState title="No leads match these filters" hint="Try clearing a filter or searching for something broader." />
           ) : null}
           {q.data && q.data.total > 0 ? (
-            <div className="flex items-center justify-between px-6 py-3 text-xs text-ink-500">
+            <div className="flex items-center justify-between px-8 py-3 text-xs text-ink-500">
               <span className="tnum">
                 {fmt.int((filters.page - 1) * PAGE_SIZE + 1)}–{fmt.int(Math.min(filters.page * PAGE_SIZE, q.data.total))} of{" "}
                 {fmt.int(q.data.total)}
