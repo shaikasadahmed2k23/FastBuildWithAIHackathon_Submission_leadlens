@@ -300,6 +300,11 @@ export const api = {
     request<Action>(`/actions/${id}/${decision}`, { method: "POST", body: JSON.stringify(body) }),
   evals: () => request<EvalReport>("/evals/latest"),
   askExamples: () => request<string[]>("/ask/examples"),
+  resetDemo: () =>
+    request<{ leads: number; cached_answers_loaded: number; cache_seed_found: boolean; seconds: number }>(
+      "/admin/reset-demo",
+      { method: "POST" },
+    ),
   importPreview: (file: File) => {
     const body = new FormData();
     body.append("file", file);

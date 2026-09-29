@@ -5,6 +5,7 @@ import { FlaskConical, Inbox, LayoutGrid, MessageSquareText, Users } from "lucid
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { ResetDemoButton } from "@/components/reset-demo";
 import { api } from "@/lib/api";
 import { cn, fmt } from "@/lib/utils";
 
@@ -55,7 +56,10 @@ export function Sidebar() {
             <span className="size-1.5 rounded-full bg-red-500" /> API unreachable
           </div>
         ) : health.data ? (
-          <div>Data as of {fmt.date(health.data.as_of)}</div>
+          <>
+            <div>Data as of {fmt.date(health.data.as_of)}</div>
+            <ResetDemoButton />
+          </>
         ) : (
           <div>Connecting…</div>
         )}

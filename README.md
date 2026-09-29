@@ -27,13 +27,15 @@ python -m evals.run              # golden eval + cleaning precision/recall -> ev
 
 Free-tier keys have small quotas (Groq: 8k tokens/min, 200k tokens/day on this model). LeadLens protects them in four ways:
 
-- **Answer cache.** `/ask` and "why now" results are cached in DuckDB, keyed on the normalized question, a fingerprint of the prompts and model, and a data version. Approving an action or importing a CSV bumps the data version, so cached answers never describe stale data. Cached responses say `cached` and cost 0 tokens.
+- **Answer cache.** `/ask` and "why now" results are cached in DuckDB, keyed on the normalized question and a fingerprint of the prompts and model. Each entry also stores a content hash of every table its SQL read, and is served only while those tables are unchanged. For example, an approved stage change invalidates lead questions but not a companies-only question; proposing or rejecting an action invalidates nothing. Cached responses say `cached` and cost 0 tokens.
+- **Reset demo data** (sidebar, or `POST /admin/reset-demo`) rebuilds the seed-42 database and reloads `backend/data/answer_cache_seed.json`. Because entries are keyed on table contents, the seed cache is fully valid again after every reset. Set `DEMO_RESET_ENABLED=false` to disable it on a shared deployment.
 - **Compact prompts.** About 1,080 tokens per question, down from about 1,400 on the same questions. On list questions the answer payload is 82% smaller.
 - **Rate limit.** 10 requests per minute per client on `/ask` and `/explain` (`LLM_RATE_LIMIT_PER_MIN`).
 - **Call ledger.** Every provider call (purpose, tokens, latency, error) is appended to `backend/data/llm_calls.jsonl`.
 
 ```bash
-python -m app.prewarm --api http://localhost:8000   # cache the demo questions shown on the Ask page
+python -m app.prewarm --reset --export             # API stopped: seed-42 DB + demo answers -> answer_cache_seed.json
+python -m app.prewarm --api http://localhost:8000   # or: warm a running API without exporting
 python -m app.llm_usage --since 2026-09-30           # tokens and errors from the ledger (UTC)
 ```
 
