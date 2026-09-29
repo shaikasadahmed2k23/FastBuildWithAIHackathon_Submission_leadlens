@@ -202,6 +202,7 @@ export interface AskResult {
   answer_attempts: number;
   fallback: "none" | "template" | "rules";
   cached: boolean;
+  suggestions: string[];
   tokens: number;
   notes: string[];
 }

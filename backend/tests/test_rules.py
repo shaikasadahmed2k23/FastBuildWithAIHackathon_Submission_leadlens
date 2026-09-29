@@ -1,11 +1,12 @@
-"""Held-out phrasings (not in the golden set): the rules engine must be right or decline."""
+"""Offline parser: must answer correctly or decline. Never a confident wrong answer."""
 
 import pytest
 
 from app import db, rules, sql_guard
 from app.seed import GroundTruth
 
-HELD_OUT = [
+# Phrasings not in the golden set that the parser fully accounts for.
+ANSWERABLE = [
     ("count the leads owned by Ravi", "SELECT count(*) FROM leads WHERE owner = 'Ravi Kumar'"),
     ("number of won leads in Healthcare",
      "SELECT count(*) FROM leads l JOIN companies c ON c.company_id = l.company_id "
@@ -20,9 +21,23 @@ HELD_OUT = [
      "SELECT count(*) FROM leads WHERE title IS NULL OR trim(title) = ''"),
     ("average score of leads from linkedin",
      "SELECT round(avg(s.score), 1) FROM leads l JOIN lead_scores s ON s.lead_id = l.lead_id WHERE l.source = 'linkedin'"),
+    ("how many closed leads", "SELECT count(*) FROM leads WHERE stage IN ('won', 'lost')"),
+    ("how many leads have never been contacted", "SELECT count(*) FROM leads WHERE last_contacted_at IS NULL"),
 ]
 
 MUST_DECLINE = [
+    # The three confident wrong answers from the held-out set (rule-based run, 5/25):
+    "Top 5 leads by deal value in Manufacturing",  # was ranked by score
+    "Top 4 industries by average deal value of open leads",  # was one overall average
+    "How many open leads have never had any activity?",  # negation was dropped
+    # Same failure classes, different wording:
+    "which leads are not in Software",
+    "leads without a title",
+    "top 3 owners by pipeline",
+    "top 10 leads by deal value",
+    "how many leads were created in the last 30 days",  # day window with no activity to apply it to
+    "how many leads with more activity",
+    # Out of scope entirely:
     "which leads are most likely to churn next quarter",
     "what did Maya say on her last call",
     "forecast revenue for next month",
@@ -30,10 +45,10 @@ MUST_DECLINE = [
 ]
 
 
-@pytest.mark.parametrize(("question", "reference_sql"), HELD_OUT)
-def test_held_out_questions_answer_correctly(seeded: GroundTruth, question: str, reference_sql: str) -> None:
+@pytest.mark.parametrize(("question", "reference_sql"), ANSWERABLE)
+def test_answerable_questions_are_correct(seeded: GroundTruth, question: str, reference_sql: str) -> None:
     m = rules.match(question)
-    assert m is not None, question
+    assert isinstance(m, rules.RuleMatch), f"{question}: {m}"
     _, _, rows = sql_guard.run(m.sql)
     with db.cursor() as cur:
         expected = cur.execute(reference_sql).fetchone()[0]
@@ -41,5 +56,14 @@ def test_held_out_questions_answer_correctly(seeded: GroundTruth, question: str,
 
 
 @pytest.mark.parametrize("question", MUST_DECLINE)
-def test_unknown_questions_are_declined(question: str) -> None:
-    assert rules.match(question) is None
+def test_unsupported_questions_are_declined(question: str) -> None:
+    result = rules.match(question)
+    assert isinstance(result, rules.RuleDecline), f"{question} was answered with: {result}"
+    assert result.reason
+
+
+@pytest.mark.parametrize("question", rules.OFFLINE_EXAMPLES)
+def test_offline_examples_are_answerable(seeded: GroundTruth, question: str) -> None:
+    m = rules.match(question)
+    assert isinstance(m, rules.RuleMatch)
+    assert sql_guard.run(m.sql)[2]

@@ -10,6 +10,7 @@ This document covers what we measure, how, the results, and where the numbers fa
 | Answers passing the citation checker | 100% | 100% |
 | Wrong answers across 150 attempts | 0 | 0 |
 | **Held-out accuracy (25 new questions, never tuned on)** | **5/25**; 3 of its 6 answers were wrong | *pending: provider quota* |
+| Held-out, after strict-fallback policy | **4/25, 0 wrong answers** (21 declined) | n/a (policy applies to the offline parser only) |
 
 **Read the held-out row first.** The golden set was used to find and fix problems, so 50/50 on it is an upper bound. The held-out set is the honest test of generalization, and the rule-based fallback does poorly on it.
 
@@ -124,7 +125,25 @@ The three wrong answers matter more than the declines, because each one passed t
 - **H17** "Top 4 industries by average deal value of open leads": returned one overall average (8,986) for all open leads, dropping both "top 4" and the per-industry grouping.
 - **H20** "How many open leads have never had any activity?": answered 4,045 (all open leads) instead of 542. The negation "never had any activity" was dropped.
 
-So the design claim that the parser "declines rather than guesses" doesn't hold. It declines unknown *words*, but it can still silently drop a known word's *meaning* (ranking measure, negation). The citation checker can't catch this, because every number it states is really in the rows it fetched. These stay unfixed here; see Known limits.
+So the design claim that the parser "declines rather than guesses" didn't hold. It declined unknown *words*, but it could still silently drop a known word's *meaning* (ranking measure, negation). The citation checker can't catch this, because every number it states is really in the rows it fetched.
+
+**After the strict-fallback policy, `reports/heldout_offline_strict.json`: 4/25, 0 wrong answers.**
+
+This is a general safety policy, not a per-question fix. The parser was rewritten around *token consumption*: every slot (filter, metric, grouping, ranking, entity) marks the words it uses, and the parser answers only if no content word is left over. It also declines on:
+- any negation, except the single supported filter "never (been) contacted", which is consumed as one unit;
+- ranking by anything other than score, or ranking groups;
+- a parsed filter it can't apply (a day window with no activity to apply it to).
+
+Its vocabulary is a subset of the previous parser's: strictness removed words and added none, so the held-out result couldn't be improved by adding synonyms. The golden set stays 50/50 offline.
+
+| Outcome | Before (5/25) | After strict policy (4/25) |
+|---|---|---|
+| Correct answer | 3 (H06, H08, H18) | 2 (H06, H08) |
+| Correctly declined | 2 (H24, H25) | 2 (H24, H25) |
+| Declined an answerable question | 17 | 21 |
+| **Confident wrong answer** | **3** (H15, H17, H20) | **0** |
+
+The three former wrong answers now decline with a reason: "can't interpret 'by deal value'", "can't interpret 'industries by'", and "negation 'never' is not supported". The price is coverage. H18 ("Won deals per owner") was answered correctly before, because the old parser treated "deals" as filler, and it now declines because "deals" isn't mapped to anything. A declined question shows "Live model unavailable right now. In offline mode I can answer questions like: …" with 4 example questions as clickable chips; each is tested to be answerable. Tests in `tests/test_rules.py` pin all three former wrong answers as declines, along with other questions in the same failure classes.
 
 **Live LLM: pending.** The planned single live run couldn't happen on Sept 29: Groq returned `429 … tokens per day (TPD): Limit 200000` (the provider's message, now recorded in the call ledger). That day's earlier golden runs had used about 212k tokens. The run needs about 27k tokens (25 questions × ~1,080) and will be run once, unchanged, when the daily window frees up.
 

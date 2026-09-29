@@ -125,7 +125,7 @@ function Ask() {
         {ask.isError ? <ErrorState error={ask.error} onRetry={() => ask.reset()} /> : null}
 
         {history.map((r, i) => (
-          <AnswerCard key={history.length - i} result={r} />
+          <AnswerCard key={history.length - i} result={r} onAsk={submit} />
         ))}
       </div>
     </>
@@ -158,7 +158,7 @@ function AnsweredBy({ result: r }: { result: AskResult }) {
   );
 }
 
-function AnswerCard({ result: r }: { result: AskResult }) {
+function AnswerCard({ result: r, onAsk }: { result: AskResult; onAsk: (q: string) => void }) {
   const [showSql, setShowSql] = React.useState(true);
   const idColumns = React.useMemo(
     () => new Set(r.columns.filter((c) => r.rows.some((row) => /^(LD|CO|ACT|ISS)-\d+$/.test(String(row[c] ?? ""))))),
@@ -172,9 +172,26 @@ function AnswerCard({ result: r }: { result: AskResult }) {
       </header>
 
       <div className="space-y-3 px-4 py-3">
-        <p className="text-sm leading-6">
-          <CitedText text={r.answer} />
-        </p>
+        {r.suggestions?.length ? (
+          <div className="space-y-2">
+            <p className="text-sm leading-6">Live model unavailable right now. In offline mode I can answer questions like:</p>
+            <div className="flex flex-wrap gap-1.5">
+              {r.suggestions.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => onAsk(s)}
+                  className="rounded border border-zinc-200 bg-white px-2.5 py-1 text-sm text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50"
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm leading-6">
+            <CitedText text={r.answer} />
+          </p>
+        )}
         <div
           className={cn(
             "flex items-center gap-1.5 text-xs",

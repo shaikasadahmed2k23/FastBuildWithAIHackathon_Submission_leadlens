@@ -82,6 +82,7 @@ class AskResponse(BaseModel):
     fallback: Literal["none", "template", "rules"] = "none"
     cached: bool = False  # served from the answer cache: no LLM call, zero tokens
     tokens: int = 0  # LLM tokens spent producing this response
+    suggestions: list[str] = []  # questions the offline parser can answer, shown when it declines
     notes: list[str] = []
 
 
@@ -223,14 +224,15 @@ def ask(question: str, use_cache: bool = True) -> AskResponse:
         notes.append("No LLM key configured; used the rule-based parser.")
 
     matched = rules.match(question)
-    if matched is None:
+    if isinstance(matched, rules.RuleDecline):
+        examples = "; ".join(f"\"{e}\"" for e in rules.OFFLINE_EXAMPLES)
         return AskResponse(
             question=question,
-            answer="I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", "
-                   "\"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+            answer=f"Live model unavailable right now. In offline mode I can answer questions like: {examples}.",
             sql=None, columns=[], rows=[], citations=[], valid=False, source="none",
             attempts=MAX_SQL_ATTEMPTS if llm_failed else 0, fallback="rules" if llm_failed else "none",
-            tokens=spent, notes=notes,
+            tokens=spent, suggestions=rules.OFFLINE_EXAMPLES,
+            notes=notes + [f"Offline parser declined: {matched.reason}"],
         )
     sql, columns, rows = sql_guard.run(matched.sql)
     result = _finish(question, sql, columns, rows, template_answer(columns, rows), source="rules",

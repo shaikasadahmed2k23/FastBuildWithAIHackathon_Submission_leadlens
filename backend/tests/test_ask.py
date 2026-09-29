@@ -3,7 +3,7 @@ from typing import Any
 
 import pytest
 
-from app import ask, llm, sql_guard
+from app import ask, llm, rules, sql_guard
 from app.config import settings
 from app.seed import GroundTruth
 
@@ -55,7 +55,10 @@ def test_offline_list_question_cites_rows(seeded: GroundTruth, offline: None) ->
 
 def test_offline_unknown_question_is_flagged(seeded: GroundTruth, offline: None) -> None:
     r = ask.ask("what is the weather")
-    assert not r.valid and r.source == "none" and r.rows == []
+    assert not r.valid and r.source == "none" and r.rows == [] and r.sql is None
+    assert r.answer.startswith("Live model unavailable right now. In offline mode I can answer questions like:")
+    assert r.suggestions == rules.OFFLINE_EXAMPLES
+    assert any("declined" in n for n in r.notes)
 
 
 def test_llm_happy_path(seeded: GroundTruth, fake_llm: Callable[..., FakeLLM]) -> None:
