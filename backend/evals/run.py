@@ -66,7 +66,9 @@ def run_questions(golden: list[dict[str, Any]]) -> list[dict[str, Any]]:
         got = extract(g["kind"], r.rows) if r.sql else None
         results.append({
             "id": g["id"], "category": g["category"], "kind": g["kind"], "question": g["question"],
-            "passed": grade(g["kind"], g["expected"], got), "valid": r.valid, "source": r.source,
+            # A decline question passes only if nothing was queried: any answer is a confident wrong answer.
+            "passed": r.sql is None if g["kind"] == "decline" else grade(g["kind"], g["expected"], got),
+            "valid": r.valid, "source": r.source,
             "fallback": r.fallback, "sql_attempts": r.attempts, "answer_attempts": r.answer_attempts,
             "latency_ms": latency_ms,
             # Time spent sleeping on provider rate limits (a quota effect, not model speed).
@@ -149,6 +151,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["auto", "offline", "live"], default="auto")
     parser.add_argument("--runs", type=int, default=1, help="repeat the golden set N times")
+    parser.add_argument("--set", choices=["golden", "heldout"], default="golden")
     parser.add_argument("--limit", type=int, default=None, help="only run the first N questions")
     parser.add_argument("--out", type=Path, default=LATEST_PATH)
     args = parser.parse_args()
@@ -159,7 +162,7 @@ def main() -> None:
         parser.error("--mode live needs GROQ_API_KEY or GEMINI_API_KEY (backend/.env)")
     mode = "live" if llm.available() else "offline"
 
-    golden = load_golden()[: args.limit]
+    golden = load_golden(EVALS_DIR / f"{args.set}.jsonl")[: args.limit]
     runs: list[list[dict[str, Any]]] = []
     with tempfile.TemporaryDirectory() as tmp:
         original = settings.leadlens_db_path
@@ -182,6 +185,7 @@ def main() -> None:
     report: dict[str, Any] = {
         "run_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "mode": "full" if mode == "live" else "offline",
+        "set": args.set,
         "model": (settings.groq_model if settings.groq_api_key else settings.gemini_model) if mode == "live" else None,
         "summary": summaries[-1],
         "cleaning": cleaning,

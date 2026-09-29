@@ -1,0 +1,733 @@
+{
+ "run_at": "2026-09-29T11:49:06+00:00",
+ "mode": "offline",
+ "set": "heldout",
+ "model": null,
+ "summary": {
+  "total": 25,
+  "passed": 5,
+  "accuracy": 0.2,
+  "answered": 6,
+  "declined": 19,
+  "citation_valid_rate": 1.0,
+  "hallucinated_citations": 0,
+  "retry_rate": 0.0,
+  "sql_retries": 0,
+  "answer_retries": 0,
+  "fallback_rate": 0.0,
+  "fallbacks": {
+   "template": 0,
+   "rules": 0
+  },
+  "avg_latency_ms": 5,
+  "p50_latency_ms": 0,
+  "p95_latency_ms": 23,
+  "max_latency_ms": 25,
+  "p50_latency_ex_backoff_ms": 0,
+  "p95_latency_ex_backoff_ms": 23,
+  "backoff_ms": 0,
+  "tokens": 0,
+  "rate_limited": 0,
+  "by_category": {
+   "breakdown": {
+    "passed": 0,
+    "total": 1
+   },
+   "date_range": {
+    "passed": 0,
+    "total": 5
+   },
+   "decline": {
+    "passed": 2,
+    "total": 2
+   },
+   "multi_filter": {
+    "passed": 2,
+    "total": 4
+   },
+   "negation": {
+    "passed": 0,
+    "total": 4
+   },
+   "synonym": {
+    "passed": 1,
+    "total": 6
+   },
+   "top_n_by_x": {
+    "passed": 0,
+    "total": 3
+   }
+  },
+  "by_source": {
+   "llm": 0,
+   "rules": 6,
+   "none": 19
+  }
+ },
+ "cleaning": {
+  "duplicate": {
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0,
+   "found": 192,
+   "expected": 192
+  },
+  "stale": {
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0,
+   "found": 480,
+   "expected": 480
+  },
+  "missing_field": {
+   "precision": 1.0,
+   "recall": 1.0,
+   "f1": 1.0,
+   "found": 240,
+   "expected": 240
+  }
+ },
+ "results": [
+  {
+   "id": "H01",
+   "category": "synonym",
+   "kind": "scalar",
+   "question": "How many prospects are sitting in the negotiating phase?",
+   "passed": false,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 4,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": 332.0,
+   "got": null
+  },
+  {
+   "id": "H02",
+   "category": "synonym",
+   "kind": "scalar",
+   "question": "What's the count of deals we closed successfully?",
+   "passed": false,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 0,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": 455.0,
+   "got": null
+  },
+  {
+   "id": "H03",
+   "category": "synonym",
+   "kind": "scalar",
+   "question": "How many contacts have no phone number on file?",
+   "passed": false,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 0,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": 100.0,
+   "got": null
+  },
+  {
+   "id": "H04",
+   "category": "synonym",
+   "kind": "scalar",
+   "question": "Number of prospects nobody has reached out to yet",
+   "passed": false,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 0,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": 301.0,
+   "got": null
+  },
+  {
+   "id": "H05",
+   "category": "synonym",
+   "kind": "scalar",
+   "question": "What's the mean score of C-suite prospects?",
+   "passed": false,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 0,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": 48.4,
+   "got": null
+  },
+  {
+   "id": "H06",
+   "category": "multi_filter",
+   "kind": "scalar",
+   "question": "How many open Healthcare leads does Daniel Ortiz own?",
+   "passed": true,
+   "valid": true,
+   "source": "rules",
+   "fallback": "none",
+   "sql_attempts": 1,
+   "answer_attempts": 0,
+   "latency_ms": 25,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": "SELECT count(*) AS lead_count FROM leads l JOIN companies c ON c.company_id = l.company_id JOIN lead_scores s ON s.lead_id = l.lead_id WHERE c.industry = 'Healthcare' AND l.owner = 'Daniel Ortiz' AND l.stage NOT IN ('won', 'lost')",
+   "answer": "lead count: 68.",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser.",
+    "Matched rule: leads:count"
+   ],
+   "expected": 68.0,
+   "got": 68.0
+  },
+  {
+   "id": "H07",
+   "category": "multi_filter",
+   "kind": "id_set",
+   "question": "Which VPs at US logistics companies are in the qualified stage?",
+   "passed": false,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 0,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": "4 ids",
+   "got": null
+  },
+  {
+   "id": "H08",
+   "category": "multi_filter",
+   "kind": "scalar",
+   "question": "How many director-level leads that came from LinkedIn score above 60?",
+   "passed": true,
+   "valid": true,
+   "source": "rules",
+   "fallback": "none",
+   "sql_attempts": 1,
+   "answer_attempts": 0,
+   "latency_ms": 18,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": "SELECT count(*) AS lead_count FROM leads l JOIN companies c ON c.company_id = l.company_id JOIN lead_scores s ON s.lead_id = l.lead_id WHERE l.seniority = 'director' AND l.source = 'linkedin' AND s.score > 60",
+   "answer": "lead count: 21.",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser.",
+    "Matched rule: leads:count"
+   ],
+   "expected": 21.0,
+   "got": 21.0
+  },
+  {
+   "id": "H09",
+   "category": "multi_filter",
+   "kind": "id_set",
+   "question": "Which Canadian C-level leads have a score of at least 70?",
+   "passed": false,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 0,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": "3 ids",
+   "got": null
+  },
+  {
+   "id": "H10",
+   "category": "date_range",
+   "kind": "scalar",
+   "question": "How many leads were created between June 1 and June 30, 2026?",
+   "passed": false,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 0,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": 204.0,
+   "got": null
+  },
+  {
+   "id": "H11",
+   "category": "date_range",
+   "kind": "scalar",
+   "question": "How many pricing page visits happened in August 2026?",
+   "passed": false,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 0,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": 872.0,
+   "got": null
+  },
+  {
+   "id": "H12",
+   "category": "date_range",
+   "kind": "id_set",
+   "question": "Which Media leads requested a demo during the first week of September 2026 (Sept 1-7)?",
+   "passed": false,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 0,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": "25 ids",
+   "got": null
+  },
+  {
+   "id": "H13",
+   "category": "date_range",
+   "kind": "scalar",
+   "question": "How many open leads were last contacted before June 1, 2026?",
+   "passed": false,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 0,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": 359.0,
+   "got": null
+  },
+  {
+   "id": "H14",
+   "category": "date_range",
+   "kind": "scalar",
+   "question": "How many leads flagged as duplicates were created in the past 30 days?",
+   "passed": false,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 0,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": 70.0,
+   "got": null
+  },
+  {
+   "id": "H15",
+   "category": "top_n_by_x",
+   "kind": "id_set",
+   "question": "Top 5 leads by deal value in Manufacturing",
+   "passed": false,
+   "valid": true,
+   "source": "rules",
+   "fallback": "none",
+   "sql_attempts": 1,
+   "answer_attempts": 0,
+   "latency_ms": 23,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": "SELECT l.lead_id, l.first_name || ' ' || l.last_name AS name, c.name AS company, l.stage, l.owner, s.score FROM leads l JOIN companies c ON c.company_id = l.company_id JOIN lead_scores s ON s.lead_id = l.lead_id WHERE c.industry = 'Manufacturing' ORDER BY s.score DESC, l.lead_id LIMIT 5",
+   "answer": "5 matching rows: [LD-04178] Margaret Marshall, Thornton PLC, score 89.2; [LD-00536] Devin Kim, Kramer-Lane, score 87.0; [LD-03100] Jeremy Fuller, Thornton PLC, score 87.0; [LD-02492] Jacob Yoder, Mcpherson Anderson and Knapp, score 84.9; [LD-00928] John Tran, Craig Wilson and Yang, score 83.4.",
+   "citations": [
+    "LD-04178",
+    "LD-00536",
+    "LD-03100",
+    "LD-02492",
+    "LD-00928"
+   ],
+   "notes": [
+    "No LLM key configured; used the rule-based parser.",
+    "Matched rule: leads:list"
+   ],
+   "expected": "5 ids",
+   "got": "5 ids"
+  },
+  {
+   "id": "H16",
+   "category": "top_n_by_x",
+   "kind": "id_set",
+   "question": "Top 3 companies by headcount in Germany",
+   "passed": false,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 0,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": "3 ids",
+   "got": null
+  },
+  {
+   "id": "H17",
+   "category": "top_n_by_x",
+   "kind": "table",
+   "question": "Top 4 industries by average deal value of open leads",
+   "passed": false,
+   "valid": true,
+   "source": "rules",
+   "fallback": "none",
+   "sql_attempts": 1,
+   "answer_attempts": 0,
+   "latency_ms": 21,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": "SELECT round(avg(l.deal_value), 0) AS avg_deal_value FROM leads l JOIN companies c ON c.company_id = l.company_id JOIN lead_scores s ON s.lead_id = l.lead_id WHERE l.stage NOT IN ('won', 'lost')",
+   "answer": "avg deal value: 8986.0.",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser.",
+    "Matched rule: leads:avg_deal"
+   ],
+   "expected": {
+    "fintech": 9909.0,
+    "logistics": 9703.0,
+    "media": 9662.0,
+    "healthcare": 9104.0
+   },
+   "got": {}
+  },
+  {
+   "id": "H18",
+   "category": "synonym",
+   "kind": "table",
+   "question": "Won deals per owner",
+   "passed": true,
+   "valid": true,
+   "source": "rules",
+   "fallback": "none",
+   "sql_attempts": 1,
+   "answer_attempts": 0,
+   "latency_ms": 20,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": "SELECT l.owner AS owner, count(*) AS lead_count FROM leads l JOIN companies c ON c.company_id = l.company_id JOIN lead_scores s ON s.lead_id = l.lead_id WHERE l.stage = 'won' GROUP BY 1 ORDER BY 2 DESC",
+   "answer": "8 matching rows (showing 5 of 8): Lucas Martin, lead count 64; Maya Chen, lead count 62; Hana Sato, lead count 60; Ravi Kumar, lead count 60; Tom Becker, lead count 57.",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser.",
+    "Matched rule: leads:count:by_owner"
+   ],
+   "expected": {
+    "hana sato": 60.0,
+    "ravi kumar": 60.0,
+    "priya nair": 50.0,
+    "lucas martin": 64.0,
+    "daniel ortiz": 52.0,
+    "aisha bello": 50.0,
+    "maya chen": 62.0,
+    "tom becker": 57.0
+   },
+   "got": {
+    "lucas martin": 64.0,
+    "maya chen": 62.0,
+    "hana sato": 60.0,
+    "ravi kumar": 60.0,
+    "tom becker": 57.0,
+    "daniel ortiz": 52.0,
+    "priya nair": 50.0,
+    "aisha bello": 50.0
+   }
+  },
+  {
+   "id": "H19",
+   "category": "negation",
+   "kind": "scalar",
+   "question": "How many leads are not in Software or Fintech?",
+   "passed": false,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 0,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": 3289.0,
+   "got": null
+  },
+  {
+   "id": "H20",
+   "category": "negation",
+   "kind": "scalar",
+   "question": "How many open leads have never had any activity?",
+   "passed": false,
+   "valid": true,
+   "source": "rules",
+   "fallback": "none",
+   "sql_attempts": 1,
+   "answer_attempts": 0,
+   "latency_ms": 20,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": "SELECT count(*) AS lead_count FROM leads l JOIN companies c ON c.company_id = l.company_id JOIN lead_scores s ON s.lead_id = l.lead_id WHERE l.stage NOT IN ('won', 'lost')",
+   "answer": "lead count: 4045.",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser.",
+    "Matched rule: leads:count"
+   ],
+   "expected": 542.0,
+   "got": 4045.0
+  },
+  {
+   "id": "H21",
+   "category": "negation",
+   "kind": "id_set",
+   "question": "Which Education leads in negotiation have no data issues?",
+   "passed": false,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 0,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": "20 ids",
+   "got": null
+  },
+  {
+   "id": "H22",
+   "category": "negation",
+   "kind": "scalar",
+   "question": "How many leads that aren't stale were last contacted more than 60 days ago?",
+   "passed": false,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 0,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": 1616.0,
+   "got": null
+  },
+  {
+   "id": "H23",
+   "category": "breakdown",
+   "kind": "table",
+   "question": "Break down stale leads by stage",
+   "passed": false,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 0,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": {
+    "negotiation": 42.0,
+    "proposal": 60.0,
+    "qualified": 112.0,
+    "new": 118.0,
+    "contacted": 148.0
+   },
+   "got": null
+  },
+  {
+   "id": "H24",
+   "category": "decline",
+   "kind": "decline",
+   "question": "Which of our leads are most likely to churn next quarter?",
+   "passed": true,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 0,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": null,
+   "got": null
+  },
+  {
+   "id": "H25",
+   "category": "decline",
+   "kind": "decline",
+   "question": "What did Tom Becker discuss on his last call with each lead?",
+   "passed": true,
+   "valid": false,
+   "source": "none",
+   "fallback": "none",
+   "sql_attempts": 0,
+   "answer_attempts": 0,
+   "latency_ms": 0,
+   "backoff_ms": 0,
+   "tokens": 0,
+   "rate_limited": 0,
+   "sql": null,
+   "answer": "I can't answer that without the LLM. Try e.g. \"top 10 open leads in Fintech\", \"how many stale leads\", or \"leads that requested a demo in the last 14 days\".",
+   "citations": [],
+   "notes": [
+    "No LLM key configured; used the rule-based parser."
+   ],
+   "expected": null,
+   "got": null
+  }
+ ]
+}

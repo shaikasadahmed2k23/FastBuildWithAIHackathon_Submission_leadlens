@@ -9,6 +9,9 @@ This document covers what we measure, how, the results, and where the numbers fa
 | Golden accuracy, 3 runs | 50/50 every run | 50/50 every run (see the run 3 caveat) |
 | Answers passing the citation checker | 100% | 100% |
 | Wrong answers across 150 attempts | 0 | 0 |
+| **Held-out accuracy (25 new questions, never tuned on)** | **5/25**; 3 of its 6 answers were wrong | *pending: provider quota* |
+
+**Read the held-out row first.** The golden set was used to find and fix problems, so 50/50 on it is an upper bound. The held-out set is the honest test of generalization, and the rule-based fallback does poorly on it.
 
 The most important caveat: in live run 3, the provider quota ran out partway through and 17 of the 50 questions fell back. Its 50/50 therefore includes 14 answers from the rule-based parser, which was tuned on these same questions. The LLM's own record is 50/50, 50/50 and 36/36 (the questions it answered in run 3).
 
@@ -89,6 +92,41 @@ Detected `data_issues` are compared with `backend/data/ground_truth.json`, writt
 | Duplicate pairs | 1.000 | 1.000 | 1.000 | 192 / 192 |
 | Stale leads | 1.000 | 1.000 | 1.000 | 480 / 480 |
 | Missing fields | 1.000 | 1.000 | 1.000 | 240 / 240 |
+
+### Held-out questions (`backend/evals/heldout.jsonl`)
+
+**Construction.** 25 questions written after the golden-set fixes, phrased differently from any golden question (a test enforces no overlap), in 7 categories:
+
+| Category | Questions | Example |
+|---|---|---|
+| Synonyms | 6 | "How many prospects are sitting in the negotiating phase?" |
+| Multi-condition filters | 4 | "Which VPs at US logistics companies are in the qualified stage?" |
+| Date ranges | 5 | "How many pricing page visits happened in August 2026?" |
+| Top N by X in Y | 3 | "Top 5 leads by deal value in Manufacturing" |
+| Negations | 4 | "How many open leads have never had any activity?" |
+| Breakdown | 1 | "Break down stale leads by stage" |
+| Must decline | 2 | "Which of our leads are most likely to churn next quarter?" |
+
+Expected answers are computed from reference SQL (`python -m evals.build_golden --set heldout`). A decline question passes only if the system runs no query. **Rule: no prompt, rule or guard change is made in response to held-out results.** Failures are reported, not fixed.
+
+**Rule-based (offline), `reports/heldout_offline.json`: 5/25.**
+
+| Outcome | Count | Questions |
+|---|---|---|
+| Correct answer | 3 | H06, H08 (multi-filter), H18 (won deals per owner) |
+| Correctly declined | 2 | H24, H25 (the two must-decline questions) |
+| Declined an answerable question | 17 | every synonym except H18, every date-range question, and more |
+| **Confident wrong answer** | **3** | H15, H17, H20 |
+
+The three wrong answers matter more than the declines, because each one passed the citation checker and would have been shown as verified:
+
+- **H15** "Top 5 leads by deal value in Manufacturing": ranked by score. The parser recognizes "top 5" and "Manufacturing" but has no concept of "by deal value", and "deal"/"value" are in its known vocabulary, so it didn't decline.
+- **H17** "Top 4 industries by average deal value of open leads": returned one overall average (8,986) for all open leads, dropping both "top 4" and the per-industry grouping.
+- **H20** "How many open leads have never had any activity?": answered 4,045 (all open leads) instead of 542. The negation "never had any activity" was dropped.
+
+So the design claim that the parser "declines rather than guesses" doesn't hold. It declines unknown *words*, but it can still silently drop a known word's *meaning* (ranking measure, negation). The citation checker can't catch this, because every number it states is really in the rows it fetched. These stay unfixed here; see Known limits.
+
+**Live LLM: pending.** The planned single live run couldn't happen on Sept 29: Groq returned `429 … tokens per day (TPD): Limit 200000` (the provider's message, now recorded in the call ledger). That day's earlier golden runs had used about 212k tokens. The run needs about 27k tokens (25 questions × ~1,080) and will be run once, unchanged, when the daily window frees up.
 
 ## How we got here: failures found and fixed
 

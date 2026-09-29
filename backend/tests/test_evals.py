@@ -25,3 +25,13 @@ def test_cleaning_metrics_are_perfect_on_fresh_seed(seeded: GroundTruth) -> None
     with db.cursor():
         metrics = cleaning_metrics(seeded)
     assert all(m["precision"] >= 0.95 and m["recall"] >= 0.95 for m in metrics.values())
+
+
+def test_heldout_file_matches_current_data(seeded: GroundTruth) -> None:
+    from evals.run import EVALS_DIR
+
+    heldout = load_golden(EVALS_DIR / "heldout.jsonl")
+    assert heldout == build("heldout")
+    assert len(heldout) == 25 and sum(e["kind"] == "decline" for e in heldout) == 2
+    golden_questions = {q[2].lower() for q in QUESTIONS}
+    assert not any(e["question"].lower() in golden_questions for e in heldout)  # genuinely new phrasings
