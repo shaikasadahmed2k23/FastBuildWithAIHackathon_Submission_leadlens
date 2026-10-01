@@ -151,7 +151,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--mode", choices=["auto", "offline", "live"], default="auto")
     parser.add_argument("--runs", type=int, default=1, help="repeat the golden set N times")
-    parser.add_argument("--set", choices=["golden", "heldout"], default="golden")
+    parser.add_argument("--set", choices=["golden", "heldout", "decline_check"], default="golden")
     parser.add_argument("--limit", type=int, default=None, help="only run the first N questions")
     parser.add_argument("--out", type=Path, default=LATEST_PATH)
     args = parser.parse_args()

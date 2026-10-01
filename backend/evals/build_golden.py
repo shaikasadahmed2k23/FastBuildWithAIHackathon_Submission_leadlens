@@ -3,6 +3,7 @@
 Run from ``backend/``:
     python -m evals.build_golden                 # golden.jsonl  (questions.py)
     python -m evals.build_golden --set heldout   # heldout.jsonl (heldout_questions.py)
+    python -m evals.build_golden --set decline_check   # decline_check.jsonl
 """
 
 import argparse
@@ -14,6 +15,7 @@ from app import db
 from app.config import settings
 from app.seed import write_database
 from evals.grading import extract
+from evals.decline_check_questions import DECLINE_CHECK
 from evals.heldout_questions import HELDOUT
 from evals.questions import QUESTIONS
 
@@ -21,6 +23,7 @@ EVALS_DIR = Path(__file__).parent
 SETS = {
     "golden": (QUESTIONS, EVALS_DIR / "golden.jsonl", "Q"),
     "heldout": (HELDOUT, EVALS_DIR / "heldout.jsonl", "H"),
+    "decline_check": (DECLINE_CHECK, EVALS_DIR / "decline_check.jsonl", "D"),
 }
 
 

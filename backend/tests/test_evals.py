@@ -37,6 +37,20 @@ def test_heldout_file_matches_current_data(seeded: GroundTruth) -> None:
     assert not any(e["question"].lower() in golden_questions for e in heldout)  # genuinely new phrasings
 
 
+
+def test_decline_check_file_matches_current_data(seeded: GroundTruth) -> None:
+    from app.ask import SQL_SYSTEM
+    from evals.run import EVALS_DIR
+
+    entries = load_golden(EVALS_DIR / "decline_check.jsonl")
+    assert entries == build("decline_check")
+    assert sum(e["kind"] == "decline" for e in entries) == 6 and len(entries) == 10
+    # The unanswerable questions must not lean on the examples the prompt itself names.
+    named = ("churn", "likel", "forecast", "revenue", "sentiment", "transcript")
+    assert not any(w in e["question"].lower() for e in entries if e["kind"] == "decline" for w in named)
+    assert all(w in SQL_SYSTEM for w in ("churn", "sentiment"))
+
+
 def test_cleaning_benchmark_regression_guard() -> None:
     """The held-out dedup set was used to fix the detector, so it is now a regression guard, not a held-out score."""
     from evals.cleaning_heldout import evaluate, generate
