@@ -1,47 +1,47 @@
 [
  {
   "kind": "ask",
-  "key": "129d78c4b34463c9",
+  "key": "1409be0d6269f67d",
   "payload": {
-   "question": "Average lead score by industry",
-   "answer": "The average lead scores are: Fintech 44.03, Healthcare 41.14, Education 36.38, Logistics 37.97, Manufacturing 37.26, E-commerce 40.61, Media 36.96, and Software 43.02.",
-   "sql": "WITH ls AS (SELECT l.lead_id, ls.score FROM leads l JOIN lead_scores ls ON l.lead_id = ls.lead_id) SELECT c.industry, AVG(ls.score) AS avg_score FROM leads l JOIN companies c ON l.company_id = c.company_id JOIN lead_scores ls ON l.lead_id = ls.lead_id GROUP BY c.industry",
+   "question": "Total open pipeline deal value by owner",
+   "answer": "The total open pipeline deal values are: Hana Sato\u202f\u2013\u202f3,923,300; Priya Nair\u202f\u2013\u202f3,489,600; Ravi Kumar\u202f\u2013\u202f3,424,100; Aisha Bello\u202f\u2013\u202f4,042,800; Daniel Ortiz\u202f\u2013\u202f3,423,800; Lucas Martin\u202f\u2013\u202f3,879,000; Tom Becker\u202f\u2013\u202f3,694,800; Maya Chen\u202f\u2013\u202f3,705,900.",
+   "sql": "WITH open_leads AS (SELECT owner, deal_value FROM leads WHERE stage NOT IN ('won','lost')) SELECT owner, SUM(deal_value) AS total_open_pipeline_deal_value FROM open_leads GROUP BY owner",
    "columns": [
-    "industry",
-    "avg_score"
+    "owner",
+    "total_open_pipeline_deal_value"
    ],
    "rows": [
     {
-     "industry": "Fintech",
-     "avg_score": 44.03
+     "owner": "Hana Sato",
+     "total_open_pipeline_deal_value": 3923300.0
     },
     {
-     "industry": "Healthcare",
-     "avg_score": 41.14
+     "owner": "Priya Nair",
+     "total_open_pipeline_deal_value": 3489600.0
     },
     {
-     "industry": "Education",
-     "avg_score": 36.38
+     "owner": "Ravi Kumar",
+     "total_open_pipeline_deal_value": 3424100.0
     },
     {
-     "industry": "Logistics",
-     "avg_score": 37.97
+     "owner": "Aisha Bello",
+     "total_open_pipeline_deal_value": 4042800.0
     },
     {
-     "industry": "Manufacturing",
-     "avg_score": 37.26
+     "owner": "Daniel Ortiz",
+     "total_open_pipeline_deal_value": 3423800.0
     },
     {
-     "industry": "E-commerce",
-     "avg_score": 40.61
+     "owner": "Lucas Martin",
+     "total_open_pipeline_deal_value": 3879000.0
     },
     {
-     "industry": "Media",
-     "avg_score": 36.96
+     "owner": "Tom Becker",
+     "total_open_pipeline_deal_value": 3694800.0
     },
     {
-     "industry": "Software",
-     "avg_score": 43.02
+     "owner": "Maya Chen",
+     "total_open_pipeline_deal_value": 3705900.0
     }
    ],
    "citations": [],
@@ -52,23 +52,359 @@
    "answer_attempts": 1,
    "fallback": "none",
    "cached": false,
-   "tokens": 1198,
+   "tokens": 1348,
    "suggestions": [],
+   "cannot_answer": null,
    "notes": []
   },
   "deps": {
-   "lead_scores": "18279683458322419555",
-   "companies": "10869506712501160118",
    "leads": "6497344544753538303"
   }
  },
  {
   "kind": "ask",
-  "key": "4b6d5179f0e63b8d",
+  "key": "17b85d651aabb1b7",
+  "payload": {
+   "question": "How many leads are missing a phone number?",
+   "answer": "There are 100 leads missing a phone number.",
+   "sql": "SELECT COUNT(*) AS missing_phone_count FROM leads WHERE phone IS NULL OR TRIM(phone) = ''",
+   "columns": [
+    "missing_phone_count"
+   ],
+   "rows": [
+    {
+     "missing_phone_count": 100
+    }
+   ],
+   "citations": [],
+   "valid": true,
+   "source": "llm",
+   "provider": "groq",
+   "attempts": 1,
+   "answer_attempts": 1,
+   "fallback": "none",
+   "cached": false,
+   "tokens": 1119,
+   "suggestions": [],
+   "cannot_answer": null,
+   "notes": []
+  },
+  "deps": {
+   "leads": "6497344544753538303"
+  }
+ },
+ {
+  "kind": "ask",
+  "key": "8202cf148d0e445c",
+  "payload": {
+   "question": "Top 10 open leads in Fintech",
+   "answer": "The top 10 open Fintech leads are Samuel Garcia [LD-00911], Donna Carroll [LD-04302], Matthew Elliott [LD-01359], Melissa Stephens [LD-03047], Cassidy Brady [LD-04836], Kimberly Navarro [LD-00968], Kevin Moses [LD-01056], Tina Horton [LD-02091], Joshua Melton [LD-01467] and Eric Black [LD-03832].",
+   "sql": "WITH ls AS (SELECT lead_id, score FROM lead_scores), l AS (SELECT l.lead_id, l.first_name || ' ' || l.last_name AS name, l.stage, c.industry, ls.score FROM leads l JOIN companies c ON l.company_id = c.company_id LEFT JOIN ls ON l.lead_id = ls.lead_id) SELECT lead_id, name FROM l WHERE stage NOT IN ('won','lost') AND industry = 'Fintech' ORDER BY score DESC NULLS LAST, lead_id LIMIT 10",
+   "columns": [
+    "lead_id",
+    "name"
+   ],
+   "rows": [
+    {
+     "lead_id": "LD-00911",
+     "name": "Samuel Garcia"
+    },
+    {
+     "lead_id": "LD-04302",
+     "name": "Donna Carroll"
+    },
+    {
+     "lead_id": "LD-01359",
+     "name": "Matthew Elliott"
+    },
+    {
+     "lead_id": "LD-03047",
+     "name": "Melissa Stephens"
+    },
+    {
+     "lead_id": "LD-04836",
+     "name": "Cassidy Brady"
+    },
+    {
+     "lead_id": "LD-00968",
+     "name": "Kimberly Navarro"
+    },
+    {
+     "lead_id": "LD-01056",
+     "name": "Kevin Moses"
+    },
+    {
+     "lead_id": "LD-02091",
+     "name": "Tina Horton"
+    },
+    {
+     "lead_id": "LD-01467",
+     "name": "Joshua Melton"
+    },
+    {
+     "lead_id": "LD-03832",
+     "name": "Eric Black"
+    }
+   ],
+   "citations": [
+    "LD-00911",
+    "LD-04302",
+    "LD-01359",
+    "LD-03047",
+    "LD-04836",
+    "LD-00968",
+    "LD-01056",
+    "LD-02091",
+    "LD-01467",
+    "LD-03832"
+   ],
+   "valid": true,
+   "source": "llm",
+   "provider": "groq",
+   "attempts": 1,
+   "answer_attempts": 1,
+   "fallback": "none",
+   "cached": false,
+   "tokens": 1460,
+   "suggestions": [],
+   "cannot_answer": null,
+   "notes": []
+  },
+  "deps": {
+   "companies": "10869506712501160118",
+   "leads": "6497344544753538303",
+   "lead_scores": "18279683458322419555"
+  }
+ },
+ {
+  "kind": "ask",
+  "key": "91e17b04eb72fc84",
+  "payload": {
+   "question": "How many leads are flagged as duplicates?",
+   "answer": "There are 192 leads flagged as duplicates.",
+   "sql": "SELECT COUNT(*) AS duplicate_count FROM data_issues WHERE issue_type = 'duplicate'",
+   "columns": [
+    "duplicate_count"
+   ],
+   "rows": [
+    {
+     "duplicate_count": 192
+    }
+   ],
+   "citations": [],
+   "valid": true,
+   "source": "llm",
+   "provider": "groq",
+   "attempts": 1,
+   "answer_attempts": 1,
+   "fallback": "none",
+   "cached": false,
+   "tokens": 1136,
+   "suggestions": [],
+   "cannot_answer": null,
+   "notes": []
+  },
+  "deps": {
+   "data_issues": "1556234999782815453"
+  }
+ },
+ {
+  "kind": "ask",
+  "key": "ac1dac371d6c5b07",
+  "payload": {
+   "question": "How many stale leads does each owner have?",
+   "answer": "Daniel Ortiz has 69 stale leads, Lucas Martin has 58, Aisha Bello has 65, Maya Chen has 66, Tom Becker has 59, Hana Sato has 59, Priya Nair has 53, and Ravi Kumar has 51 stale leads.",
+   "sql": "WITH stale_leads AS (SELECT owner FROM leads WHERE stage NOT IN ('won','lost') AND ( (last_contacted_at IS NOT NULL AND last_contacted_at < TIMESTAMP '2026-09-15 12:00:00' - INTERVAL 90 DAY) OR (last_contacted_at IS NULL AND created_at < TIMESTAMP '2026-09-15 12:00:00' - INTERVAL 90 DAY) ) ) SELECT owner, COUNT(*) AS stale_lead_count FROM stale_leads GROUP BY owner",
+   "columns": [
+    "owner",
+    "stale_lead_count"
+   ],
+   "rows": [
+    {
+     "owner": "Daniel Ortiz",
+     "stale_lead_count": 69
+    },
+    {
+     "owner": "Lucas Martin",
+     "stale_lead_count": 58
+    },
+    {
+     "owner": "Aisha Bello",
+     "stale_lead_count": 65
+    },
+    {
+     "owner": "Maya Chen",
+     "stale_lead_count": 66
+    },
+    {
+     "owner": "Tom Becker",
+     "stale_lead_count": 59
+    },
+    {
+     "owner": "Hana Sato",
+     "stale_lead_count": 59
+    },
+    {
+     "owner": "Priya Nair",
+     "stale_lead_count": 53
+    },
+    {
+     "owner": "Ravi Kumar",
+     "stale_lead_count": 51
+    }
+   ],
+   "citations": [],
+   "valid": true,
+   "source": "llm",
+   "provider": "groq",
+   "attempts": 1,
+   "answer_attempts": 1,
+   "fallback": "none",
+   "cached": false,
+   "tokens": 1394,
+   "suggestions": [],
+   "cannot_answer": null,
+   "notes": []
+  },
+  "deps": {
+   "leads": "6497344544753538303"
+  }
+ },
+ {
+  "kind": "ask",
+  "key": "ac88a1e243593ca5",
+  "payload": {
+   "question": "Top 5 C-level leads at Software companies",
+   "answer": "The top C-level leads are Jacqueline Hoover (score\u202f98.0) [LD-00574] and Elizabeth Walker (score\u202f98.0) [LD-03161], followed by Joshua Hoffman (score\u202f94.0) [LD-01005], Laura Marsh (score\u202f86.1) [LD-04598], and Nicholas Ruiz (score\u202f80.0) [LD-01639].",
+   "sql": "WITH filtered AS (SELECT l.lead_id,l.first_name||' '||l.last_name AS name,ls.score FROM leads l JOIN companies c ON l.company_id=c.company_id JOIN lead_scores ls ON l.lead_id=ls.lead_id WHERE l.seniority='c_level' AND c.industry='Software') SELECT lead_id,name,score FROM filtered ORDER BY score DESC, lead_id LIMIT 5",
+   "columns": [
+    "lead_id",
+    "name",
+    "score"
+   ],
+   "rows": [
+    {
+     "lead_id": "LD-00574",
+     "name": "Jacqueline Hoover",
+     "score": 98.0
+    },
+    {
+     "lead_id": "LD-03161",
+     "name": "Elizabeth Walker",
+     "score": 98.0
+    },
+    {
+     "lead_id": "LD-01005",
+     "name": "Joshua Hoffman",
+     "score": 94.0
+    },
+    {
+     "lead_id": "LD-04598",
+     "name": "Laura Marsh",
+     "score": 86.1
+    },
+    {
+     "lead_id": "LD-01639",
+     "name": "Nicholas Ruiz",
+     "score": 80.0
+    }
+   ],
+   "citations": [
+    "LD-00574",
+    "LD-03161",
+    "LD-01005",
+    "LD-04598",
+    "LD-01639"
+   ],
+   "valid": true,
+   "source": "llm",
+   "provider": "groq",
+   "attempts": 1,
+   "answer_attempts": 1,
+   "fallback": "none",
+   "cached": false,
+   "tokens": 1382,
+   "suggestions": [],
+   "cannot_answer": null,
+   "notes": []
+  },
+  "deps": {
+   "companies": "10869506712501160118",
+   "leads": "6497344544753538303",
+   "lead_scores": "18279683458322419555"
+  }
+ },
+ {
+  "kind": "ask",
+  "key": "b1c10ce25f058f29",
+  "payload": {
+   "question": "Average lead score by industry",
+   "answer": "The average lead scores range from 36.38 in Education to 44.03 in Fintech, with Software having a slightly higher average of 43.02.",
+   "sql": "WITH ls AS (SELECT lead_id, score FROM lead_scores) SELECT c.industry, AVG(ls.score) AS average_score FROM leads l JOIN companies c ON l.company_id = c.company_id JOIN ls ON l.lead_id = ls.lead_id GROUP BY c.industry",
+   "columns": [
+    "industry",
+    "average_score"
+   ],
+   "rows": [
+    {
+     "industry": "Media",
+     "average_score": 36.96
+    },
+    {
+     "industry": "Manufacturing",
+     "average_score": 37.26
+    },
+    {
+     "industry": "E-commerce",
+     "average_score": 40.61
+    },
+    {
+     "industry": "Software",
+     "average_score": 43.02
+    },
+    {
+     "industry": "Fintech",
+     "average_score": 44.03
+    },
+    {
+     "industry": "Healthcare",
+     "average_score": 41.14
+    },
+    {
+     "industry": "Education",
+     "average_score": 36.38
+    },
+    {
+     "industry": "Logistics",
+     "average_score": 37.97
+    }
+   ],
+   "citations": [],
+   "valid": true,
+   "source": "llm",
+   "provider": "groq",
+   "attempts": 1,
+   "answer_attempts": 1,
+   "fallback": "none",
+   "cached": false,
+   "tokens": 1276,
+   "suggestions": [],
+   "cannot_answer": null,
+   "notes": []
+  },
+  "deps": {
+   "companies": "10869506712501160118",
+   "leads": "6497344544753538303",
+   "lead_scores": "18279683458322419555"
+  }
+ },
+ {
+  "kind": "ask",
+  "key": "d6713b064e89295c",
   "payload": {
    "question": "Which leads requested a demo in the last 7 days?",
    "answer": "Leads LD-00014, LD-00017, LD-00037, LD-00050, LD-00060, LD-00062, LD-00069, LD-00094, LD-00128, LD-00201, LD-00204, and LD-00224 requested a demo in the last 7 days.",
-   "sql": "WITH recent_demo AS (SELECT DISTINCT lead_id FROM activities WHERE type = 'demo_request' AND occurred_at >= TIMESTAMP '2026-09-08 12:00:00' AND occurred_at <= TIMESTAMP '2026-09-15 12:00:00') SELECT l.lead_id, l.first_name || ' ' || l.last_name AS name FROM leads l JOIN recent_demo rd ON l.lead_id = rd.lead_id",
+   "sql": "WITH recent_demo AS (SELECT lead_id FROM activities WHERE type = 'demo_request' AND occurred_at >= TIMESTAMP '2026-09-08 12:00:00' AND occurred_at <= TIMESTAMP '2026-09-15 12:00:00') SELECT l.lead_id, l.first_name || ' ' || l.last_name AS name FROM leads l JOIN recent_demo rd ON l.lead_id = rd.lead_id",
    "columns": [
     "lead_id",
     "name"
@@ -687,6 +1023,102 @@
      "name": "Curtis Phillips"
     },
     {
+     "lead_id": "LD-00475",
+     "name": "Veronica Cox"
+    },
+    {
+     "lead_id": "LD-00526",
+     "name": "Frank Lewis"
+    },
+    {
+     "lead_id": "LD-00536",
+     "name": "Devin Kim"
+    },
+    {
+     "lead_id": "LD-00559",
+     "name": "Marc Ramos"
+    },
+    {
+     "lead_id": "LD-00568",
+     "name": "Renee Garcia"
+    },
+    {
+     "lead_id": "LD-00732",
+     "name": "Alexis Moody"
+    },
+    {
+     "lead_id": "LD-00940",
+     "name": "John Wilson"
+    },
+    {
+     "lead_id": "LD-00949",
+     "name": "Peter Brown"
+    },
+    {
+     "lead_id": "LD-01117",
+     "name": "Sara Melton"
+    },
+    {
+     "lead_id": "LD-01126",
+     "name": "Gregory Moore"
+    },
+    {
+     "lead_id": "LD-01142",
+     "name": "Diane Anderson"
+    },
+    {
+     "lead_id": "LD-01196",
+     "name": "Elizabeth Pace"
+    },
+    {
+     "lead_id": "LD-01221",
+     "name": "Sharon Clark"
+    },
+    {
+     "lead_id": "LD-01427",
+     "name": "Brittany Hood"
+    },
+    {
+     "lead_id": "LD-01454",
+     "name": "Tiffany Scott"
+    },
+    {
+     "lead_id": "LD-01707",
+     "name": "Mark Rowe"
+    },
+    {
+     "lead_id": "LD-01731",
+     "name": "Eric Watson"
+    },
+    {
+     "lead_id": "LD-01756",
+     "name": "Shannon Cox"
+    },
+    {
+     "lead_id": "LD-01951",
+     "name": "Donna Jones"
+    },
+    {
+     "lead_id": "LD-01960",
+     "name": "Yesenia Ramos"
+    },
+    {
+     "lead_id": "LD-01967",
+     "name": "Andres Nguyen"
+    },
+    {
+     "lead_id": "LD-00568",
+     "name": "Renee Garcia"
+    },
+    {
+     "lead_id": "LD-01756",
+     "name": "Shannon Cox"
+    },
+    {
+     "lead_id": "LD-01960",
+     "name": "Yesenia Ramos"
+    },
+    {
      "lead_id": "LD-02072",
      "name": "Roger Davis"
     },
@@ -777,102 +1209,6 @@
     {
      "lead_id": "LD-02382",
      "name": "Robert Ramriez"
-    },
-    {
-     "lead_id": "LD-02388",
-     "name": "Bradley Bailey"
-    },
-    {
-     "lead_id": "LD-02394",
-     "name": "Tammy Sloan"
-    },
-    {
-     "lead_id": "LD-02410",
-     "name": "Kevin Williams"
-    },
-    {
-     "lead_id": "LD-02436",
-     "name": "James Roy"
-    },
-    {
-     "lead_id": "LD-02463",
-     "name": "Mary Barrett"
-    },
-    {
-     "lead_id": "LD-02492",
-     "name": "Jacob Yoder"
-    },
-    {
-     "lead_id": "LD-02502",
-     "name": "Amber Robinson"
-    },
-    {
-     "lead_id": "LD-02512",
-     "name": "Shane Hamilton"
-    },
-    {
-     "lead_id": "LD-02525",
-     "name": "Luke Gutierrez"
-    },
-    {
-     "lead_id": "LD-02528",
-     "name": "Hannah Bryant"
-    },
-    {
-     "lead_id": "LD-02529",
-     "name": "David Carroll"
-    },
-    {
-     "lead_id": "LD-02546",
-     "name": "Joshua Mccoy"
-    },
-    {
-     "lead_id": "LD-02559",
-     "name": "Lisa Smith"
-    },
-    {
-     "lead_id": "LD-02561",
-     "name": "Michael Scott"
-    },
-    {
-     "lead_id": "LD-02582",
-     "name": "Shelly Duncan"
-    },
-    {
-     "lead_id": "LD-02592",
-     "name": "Robert Ballard"
-    },
-    {
-     "lead_id": "LD-02593",
-     "name": "Joshua Baker"
-    },
-    {
-     "lead_id": "LD-02594",
-     "name": "Lynn Mack"
-    },
-    {
-     "lead_id": "LD-02609",
-     "name": "Laura Higgins"
-    },
-    {
-     "lead_id": "LD-02622",
-     "name": "Amy Norton"
-    },
-    {
-     "lead_id": "LD-02627",
-     "name": "Lori Jacobs"
-    },
-    {
-     "lead_id": "LD-02629",
-     "name": "Diana Flores"
-    },
-    {
-     "lead_id": "LD-02640",
-     "name": "Melissa Stein"
-    },
-    {
-     "lead_id": "LD-02678",
-     "name": "Jennifer Hicks"
     }
    ],
    "citations": [
@@ -896,275 +1232,14 @@
    "answer_attempts": 1,
    "fallback": "none",
    "cached": false,
-   "tokens": 1323,
+   "tokens": 1428,
    "suggestions": [],
+   "cannot_answer": null,
    "notes": []
   },
   "deps": {
-   "activities": "16903541769951858393",
-   "leads": "6497344544753538303"
-  }
- },
- {
-  "kind": "ask",
-  "key": "691b7f440e5021b4",
-  "payload": {
-   "question": "Top 10 open leads in Fintech",
-   "answer": "The top 10 open fintech leads are Samuel Garcia (LD-00911), Donna Carroll (LD-04302), Matthew Elliott (LD-01359), Melissa Stephens (LD-03047), Cassidy Brady (LD-04836), Kimberly Navarro (LD-00968), Kevin Moses (LD-01056), Tina Horton (LD-02091), Joshua Melton (LD-01467), and Eric Black (LD-03832).",
-   "sql": "WITH filtered AS (SELECT l.lead_id, l.first_name || ' ' || l.last_name AS name, ls.score FROM leads l JOIN companies c ON l.company_id = c.company_id JOIN lead_scores ls ON l.lead_id = ls.lead_id WHERE l.stage NOT IN ('won','lost') AND c.industry = 'Fintech') SELECT lead_id, name FROM filtered ORDER BY score DESC, lead_id LIMIT 10",
-   "columns": [
-    "lead_id",
-    "name"
-   ],
-   "rows": [
-    {
-     "lead_id": "LD-00911",
-     "name": "Samuel Garcia"
-    },
-    {
-     "lead_id": "LD-04302",
-     "name": "Donna Carroll"
-    },
-    {
-     "lead_id": "LD-01359",
-     "name": "Matthew Elliott"
-    },
-    {
-     "lead_id": "LD-03047",
-     "name": "Melissa Stephens"
-    },
-    {
-     "lead_id": "LD-04836",
-     "name": "Cassidy Brady"
-    },
-    {
-     "lead_id": "LD-00968",
-     "name": "Kimberly Navarro"
-    },
-    {
-     "lead_id": "LD-01056",
-     "name": "Kevin Moses"
-    },
-    {
-     "lead_id": "LD-02091",
-     "name": "Tina Horton"
-    },
-    {
-     "lead_id": "LD-01467",
-     "name": "Joshua Melton"
-    },
-    {
-     "lead_id": "LD-03832",
-     "name": "Eric Black"
-    }
-   ],
-   "citations": [
-    "LD-00911",
-    "LD-04302",
-    "LD-01359",
-    "LD-03047",
-    "LD-04836",
-    "LD-00968",
-    "LD-01056",
-    "LD-02091",
-    "LD-01467",
-    "LD-03832"
-   ],
-   "valid": true,
-   "source": "llm",
-   "provider": "groq",
-   "attempts": 1,
-   "answer_attempts": 1,
-   "fallback": "none",
-   "cached": false,
-   "tokens": 1404,
-   "suggestions": [],
-   "notes": []
-  },
-  "deps": {
-   "lead_scores": "18279683458322419555",
-   "companies": "10869506712501160118",
-   "leads": "6497344544753538303"
-  }
- },
- {
-  "kind": "ask",
-  "key": "7f2174b4a0559f80",
-  "payload": {
-   "question": "How many leads are flagged as duplicates?",
-   "answer": "There are 192 leads flagged as duplicates.",
-   "sql": "WITH dup AS (SELECT lead_id FROM data_issues WHERE issue_type = 'duplicate') SELECT COUNT(*) AS duplicate_leads FROM dup",
-   "columns": [
-    "duplicate_leads"
-   ],
-   "rows": [
-    {
-     "duplicate_leads": 192
-    }
-   ],
-   "citations": [],
-   "valid": true,
-   "source": "llm",
-   "provider": "groq",
-   "attempts": 1,
-   "answer_attempts": 1,
-   "fallback": "none",
-   "cached": false,
-   "tokens": 1353,
-   "suggestions": [],
-   "notes": []
-  },
-  "deps": {
-   "data_issues": "1556234999782815453"
-  }
- },
- {
-  "kind": "ask",
-  "key": "9a542ded11f09f79",
-  "payload": {
-   "question": "Total open pipeline deal value by owner",
-   "answer": "Aisha Bello has $4,042,800.0, Daniel Ortiz $3,423,800.0, Lucas Martin $3,879,000.0, Tom Becker $3,694,800.0, Maya Chen $3,705,900.0, Hana Sato $3,923,300.0, Priya Nair $3,489,600.0, and Ravi Kumar $3,424,100.0 in open pipeline deals.",
-   "sql": "WITH open_leads AS (SELECT owner, deal_value FROM leads WHERE stage NOT IN ('won','lost')) SELECT owner, SUM(deal_value) AS total_open_pipeline_deal_value FROM open_leads GROUP BY owner",
-   "columns": [
-    "owner",
-    "total_open_pipeline_deal_value"
-   ],
-   "rows": [
-    {
-     "owner": "Aisha Bello",
-     "total_open_pipeline_deal_value": 4042800.0
-    },
-    {
-     "owner": "Daniel Ortiz",
-     "total_open_pipeline_deal_value": 3423800.0
-    },
-    {
-     "owner": "Lucas Martin",
-     "total_open_pipeline_deal_value": 3879000.0
-    },
-    {
-     "owner": "Tom Becker",
-     "total_open_pipeline_deal_value": 3694800.0
-    },
-    {
-     "owner": "Maya Chen",
-     "total_open_pipeline_deal_value": 3705900.0
-    },
-    {
-     "owner": "Hana Sato",
-     "total_open_pipeline_deal_value": 3923300.0
-    },
-    {
-     "owner": "Priya Nair",
-     "total_open_pipeline_deal_value": 3489600.0
-    },
-    {
-     "owner": "Ravi Kumar",
-     "total_open_pipeline_deal_value": 3424100.0
-    }
-   ],
-   "citations": [],
-   "valid": true,
-   "source": "llm",
-   "provider": "groq",
-   "attempts": 1,
-   "answer_attempts": 1,
-   "fallback": "none",
-   "cached": false,
-   "tokens": 1239,
-   "suggestions": [],
-   "notes": []
-  },
-  "deps": {
-   "leads": "6497344544753538303"
-  }
- },
- {
-  "kind": "ask",
-  "key": "bbcc52c411038842",
-  "payload": {
-   "question": "How many leads are missing a phone number?",
-   "answer": "100 leads are missing a phone number.",
-   "sql": "SELECT COUNT(*) AS missing_phone FROM leads WHERE phone IS NULL OR trim(phone) = ''",
-   "columns": [
-    "missing_phone"
-   ],
-   "rows": [
-    {
-     "missing_phone": 100
-    }
-   ],
-   "citations": [],
-   "valid": true,
-   "source": "llm",
-   "provider": "groq",
-   "attempts": 1,
-   "answer_attempts": 1,
-   "fallback": "none",
-   "cached": false,
-   "tokens": 1066,
-   "suggestions": [],
-   "notes": []
-  },
-  "deps": {
-   "leads": "6497344544753538303"
-  }
- },
- {
-  "kind": "ask",
-  "key": "f9c0fc14ae5b3e46",
-  "payload": {
-   "question": "Top 5 C-level leads at Software companies",
-   "answer": "The top 5 C-level leads are Jacqueline Hoover [LD-00574], Elizabeth Walker [LD-03161], Joshua Hoffman [LD-01005], Laura Marsh [LD-04598], and Nicholas Ruiz [LD-01639].",
-   "sql": "WITH filtered AS (SELECT l.lead_id, l.first_name || ' ' || l.last_name AS name, ls.score FROM leads l JOIN companies c ON l.company_id = c.company_id JOIN lead_scores ls ON l.lead_id = ls.lead_id WHERE l.seniority = 'c_level' AND c.industry = 'Software') SELECT lead_id, name FROM filtered ORDER BY score DESC, lead_id LIMIT 5",
-   "columns": [
-    "lead_id",
-    "name"
-   ],
-   "rows": [
-    {
-     "lead_id": "LD-00574",
-     "name": "Jacqueline Hoover"
-    },
-    {
-     "lead_id": "LD-03161",
-     "name": "Elizabeth Walker"
-    },
-    {
-     "lead_id": "LD-01005",
-     "name": "Joshua Hoffman"
-    },
-    {
-     "lead_id": "LD-04598",
-     "name": "Laura Marsh"
-    },
-    {
-     "lead_id": "LD-01639",
-     "name": "Nicholas Ruiz"
-    }
-   ],
-   "citations": [
-    "LD-00574",
-    "LD-03161",
-    "LD-01005",
-    "LD-04598",
-    "LD-01639"
-   ],
-   "valid": true,
-   "source": "llm",
-   "provider": "groq",
-   "attempts": 1,
-   "answer_attempts": 1,
-   "fallback": "none",
-   "cached": false,
-   "tokens": 1212,
-   "suggestions": [],
-   "notes": []
-  },
-  "deps": {
-   "lead_scores": "18279683458322419555",
-   "companies": "10869506712501160118",
-   "leads": "6497344544753538303"
+   "leads": "6497344544753538303",
+   "activities": "4359652558631598548"
   }
  }
 ]
