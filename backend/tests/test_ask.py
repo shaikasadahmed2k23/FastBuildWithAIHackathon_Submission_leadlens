@@ -119,3 +119,26 @@ def test_repeated_bad_sql_falls_back_to_rules(seeded: GroundTruth, fake_llm: Cal
 def test_offline_mode_is_not_counted_as_fallback(seeded: GroundTruth, offline: None) -> None:
     r = ask.ask("how many stale leads")
     assert r.source == "rules" and r.fallback == "none"
+
+
+def test_model_can_decline_when_no_data_answers_the_question(seeded: GroundTruth, fake_llm) -> None:
+    fake = fake_llm([{"cannot_answer": "There is no churn data or forecast in these tables."}])
+    r = ask.ask("Which leads will churn next quarter?", use_cache=False)
+    assert len(fake.prompts) == 1  # no SQL run, no answer-writing call, no rule-based fallback
+    assert r.sql is None and r.rows == [] and not r.valid
+    assert r.source == "llm" and r.fallback == "none"
+    assert r.cannot_answer == "There is no churn data or forecast in these tables"
+    assert r.answer == "This data can't answer that: There is no churn data or forecast in these tables."
+    assert r.suggestions and all(isinstance(q, str) for q in r.suggestions)
+
+
+def test_decline_after_a_rejected_query_still_runs_nothing(seeded: GroundTruth, fake_llm) -> None:
+    fake = fake_llm([{"sql": "DELETE FROM leads"}, {"cannot_answer": "No call transcripts are stored"}])
+    r = ask.ask("What did Tom discuss on his calls?", use_cache=False)
+    assert len(fake.prompts) == 2 and r.sql is None and r.cannot_answer == "No call transcripts are stored"
+    assert r.attempts == 2
+
+
+def test_sql_prompt_reads_issue_flags_and_offers_a_decline() -> None:
+    assert "count rows in data_issues by issue_type; never recompute them" in ask.SQL_SYSTEM
+    assert '"cannot_answer"' in ask.SQL_SYSTEM

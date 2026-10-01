@@ -208,6 +208,8 @@ export interface AskResult {
   fallback: "none" | "template" | "rules";
   cached: boolean;
   suggestions: string[];
+  /** The model's reason when no table holds data that answers the question. */
+  cannot_answer?: string | null;
   tokens: number;
   notes: string[];
 }

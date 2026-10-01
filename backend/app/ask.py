@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from app import cache, citations, llm, rules, sql_guard
 from app.config import AS_OF_SQL, settings
+from app.demo import DEMO_QUESTIONS
 
 MAX_SQL_ATTEMPTS = 3
 MAX_ANSWER_ATTEMPTS = 2
@@ -35,7 +36,8 @@ industry: Software Fintech Healthcare E-commerce Logistics Manufacturing Educati
 country: US GB DE IN CA AU FR. owner: full name, e.g. 'Maya Chen'.
 
 Now is {AS_OF_SQL} (frozen data; never now()/current_date).
-Data-quality questions: use data_issues. stale = open lead with no contact for >90 days.
+Stale, duplicate and missing-field questions: count rows in data_issues by issue_type; never recompute them
+from dates. (stale = open lead not contacted for >90 days, or never contacted and created >90 days ago.)
 duplicate: lead_id is the newer copy of related_lead_id.
 Missing text is NULL, '' or whitespace: (col IS NULL OR trim(col) = '').
 last_contacted_at NULL = never contacted. Compare names/emails case-insensitively."""
@@ -44,6 +46,10 @@ SQL_SYSTEM = f"""Translate the sales team's question into ONE DuckDB SELECT.
 {SCHEMA_DOC}
 
 Return JSON {{"sql": "..."}}: one SELECT (CTEs ok), no semicolon.
+If these tables hold no data that answers the question, return {{"cannot_answer": "<short reason>"}} instead.
+That covers predictions and forecasts (churn, likelihood to buy or close, future revenue), contents of calls,
+emails or meetings, sentiment, and anything else not stored in the columns above. Never answer with a proxy:
+lead_scores rank who to contact now; they are not a prediction of outcomes.
 - Select the ID column of rows the answer is about; for leads also first_name || ' ' || last_name AS name.
 - Top/best/hottest leads: ORDER BY lead_scores.score DESC, tie-break by ID, LIMIT N (10 if no N).
   "Which"/"list"/"show" questions: return all matching rows, no LIMIT (results are capped at 200).
@@ -82,7 +88,8 @@ class AskResponse(BaseModel):
     fallback: Literal["none", "template", "rules"] = "none"
     cached: bool = False  # served from the answer cache: no LLM call, zero tokens
     tokens: int = 0  # LLM tokens spent producing this response
-    suggestions: list[str] = []  # questions the offline parser can answer, shown when it declines
+    suggestions: list[str] = []  # answerable example questions, shown when a question is declined
+    cannot_answer: str | None = None  # the model's reason when the data has nothing that answers the question
     notes: list[str] = []
 
 
@@ -154,6 +161,16 @@ def _finish(question: str, sql: str, columns: list[str], rows: list[dict[str, An
     )
 
 
+def _cannot_answer(question: str, reason: str, provider: str | None, attempt: int, notes: list[str]) -> AskResponse:
+    """The model found no data that answers the question: say so and run nothing."""
+    reason = reason.rstrip(".")
+    return AskResponse(
+        question=question, answer=f"This data can't answer that: {reason}.", sql=None, columns=[], rows=[],
+        citations=[], valid=False, source="llm", provider=provider, attempts=attempt, cannot_answer=reason,
+        suggestions=DEMO_QUESTIONS[:4], notes=notes + ["The model declined: no table holds data for this question."],
+    )
+
+
 def _ask_llm(question: str, notes: list[str]) -> AskResponse | None:
     """The LLM path. Returns None when it can't produce a result (caller falls back to rules)."""
     feedback: str | None = None
@@ -164,6 +181,8 @@ def _ask_llm(question: str, notes: list[str]) -> AskResponse | None:
         candidate = ""
         try:
             data, provider = llm.complete_json(SQL_SYSTEM, user, purpose="ask.sql")
+            if reason := str(data.get("cannot_answer") or "").strip():
+                return _cannot_answer(question, reason, provider, attempt, notes)
             candidate = str(data.get("sql", ""))
             sql, columns, rows = sql_guard.run(candidate)
         except llm.LLMUnavailable as exc:
