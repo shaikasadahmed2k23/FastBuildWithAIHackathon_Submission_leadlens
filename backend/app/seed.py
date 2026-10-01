@@ -263,7 +263,9 @@ def generate(seed: int = SEED) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame
             activities.append({
                 "lead_id": lead["lead_id"],
                 "type": _pick(rng, ACTIVITY_TYPES),
-                "occurred_at": AS_OF - timedelta(days=back),
+                # Whole seconds: `back` comes from float pow(), whose last bit differs between
+                # libm implementations (Windows vs Linux); microseconds would make the seed OS-dependent.
+                "occurred_at": (AS_OF - timedelta(days=back)).replace(microsecond=0),
             })
     activities.sort(key=lambda a: (a["occurred_at"], a["lead_id"]))
     for n, act in enumerate(activities, start=1):
