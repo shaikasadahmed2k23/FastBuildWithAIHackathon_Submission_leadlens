@@ -7,7 +7,9 @@ This document covers what we measure, how, the results, and where the numbers fa
 | | Rule-based (offline) | Live LLM (Groq `openai/gpt-oss-120b`) |
 |---|---|---|
 | Golden accuracy, 3 runs, prompts before compaction (Sep 29) | 50/50 every run | 50/50 every run (see the run 3 caveat) |
-| **Golden accuracy, 1 run, current prompts (Oct 1)** | n/a | **49/50** (Q30 wrong) |
+| Golden accuracy, 1 run, compacted prompts (Oct 1, morning) | n/a | 49/50 (Q30 wrong) |
+| **Golden accuracy, 1 run, after the stale + decline changes (Oct 1, shipped)** | n/a | **47/50** (Q30 fixed; Q11, Q12, Q46 wrong) |
+| **Decline check (10 new questions, written before running)** | n/a | **10/10**: 6 of 6 unanswerable declined, 4 of 4 answerable answered |
 | Answers passing the citation checker | 100% | 100% in every run |
 | **Held-out accuracy (25 new questions, never tuned on)** | **5/25**; 3 of its 6 answers were wrong | **21/25**: 2 wrong numbers, 2 must-decline questions answered |
 | Held-out, after strict-fallback policy | **4/25, 0 wrong answers** (21 declined) | n/a (policy applies to the offline parser only) |
@@ -17,7 +19,7 @@ This document covers what we measure, how, the results, and where the numbers fa
 **The LLM's five failures across both Oct 1 runs** (details below):
 - Two (golden Q30, held-out H23) come from the model computing "stale" from `last_contacted_at` instead of reading the flagged issues in `data_issues`.
 - One (held-out H22) is an off-by-boundary: "more than 60 days ago" written as `<=`, which counted 4 leads contacted exactly 60 days earlier.
-- Two (H24, H25) are questions the data can't answer; the model wrote a plausible query instead of declining, and the app showed its rows. No prompt was changed in response to the held-out results.
+- Two (H24, H25) are questions the data can't answer; the model wrote a plausible query instead of declining, and the app showed its rows. The held-out score above stays as recorded. Afterwards two prompt changes were made (a stale definition fix and a "cannot answer" path); the second was motivated by H24/H25, so **the held-out set can no longer measure declining**, and it was not re-run. See [After the stale and decline changes](#after-the-stale-and-decline-changes-oct-1).
 
 The most important caveat: in live run 3, the provider quota ran out partway through and 17 of the 50 questions fell back. Its 50/50 therefore includes 14 answers from the rule-based parser, which was tuned on these same questions. The LLM's own record is 50/50, 50/50 and 36/36 (the questions it answered in run 3).
 
@@ -100,6 +102,50 @@ The three runs above used the prompts from before quota-saving compaction. This 
 **The one failure, Q30 "Top 10 stale leads by score", is most likely a regression from compaction** (one run can't fully separate that from run-to-run variance). The model defined stale itself, as "open and `last_contacted_at` is NULL or older than 90 days", instead of using the `stale` rows in `data_issues`. The detector counts a never-contacted lead as stale only when it was *created* more than 90 days ago, so the model's version adds 236 recently created, never-contacted open leads, and its top 10 differed. Q30 failed the same way in development and was fixed by defining the business terms in the prompt (`4e95197`, below); it passed 3 of 3 runs afterwards. The compacted prompt still says "Data-quality questions: use data_issues" and gives the 90-day definition, but the model now follows the definition and ignores the table. The same cause produced held-out failure H23.
 
 **A second, smaller weakness: "nothing matched" on list results.** In 3 questions (Q36, Q38, Q40) the answer-writing step twice replied "nothing matched" although the query returned rows, so the app showed a deterministic summary of the rows instead (the "template" fallback). Q29 needed one retry for the same reason. The rows really were in the prompt (checked by rebuilding the payload offline). The checker caught every case, so no wrong prose reached the user, but it costs a retry and plainer answers.
+
+### After the stale and decline changes (Oct 1)
+
+Two changes were made after the runs above, in commit `231fed0`:
+
+1. **Stale, duplicate and missing-field questions count `data_issues`.** The SQL prompt now says to count those rows by `issue_type` and never recompute them from dates, and states the detector's exact rule (open and not contacted for more than 90 days, or never contacted and created more than 90 days ago). Motivated by golden Q30 and by the wrong "stale leads per owner" demo answer. It addresses the same cause as held-out H23.
+2. **A decline path.** The SQL step may return `{"cannot_answer": "<reason>"}` when no table holds the data: predictions and forecasts, contents of calls, emails or meetings, sentiment, anything not in the columns. The prompt says lead scores rank whom to contact now and are not a prediction of outcomes, so the model shouldn't answer with a proxy. Nothing is queried, and the UI says "This data can't answer that", gives the model's reason, and offers answerable examples. **Motivated by held-out H24 and H25**, so the held-out set can't measure it any more; its 21/25 above is unchanged and wasn't re-run.
+
+**Decline check (`evals/decline_check.jsonl`, `reports/decline_check_live.json`): 10/10.** To test the decline path on questions it wasn't shaped by, 10 new questions were written and committed (`e236fbe`) before the first run. The six unanswerable ones avoid every category the prompt names as an example; a test enforces that. The four answerable ones sit near the boundary to catch over-declining.
+
+| Question | Kind | Result |
+|---|---|---|
+| Which competitors are our leads currently evaluating? | unanswerable | declined: no competitor data |
+| What discount did we offer Cruz PLC in our last proposal? | unanswerable | declined: no discount data |
+| How satisfied are our won customers with onboarding? | unanswerable | declined: no satisfaction data |
+| Which leads are based within 50 miles of our office? | unanswerable | declined: no location beyond country |
+| What is each sales rep's quota attainment this quarter? | unanswerable | declined: no quota data |
+| Which leads prefer to be contacted by phone rather than email? | unanswerable | declined: no preference column |
+| Which leads requested a demo but have never been contacted? | answerable | correct |
+| How many email replies did Priya Nair's leads send in August 2026? | answerable | correct (136) |
+| What is the average deal value of won leads in each industry? | answerable | correct |
+| Which 5 open leads should we call first? | answerable | correct (top 5 by score) |
+
+10.3k tokens. Ten questions are a small sample: this shows the path works and doesn't decline obvious analytics questions, not that it never over- or under-declines.
+
+**Golden set after the changes (`reports/live_v2.json`, the shipped prompts): 47/50.**
+
+| Metric | Result |
+|---|---|
+| Accuracy | **47/50** |
+| Citation checker pass | 100% |
+| Retry rate | 8% |
+| Fallback rate | 4% (2 template, 0 rules) |
+| Latency p50 / p95, excluding backoff | 3.2s / 5.8s |
+| Rate-limit retries (429) | 48 |
+| Tokens | 63.9k |
+
+Q30 now passes: the model applies the detector's rule, including "created more than 90 days ago" for never-contacted leads. (It still derives staleness from dates rather than reading `data_issues`, but with the right definition.) Three questions that passed in the morning run now fail, none of them about staleness or declining:
+
+- **Q11** "How many leads requested a demo in the last 7 days?": 482 instead of 409. It counted demo-request *events* (`COUNT(*)`) instead of distinct leads.
+- **Q12** "How many leads visited the pricing page in the last 30 days?": 1,704 instead of 1,098. The same events-for-leads error, and the 30-day window started at midnight instead of the 12:00 as-of time.
+- **Q46** "Number of demo requests per industry in the last 30 days": off by 1 to 2 in four industries, from the same midnight window start.
+
+**These are not fixed.** With one run before and one after, run-to-run variance can't be separated from the longer prompt nudging the model on unrelated questions. Verifying a fix needs another full golden run (about 60k tokens), which didn't fit in the day's budget. The shipped prompts are the ones measured here, and `evals/latest.json` (the Evals page) shows this run.
 
 ### Rule-based (offline), 3 runs (`backend/evals/reports/offline.json`)
 
@@ -259,7 +305,8 @@ The first live run scored 8/10 on a 10-question subset, and the first full run 4
 - **The golden set is small and easy.** 50 questions, one phrasing each, 7 categories, all answerable with one query over 5 tables. 100% here means "reliable on common analytics questions", not "handles any question".
 - **The rule-based 50/50 is tuned on the test set.** Accuracy went from 22 to 47, 49 and then 50 as vocabulary gaps were fixed. `tests/test_rules.py` holds 7 held-out phrasings and 4 must-decline questions as a fairer check.
 - **Perfect cleaning scores reflect synthetic noise.** The duplicate kinds (case changes, one-character typos, Gmail dots) were designed alongside the detector. Real CRM duplicates (nicknames, job changes, shared inboxes) would lower recall.
-- **The demo cache seed was checked by hand, and one entry was dropped.** `python -m app.prewarm --reset --export` cached 8 of the 9 demo questions ("Which Healthcare leads had a meeting in the last 2 days?" hit the "nothing matched" pattern and wasn't cacheable). Reviewing each cached SQL showed that "How many stale leads does each owner have?" used the same computed-staleness definition as Q30, so every per-owner count was wrong (e.g. 104 instead of 69). It was removed from `answer_cache_seed.json` rather than shipped as a verified answer, leaving 7 entries. Live, that question can still be answered wrongly; offline, the rule-based parser answers it from `data_issues` correctly.
+- **The demo cache seed is checked by hand.** `answer_cache_seed.json` holds 8 answers, built by `python -m app.prewarm --reset --export` on the shipped prompts and reviewed SQL by SQL. "Which Healthcare leads had a meeting in the last 2 days?" isn't cached: its answer step hit the "nothing matched" pattern. The first seed (morning) had a wrong "stale leads per owner" answer, which was removed before shipping; the rebuilt one is correct (69, 58, 65, 66, 59, 59, 53, 51). "Which leads requested a demo in the last 7 days?" lists rows without `DISTINCT`, so a lead with two requests can appear twice in its 200-row capped list.
+- **The seed is now identical on every OS.** On Render the morning seed loaded only 6 of 7 entries: activity timestamps came from float `pow()`, whose last bit differs between Windows and Linux maths libraries, so the `activities` table hashed differently. Timestamps are now whole seconds (`235a321`); every golden and held-out expected answer was unchanged.
 - **Three runs is a small sample.** Zero unstable questions across 3 runs doesn't rule out rarer flips at temperature 0 on a reasoning model.
 - **Latency depends on the free tier.** On this key, rate-limit waits made up 56% and 42% of total question time in the two clean runs (88% in run 3). Use the "excluding backoff" rows to judge model speed. A paid key would change end-to-end latency but not correctness.
 
@@ -280,6 +327,7 @@ python -m evals.run --mode offline --runs 3 --out evals/reports/offline.json
 python -m evals.run --mode live --runs 3 --out evals/reports/live.json        # needs GROQ_API_KEY in backend/.env
 python -m evals.run --mode live --out evals/reports/live_compact.json          # one golden run, current prompts
 python -m evals.run --mode live --set heldout --out evals/reports/heldout_live.json
+python -m evals.run --mode live --set decline_check --out evals/reports/decline_check_live.json
 ```
 
-Each run seeds a fresh temporary database, so it never touches your working data. Without `--out`, the report goes to `evals/latest.json`, which the UI's Evals page shows; it currently holds the Oct 1 current-prompts golden run (a copy of `reports/live_compact.json`). On the current prompts a golden run uses about 59k tokens and a held-out run about 33k, at 2 requests per question plus retries (the pre-compaction prompts used about 80k per golden run). On a free-tier key with a daily token cap, **a clean 3-run live eval may not fit in one day**, as run 3 above shows.
+Each run seeds a fresh temporary database, so it never touches your working data. Without `--out`, the report goes to `evals/latest.json`, which the UI's Evals page shows; it currently holds the shipped-prompts golden run (a copy of `reports/live_v2.json`). On the current prompts a golden run uses about 59k tokens and a held-out run about 33k, at 2 requests per question plus retries (the pre-compaction prompts used about 80k per golden run). On a free-tier key with a daily token cap, **a clean 3-run live eval may not fit in one day**, as run 3 above shows.
