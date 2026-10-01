@@ -1,18 +1,23 @@
 # LeadLens evaluation
 
-This document covers what we measure, how, the results, and where the numbers fall short. Every number here comes from the JSON reports in `backend/evals/reports/` (`offline.json`, `live.json`). None are typed in by hand.
+This document covers what we measure, how, the results, and where the numbers fall short. Every number here comes from the JSON reports in `backend/evals/reports/`. None are typed in by hand.
 
 ## Summary
 
 | | Rule-based (offline) | Live LLM (Groq `openai/gpt-oss-120b`) |
 |---|---|---|
-| Golden accuracy, 3 runs | 50/50 every run | 50/50 every run (see the run 3 caveat) |
-| Answers passing the citation checker | 100% | 100% |
-| Wrong answers across 150 attempts | 0 | 0 |
-| **Held-out accuracy (25 new questions, never tuned on)** | **5/25**; 3 of its 6 answers were wrong | *pending: provider quota* |
+| Golden accuracy, 3 runs, prompts before compaction (Sep 29) | 50/50 every run | 50/50 every run (see the run 3 caveat) |
+| **Golden accuracy, 1 run, current prompts (Oct 1)** | n/a | **49/50** (Q30 wrong) |
+| Answers passing the citation checker | 100% | 100% in every run |
+| **Held-out accuracy (25 new questions, never tuned on)** | **5/25**; 3 of its 6 answers were wrong | **21/25**: 2 wrong numbers, 2 must-decline questions answered |
 | Held-out, after strict-fallback policy | **4/25, 0 wrong answers** (21 declined) | n/a (policy applies to the offline parser only) |
 
-**Read the held-out row first.** The golden set was used to find and fix problems, so 50/50 on it is an upper bound. The held-out set is the honest test of generalization, and the rule-based fallback does poorly on it.
+**Read the held-out row first.** The golden set was used to find and fix problems, so a perfect score on it is an upper bound. The held-out set is the honest test of generalization. The live model holds up well on it (21/25, every synonym, date-range, multi-filter and top-N question correct); the rule-based fallback does poorly.
+
+**The LLM's five failures across both Oct 1 runs** (details below):
+- Two (golden Q30, held-out H23) come from the model computing "stale" from `last_contacted_at` instead of reading the flagged issues in `data_issues`.
+- One (held-out H22) is an off-by-boundary: "more than 60 days ago" written as `<=`, which counted 4 leads contacted exactly 60 days earlier.
+- Two (H24, H25) are questions the data can't answer; the model wrote a plausible query instead of declining, and the app showed its rows. No prompt was changed in response to the held-out results.
 
 The most important caveat: in live run 3, the provider quota ran out partway through and 17 of the 50 questions fell back. Its 50/50 therefore includes 14 answers from the rule-based parser, which was tuned on these same questions. The LLM's own record is 50/50, 50/50 and 36/36 (the questions it answered in run 3).
 
@@ -75,6 +80,26 @@ Detected `data_issues` are compared with `backend/data/ground_truth.json`, writt
 **What happened in run 3.** Partway through, Groq kept returning 429 after all 4 backoff retries (capped at 30s each). The Gemini fallback then failed as well: read timeouts, a 503, and then its own 429s. Afterwards Groq's response headers showed plenty of per-minute token capacity, so the per-minute limit wasn't the cause. Total usage reached about 212k tokens across the three runs, which is consistent with a daily token cap of about 200k on this key. **This wasn't confirmed:** the client logged only the status line at the time. It now records the provider's error message (commit `109d3d1`).
 
 **What the run still shows.** The fallback chain degraded exactly as designed: no question went unanswered, and no failed citation reached the user. It doesn't measure the model. The model-only results are 50/50, 50/50 and 36/36 (the 33 pure-LLM answers plus 3 whose SQL came from the LLM).
+
+### Live LLM, current (compacted) prompts, 1 run, Oct 1 (`backend/evals/reports/live_compact.json`)
+
+The three runs above used the prompts from before quota-saving compaction. This is the full golden set on the prompts the app ships today, run once on a fresh daily quota.
+
+| Metric | Result |
+|---|---|
+| Accuracy | **49/50** |
+| Answered by the LLM (no rule-based fallback) | 50 |
+| Citation checker pass | 100% (0 invented IDs or numbers) |
+| Retry rate | 8% (4 questions) |
+| Fallback rate | 6% (3 template, 0 rules) |
+| Latency p50 / p95, end to end | 5.2s / 9.3s |
+| Latency p50 / p95, excluding backoff | 3.8s / 7.3s |
+| Rate-limit retries (429) | 29 |
+| Tokens | 59.4k (about 1,190 per question, retries included; the pre-compaction runs used 80.7k and 79.5k) |
+
+**The one failure, Q30 "Top 10 stale leads by score", is most likely a regression from compaction** (one run can't fully separate that from run-to-run variance). The model defined stale itself, as "open and `last_contacted_at` is NULL or older than 90 days", instead of using the `stale` rows in `data_issues`. The detector counts a never-contacted lead as stale only when it was *created* more than 90 days ago, so the model's version adds 236 recently created, never-contacted open leads, and its top 10 differed. Q30 failed the same way in development and was fixed by defining the business terms in the prompt (`4e95197`, below); it passed 3 of 3 runs afterwards. The compacted prompt still says "Data-quality questions: use data_issues" and gives the 90-day definition, but the model now follows the definition and ignores the table. The same cause produced held-out failure H23.
+
+**A second, smaller weakness: "nothing matched" on list results.** In 3 questions (Q36, Q38, Q40) the answer-writing step twice replied "nothing matched" although the query returned rows, so the app showed a deterministic summary of the rows instead (the "template" fallback). Q29 needed one retry for the same reason. The rows really were in the prompt (checked by rebuilding the payload offline). The checker caught every case, so no wrong prose reached the user, but it costs a retry and plainer answers.
 
 ### Rule-based (offline), 3 runs (`backend/evals/reports/offline.json`)
 
@@ -145,7 +170,34 @@ Its vocabulary is a subset of the previous parser's: strictness removed words an
 
 The three former wrong answers now decline with a reason: "can't interpret 'by deal value'", "can't interpret 'industries by'", and "negation 'never' is not supported". The price is coverage. H18 ("Won deals per owner") was answered correctly before, because the old parser treated "deals" as filler, and it now declines because "deals" isn't mapped to anything. A declined question shows "Live model unavailable right now. In offline mode I can answer questions like: …" with 4 example questions as clickable buttons; each is tested to be answerable. Tests in `tests/test_rules.py` pin all three former wrong answers as declines, along with other questions in the same failure classes.
 
-**Live LLM: pending.** The planned single live run couldn't happen on Sept 29: Groq returned `429 … tokens per day (TPD): Limit 200000` (the provider's message, now recorded in the call ledger). That day's earlier golden runs had used about 212k tokens. The run needs about 27k tokens (25 questions × ~1,080) and will be run once, unchanged, when the daily window frees up.
+**Live LLM, `reports/heldout_live.json`: 21/25.** Run once on Oct 1 with the prompts unchanged since the held-out set was written (later commits touched only caching and the offline decline path; evals run with the cache off). Nothing was changed in response.
+
+| Category | Correct |
+|---|---|
+| Synonyms | 6/6 |
+| Multi-condition filters | 4/4 |
+| Date ranges | 5/5 |
+| Top N by X in Y | 3/3 (including H15 and H17, which the offline parser got wrong) |
+| Negations | 3/4 (including H20, "never had any activity") |
+| Breakdown | 0/1 |
+| Must decline | 0/2 |
+
+| Metric | Result |
+|---|---|
+| Citation checker pass | 100% |
+| Retry rate | 20% (5 questions) |
+| Fallback rate | 12% (3 template, 0 rules) |
+| Latency p50 / p95, excluding backoff | 3.9s / 6.9s |
+| Tokens | 33.0k |
+
+The four failures, as they happened:
+
+- **H22** "How many leads that aren't stale were last contacted more than 60 days ago?": 1,620 instead of 1,616. The SQL used `<=` for "more than 60 days ago"; exactly 4 leads were last contacted 60 days to the hour before the dataset's as-of time. (Its first SQL attempt also had a syntax error and was retried.)
+- **H23** "Break down stale leads by stage": four of five stages exact, but "new" was 354 instead of 118. The model computed staleness from `last_contacted_at`, counting 236 recently created, never-contacted leads, instead of using `data_issues`. Same cause as golden Q30.
+- **H24** "Which of our leads are most likely to churn next quarter?" (must decline): the model ranked all leads by lowest score as a proxy for churn. Its prose was rejected twice by the checker, so the app showed a template summary of its rows (capped at 200).
+- **H25** "What did Tom Becker discuss on his last call with each lead?" (must decline; the data has no call notes): the model listed his leads' last call times instead. Same template fallback.
+
+**H24 and H25 are the most serious finding.** The SQL prompt gives the model no way to say "this data can't answer that", so it writes the closest query it can. The citation checker can't catch this: every ID and number shown really is in the rows. The UI does mark these answers ("template answer (LLM prose failed checks)" in amber), but it still presents rows for a question that has no answer. The offline parser declines both. A decline path for the SQL step is the obvious next change; it hasn't been made, because it would be a response to held-out results and the set could no longer measure it.
 
 ### Held-out duplicate detection (`backend/evals/cleaning_heldout.py`)
 
@@ -207,6 +259,7 @@ The first live run scored 8/10 on a 10-question subset, and the first full run 4
 - **The golden set is small and easy.** 50 questions, one phrasing each, 7 categories, all answerable with one query over 5 tables. 100% here means "reliable on common analytics questions", not "handles any question".
 - **The rule-based 50/50 is tuned on the test set.** Accuracy went from 22 to 47, 49 and then 50 as vocabulary gaps were fixed. `tests/test_rules.py` holds 7 held-out phrasings and 4 must-decline questions as a fairer check.
 - **Perfect cleaning scores reflect synthetic noise.** The duplicate kinds (case changes, one-character typos, Gmail dots) were designed alongside the detector. Real CRM duplicates (nicknames, job changes, shared inboxes) would lower recall.
+- **The demo cache seed was checked by hand, and one entry was dropped.** `python -m app.prewarm --reset --export` cached 8 of the 9 demo questions ("Which Healthcare leads had a meeting in the last 2 days?" hit the "nothing matched" pattern and wasn't cacheable). Reviewing each cached SQL showed that "How many stale leads does each owner have?" used the same computed-staleness definition as Q30, so every per-owner count was wrong (e.g. 104 instead of 69). It was removed from `answer_cache_seed.json` rather than shipped as a verified answer, leaving 7 entries. Live, that question can still be answered wrongly; offline, the rule-based parser answers it from `data_issues` correctly.
 - **Three runs is a small sample.** Zero unstable questions across 3 runs doesn't rule out rarer flips at temperature 0 on a reasoning model.
 - **Latency depends on the free tier.** On this key, rate-limit waits made up 56% and 42% of total question time in the two clean runs (88% in run 3). Use the "excluding backoff" rows to judge model speed. A paid key would change end-to-end latency but not correctness.
 
@@ -225,6 +278,8 @@ From `backend/`, with the venv active:
 python -m evals.build_golden                                                  # rebuild expected answers (after changing seed/questions)
 python -m evals.run --mode offline --runs 3 --out evals/reports/offline.json
 python -m evals.run --mode live --runs 3 --out evals/reports/live.json        # needs GROQ_API_KEY in backend/.env
+python -m evals.run --mode live --out evals/reports/live_compact.json          # one golden run, current prompts
+python -m evals.run --mode live --set heldout --out evals/reports/heldout_live.json
 ```
 
-Each run seeds a fresh temporary database, so it never touches your working data. Without `--out`, the report goes to `evals/latest.json`, which the UI's Evals page shows. A live run uses about 80k tokens and about 100 requests (2 per question, plus retries). On a free-tier key with a daily token cap, **a clean 3-run live eval may not fit in one day**, as run 3 above shows.
+Each run seeds a fresh temporary database, so it never touches your working data. Without `--out`, the report goes to `evals/latest.json`, which the UI's Evals page shows; it currently holds the Oct 1 current-prompts golden run (a copy of `reports/live_compact.json`). On the current prompts a golden run uses about 59k tokens and a held-out run about 33k, at 2 requests per question plus retries (the pre-compaction prompts used about 80k per golden run). On a free-tier key with a daily token cap, **a clean 3-run live eval may not fit in one day**, as run 3 above shows.

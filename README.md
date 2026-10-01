@@ -121,8 +121,8 @@ The free Groq tier allows 8k tokens per minute and 200k per day on this model. L
   - `/ask` and "why now" results are cached, keyed on the normalized question and a fingerprint of the prompts and model.
   - Each entry records a content hash of every table its SQL read, and is served only while those tables are unchanged.
   - Proposing or rejecting an action invalidates nothing. An approved stage change invalidates lead questions but not a companies-only question.
-- **Reset demo data** (sidebar): rebuilds the seed-42 database and reloads `backend/data/answer_cache_seed.json`. Content hashes make that seed valid again after every reset.
-- **Compact prompts:** about 1,080 tokens per question, down from about 1,400.
+- **Reset demo data** (sidebar): rebuilds the seed-42 database and reloads `backend/data/answer_cache_seed.json` (7 checked answers to the demo questions). Content hashes make that seed valid again after every reset.
+- **Compact prompts:** about 1,190 tokens per golden question including retries (59k for 50), down from about 1,600 (80k).
 - **Rate limit:** 10 requests per minute per client on LLM endpoints.
 - **Call ledger:** every provider call is logged in `backend/data/llm_calls.jsonl` (`python -m app.llm_usage`).
 
@@ -136,9 +136,10 @@ Full method, per-run numbers, every failure found and how it was fixed: **[docs/
 
 | | Live LLM (Groq `openai/gpt-oss-120b`) | Offline rule-based parser |
 |---|---|---|
-| **Golden set** (50 questions, used during development) | 50/50 in each of 3 runs, 100% citation-checker pass¹ | 50/50² |
-| **Held-out set** (25 new questions, never tuned on) | **not yet run**³ | 4/25 correct, **0 wrong**; 21 declined⁴ |
-| Latency p50 / p95, excluding rate-limit waits | about 3.3s / 5–6s | under 40 ms |
+| **Golden set** (50 questions, used during development) | **49/50** on the current prompts; 50/50 in each of 3 earlier runs¹ | 50/50² |
+| **Held-out set** (25 new questions, never tuned on) | **21/25**: 2 wrong numbers, 2 unanswerable questions answered anyway³ | 4/25 correct, **0 wrong**; 21 declined⁴ |
+| Citation-checker pass | 100% in every run | 100% |
+| Latency p50 / p95, excluding rate-limit waits | 3.8s / 7.3s | under 40 ms |
 
 | Cleaning | Precision | Recall |
 |---|---|---|
@@ -146,9 +147,9 @@ Full method, per-run numbers, every failure found and how it was fixed: **[docs/
 | **Held-out duplicate set, detector untouched** | **0.90** | **0.30** |
 | Same set after general fixes (no longer held-out) | 1.00 | 1.00 |
 
-1. In run 3 the daily quota ran out and 17 questions fell back, so the model's own record is 50/50, 50/50 and 36/36. These runs used the prompts from before compaction; the compacted prompts have only been re-verified on the first 15 golden questions.
+1. The 49/50 is one run on Oct 1 with the prompts the app ships. The miss (Q30, "top 10 stale leads") computed staleness from last-contact dates instead of the flagged issues, a failure fixed earlier that most likely came back with prompt compaction. The three earlier runs used the uncompacted prompts; in run 3 the daily quota ran out and 17 questions fell back, so the model's own record there is 50/50, 50/50 and 36/36.
 2. The offline parser was developed against these questions, so this is an upper bound.
-3. Blocked by the provider's daily token limit; it will be run once, unchanged, and reported as-is.
+3. Run once on Oct 1, prompts unchanged, nothing fixed afterwards. Every synonym, date-range, multi-filter and top-N question was right. Failures: a `<=` for "more than 60 days" (off by 4), the same staleness definition as Q30, and two questions the data can't answer (churn prediction, call contents) where the model wrote a proxy query instead of declining. The checker can't catch that last kind; see [docs/EVALS.md](docs/EVALS.md#held-out-questions-backendevalsheldoutjsonl).
 4. Before the strict-fallback policy, the parser scored 5/25 but gave **3 confident wrong answers** (a ranking measure and a negation silently dropped). It now declines instead, at the cost of one question it used to answer correctly.
 
 ## Deploy
@@ -165,6 +166,8 @@ CI (`.github/workflows/ci.yml`) runs pytest, an offline eval, lint, typecheck an
 - **Synthetic data.** Real CRM noise (initials, job changes, transliterations) is harder than both the seeded and the held-out cleaning sets.
 - **The offline parser declines most questions** outside its small vocabulary. It's a safety net, not a substitute for the model.
 - **The checker verifies support, not correctness.** An answer can quote the right rows and still describe them wrongly. Grading on returned rows covers the SQL, not the prose.
+- **The model doesn't decline unanswerable questions.** Asked about churn or call contents, it writes the closest query it can, and the app shows those rows (marked as a template answer). The offline parser does decline.
+- **"Stale" is sometimes recomputed by the model** from last-contact dates instead of read from the flagged issues, which miscounts never-contacted leads (golden Q30, held-out H23). The demo cache excludes the one demo answer affected.
 - **No authentication.** The reviewer name is self-declared, and "Reset demo data" is open to anyone on the deployment (set `DEMO_RESET_ENABLED=false` to disable it).
 - **Outreach is simulated;** no email is sent.
 - **Render's free disk is ephemeral:** approvals and imports reset on redeploy or restart.
